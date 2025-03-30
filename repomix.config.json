@@ -1,0 +1,23 @@
+{
+    "output": {
+        "filePath": "./squirt_repomix.md",
+        "headerText": "Squirt repo",
+        "removeComments": false
+    },
+    "ignore": {
+        "useDefaultPatterns": true,
+        "customPatterns": [
+            "public/main.bundle.js",
+            "docs",
+            ".env",
+            "knowledge",
+            "**/_*/**",
+            "**/webpack/*",
+            "*.log",
+            "**/*repopack*",
+            "**/*repomix*",
+            "**/*old*",
+            "**/*prompt*"
+        ]
+    }
+}

@@ -1,0 +1,148 @@
+/* Additional Mobile Layout Improvements */
+
+/* Responsive layout for YASGUI component */
+.yasgui-container {
+  min-height: 300px; /* Smaller on mobile */
+}
+
+/* Improved form spacing on mobile */
+@media (max-width: 767px) {
+  .view {
+    padding: var(--spacing-md);
+  }
+  
+  #post-form {
+    padding: var(--spacing-md);
+  }
+  
+  .hamburger-menu {
+    display: block;
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    z-index: 101;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* Ensure forms are mobile-friendly */
+  button[type="submit"],
+  .button-primary {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* Adjust endpoint actions on mobile */
+  .endpoint-actions {
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* Adjust navigation when visible on mobile */
+  nav.visible {
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-sm);
+  }
+  
+  /* Storage section buttons on mobile */
+  .storage-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Better spacing for wiki editor on mobile */
+  .wiki-editor {
+    padding: var(--spacing-md);
+  }
+  
+  .editor-toolbar {
+    gap: 2px;
+    justify-content: center;
+  }
+  
+  /* Fix notification container position on mobile */
+  .notifications-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Two-column grid for dashboard on medium screens */
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Adjust YASGUI height for medium screens */
+  .yasgui-container {
+    min-height: 400px;
+  }
+  
+  /* Better padding for medium screens */
+  .view {
+    padding: var(--spacing-lg);
+  }
+  
+  /* Header layout for medium screens */
+  header {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* All screen sizes - improve contrast for form elements */
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  opacity: 0.6;
+}
+
+/* Improve active state for all interactive elements */
+button:active,
+.button-primary:active,
+input[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+/* Fix layout when keyboard is visible on mobile */
+@media (max-height: 450px) and (max-width: 767px) {
+  header {
+    position: static;
+  }
+  
+  main {
+    padding-top: var(--spacing-sm);
+  }
+}
+
+/* Print styles - hide unnecessary elements when printing */
+@media print {
+  header,
+  nav,
+  .hamburger-menu,
+  .notifications-container,
+  button {
+    display: none !important;
+  }
+  
+  main {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .view {
+    box-shadow: none;
+    padding: 0;
+  }
+}

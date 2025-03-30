@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Post information to the web easily with Squirt">
+    <meta name="theme-color" content="#3498db">
+    <title>Squirt</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- iOS PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Squirt">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="favicon.ico"><script defer src="main.bundle.js"></script><link href="main.324fa52b.css" rel="stylesheet"></head>
+
+<body>
+    <header>
+        <h1>Squirt</h1>
+        <nav>
+            <a href="#" data-view="post-view">Post</a>
+            <a href="#" data-view="wiki-view">Wiki</a>
+            <a href="#" data-view="yasgui-view">SPARQL</a>
+            <a href="#" data-view="developer-view">Developer</a>
+            <a href="#" data-view="profile-view">Profile</a>
+            <a href="#" data-view="settings-view">Settings</a>
+        </nav>
+    </header>
+    
+
+    <main>
+        <!-- Post View -->
+        <div id="post-view" class="view">
+            <h2>Create Post</h2>
+            <form id="post-form" class="form-group">
+                <div class="form-field">
+                    <label for="post-type">Post Type</label>
+                    <select id="post-type" name="post-type" required>
+                        <option value="entry">Entry</option>
+                        <option value="link" selected>Link</option>
+                    </select>
+                </div>
+                
+                <!-- Static form fields for Link type -->
+                <div class="form-fields">
+                    <div class="form-field">
+                        <label for="url">URL</label>
+                        <div style="display: flex; align-items: center;">
+                            <input type="url" id="url" name="url" placeholder="https://example.com" required style="flex: 1;">
+                            <button type="button" id="extract-metadata" class="extract-button" style="margin-left: 8px;">Extract</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="Enter a title">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="content">Content</label>
+                        <textarea id="content" name="content" rows="5" placeholder="Enter your content here..."></textarea>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="tags">Tags (comma separated)</label>
+                        <input type="text" id="tags" name="tags" placeholder="tag1, tag2, tag3">
+                    </div>
+                </div>
+                
+                <button type="submit" class="button-primary">Post</button>
+            </form>
+            
+            <div id="post-preview" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Wiki View -->
+        <div id="wiki-view" class="view hidden">
+            <h2>Wiki</h2>
+            <div class="wiki-editor">
+                <div class="form-field">
+                    <label for="wiki-title">Title</label>
+                    <input type="text" id="wiki-title" name="title" required>
+                </div>
+                <div class="form-field">
+                    <label for="wiki-content">Content (Markdown supported)</label>
+                    <textarea id="wiki-content" name="content" rows="10" required></textarea>
+                </div>
+                <div class="form-field">
+                    <label for="wiki-tags">Tags (comma separated)</label>
+                    <input type="text" id="wiki-tags" name="tags" placeholder="tag1, tag2, tag3">
+                </div>
+                <button type="button" id="save-wiki">Save</button>
+            </div>
+            <div class="wiki-entries"></div>
+        </div>
+
+        <div id="yasgui-view" class="view hidden">
+            <h2>SPARQL Query Editor</h2>
+            <div id="yasgui-container" class="yasgui-container"></div>
+        </div>
+        
+        <!-- Developer View -->
+        <div id="developer-view" class="view hidden">
+            <h2>Developer Tools</h2>
+            <div class="developer-section">
+                <h3>SPARQL Query</h3>
+                <div class="form-field">
+                    <textarea id="sparql-query" rows="10" placeholder="Enter SPARQL query..."></textarea>
+                </div>
+                <button type="button" id="run-query">Run Query</button>
+                <div id="query-results" class="results-container"></div>
+            </div>
+        </div>
+
+        <!-- Profile View -->
+        <div id="profile-view" class="view hidden">
+            <h2>Profile</h2>
+            <form id="profile-form" class="form-group">
+                <div class="form-field">
+                    <label for="profile-name">Name</label>
+                    <input type="text" id="profile-name" name="name">
+                </div>
+                <div class="form-field">
+                    <label for="profile-email">Email</label>
+                    <input type="email" id="profile-email" name="email">
+                </div>
+                <div class="form-field">
+                    <label for="profile-bio">Bio</label>
+                    <textarea id="profile-bio" name="bio"></textarea>
+                </div>
+                <button type="submit">Save Profile</button>
+            </form>
+        </div>
+
+        <!-- Settings View -->
+        <div id="settings-view" class="view hidden">
+            <h2>Settings</h2>
+            
+            <!-- Appearance Section -->
+            <div class="settings-section">
+                <h3>Appearance</h3>
+                <div class="form-field">
+                    <label for="theme-selector">Theme</label>
+                    <select id="theme-selector">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="system">System Preference</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Endpoints Section -->
+            <div class="settings-section">
+                <h3>SPARQL Endpoints</h3>
+                <div id="endpoints-list"></div>
+                <form id="endpoint-form" class="form-group">
+                    <input type="text" id="endpoint-label" placeholder="Endpoint Label" required>
+                    <input type="url" id="endpoint-url" placeholder="Enter SPARQL endpoint URL" required>
+                    <button type="submit">Add Endpoint</button>
+                </form>
+            </div>
+            
+            <!-- Storage Section -->
+            <div class="settings-section storage-section">
+                <h3>Storage</h3>
+                <div id="storage-usage">Calculating storage usage...</div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

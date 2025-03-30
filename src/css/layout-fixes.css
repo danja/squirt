@@ -1,0 +1,154 @@
+/* src/css/layout-fixes.css - Layout fixes for desktop view and YASGUI component */
+
+/* Fix for YASGUI container to show full results */
+.yasgui-container {
+  width: 100%;
+  height: 700px;
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Ensure the YASGUI component fills its container */
+.yasgui {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix YASGUI results panel */
+.yasgui .yasr {
+  height: 60% !important;
+  overflow: auto !important;
+}
+
+/* Fix YASGUI query editor */
+.yasgui .yasqe {
+  height: 40% !important;
+}
+
+.yasgui .yasqe .CodeMirror {
+  height: 100% !important;
+}
+
+/* Fix markdown editor alignment */
+.wiki-editor {
+  margin-bottom: var(--spacing-lg);
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+/* ===== CodeMirror Fixes ===== */
+/* These specific overrides fix the horizontal scrollbar issues */
+
+/* Main container fixes */
+.CodeMirror {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  height: auto !important;
+  min-height: 200px;
+  font-family: monospace;
+  line-height: 1.5;
+  overflow: hidden !important;
+}
+
+/* Fix the scroll container that causes the middle scrollbar */
+.CodeMirror-scroll {
+  margin-bottom: 0 !important;
+  margin-right: 0 !important;
+  padding-bottom: 0 !important;
+  padding-right: 0 !important;
+  overflow-x: hidden !important;
+  /* Important override to prevent the 50px offset that causes the scrollbar */
+  height: auto !important;
+}
+
+/* Ensure sizer doesn't create overflow */
+.CodeMirror-sizer {
+  margin-bottom: 0 !important;
+  border-right-width: 0 !important;
+}
+
+/* Prevent scrollbars */
+.CodeMirror-hscrollbar,
+.CodeMirror-vscrollbar,
+.CodeMirror-scrollbar-filler,
+.CodeMirror-gutter-filler {
+  display: none !important;
+}
+
+/* Force text wrapping in CodeMirror */
+.CodeMirror-wrap pre.CodeMirror-line,
+.CodeMirror-wrap pre.CodeMirror-line-like {
+  word-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  word-break: normal !important;
+}
+
+/* Ensure container knows to enable wrapping */
+.CodeMirror-wrap {
+  word-wrap: break-word !important;
+}
+
+/* Make editor toolbar more consistent */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  padding: 5px;
+}
+
+/* Fix preview panel alignment */
+.wiki-preview {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+}
+
+/* Fix wiki entries styling */
+.wiki-entries {
+  margin-top: var(--spacing-lg);
+}
+
+.entry-item {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+}
+
+/* Better desktop spacing */
+@media (min-width: 1024px) {
+  .yasgui-container {
+    height: 800px;
+  }
+  
+  .CodeMirror {
+    min-height: 300px;
+  }
+  
+  /* Fix desktop layout for markdown editors */
+  main {
+    max-width: 1200px;
+    padding: var(--spacing-xl);
+  }
+  
+  .view {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Fix editor content overflow */
+.form-field textarea, 
+.wiki-editor .form-field textarea {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}

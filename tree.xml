@@ -1,0 +1,65 @@
+.
+├── about.md
+├── babel.config.json
+├── jasmine.json
+├── jest.config.js
+├── package.json
+├── package-lock.json
+├── public
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── main.324fa52b.css
+│   ├── main.bundle.js
+│   ├── manifest.json
+│   └── service-worker.js
+├── repomix.config.json
+├── squirt_repomix.md
+├── src
+│   ├── config.json
+│   ├── css
+│   │   ├── form-styles.css
+│   │   ├── layout-fixes.css
+│   │   ├── mobile-fixes.css
+│   │   ├── styles.css
+│   │   └── yasgui-styles.css
+│   ├── html
+│   │   └── index.html
+│   └── js
+│       ├── app.js
+│       ├── core
+│       │   ├── errors.js
+│       │   ├── state.js
+│       │   └── views.js
+│       ├── router.js
+│       ├── services
+│       │   ├── rdf
+│       │   │   ├── rdf-extractor.js
+│       │   │   └── rdf-model.js
+│       │   ├── sparql
+│       │   │   ├── endpoints.js
+│       │   │   └── sparql.js
+│       │   └── templates
+│       │       └── post-article.njk
+│       ├── ui
+│       │   ├── components
+│       │   │   ├── endpoint-indicator.js
+│       │   │   ├── endpoints-list.js
+│       │   │   ├── forms.js
+│       │   │   └── notifications.js
+│       │   └── views
+│       │       ├── settings.js
+│       │       ├── wiki-editor.js
+│       │       └── yasgui-view.js
+│       └── utils
+│           └── utils.js
+├── storage
+├── test
+│   ├── setup.js
+│   └── spec
+│       ├── about.md
+│       ├── sparql1.spec.js
+│       └── sparql.spec.js
+├── tree.xml
+└── webpack.config.js
+
+18 directories, 45 files

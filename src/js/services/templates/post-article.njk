@@ -1,0 +1,18 @@
+PREFIX schema: <http://schema.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX : <http://purl.org/stuff/transmissions/>
+
+INSERT DATA {
+    GRAPH <http://purl.org/stuff/squirt/> {
+        <{{uri}}> a schema:Article ;
+            schema:headline "{{title}}" ;
+            schema:dateCreated "{{dates.created}}"^^xsd:dateTime ;
+            schema:dateModified "{{dates.modified}}"^^xsd:dateTime ;
+            schema:articleBody """{{content}}""" ;
+            schema:creator <{{creator.uri}}> ;
+            :tag "tag1" ;
+            :tag "tag2" .
+        <{{creator.uri}}> a schema:Person ;
+            schema:name "{{creator.name}}" .
+    }
+}
