@@ -1,5 +1,5 @@
 ```sh
-cd ~/github-danny/hyperdata/packages/farelo/squirt
+cd ~/hyperdata/squirt
 
 npm run build
 npm run dev

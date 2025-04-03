@@ -6517,6 +6517,14 @@ function _checkNestProperty(activeCtx, nestProperty, options) {
 
 /***/ }),
 
+/***/ 1219:
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('[{"name":"local query","type":"query","url":"http://localhost:4030/semem/query","credentials":{"user":"admin","password":"admin123"}},{"name":"local update","type":"update","url":"http://localhost:4030/semem/update","credentials":{"user":"admin","password":"admin123"}}]');
+
+/***/ }),
+
 /***/ 1227:
 /***/ ((module) => {
 
@@ -9769,14 +9777,9 @@ exports.testEndpoint = testEndpoint;
 var _state = __webpack_require__(5388);
 var _errors = __webpack_require__(2062);
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
-function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; } // src/js/services/sparql/sparql.js
 /**
  * Get the active endpoint URL for a specific type (query or update)
  * @param {string} type - The endpoint type: 'query' or 'update'
@@ -9788,7 +9791,7 @@ function getEndpoint(type) {
     return e.type === type && e.status === 'active';
   });
   if (!endpoint) {
-    throw new Error("No active ".concat(type, " endpoint available"));
+    throw new Error("No active ".concat(type, " endpoint available. Please check your SPARQL configuration."));
   }
   return endpoint;
 }
@@ -9823,7 +9826,7 @@ function _postToSparql() {
           _context.prev = 4;
           headers = {
             'Content-Type': 'application/sparql-update',
-            'Accept': '*/*'
+            'Accept': 'application/json, */*'
           }; // Add basic auth if credentials exist
           if (endpoint.credentials) {
             _endpoint$credentials = endpoint.credentials, user = _endpoint$credentials.user, password = _endpoint$credentials.password;
@@ -9834,7 +9837,6 @@ function _postToSparql() {
           return fetch(endpoint.url, {
             method: 'POST',
             headers: headers,
-            mode: 'cors',
             body: insertQuery
           });
         case 9:
@@ -9847,7 +9849,7 @@ function _postToSparql() {
           return response.text();
         case 13:
           errorText = _context.sent;
-          throw new Error("SPARQL update failed: ".concat(response.status, " ").concat(errorText));
+          throw new Error("SPARQL update failed for endpoint ".concat(endpoint.url, ": ").concat(response.status, " ").concat(errorText));
         case 15:
           return _context.abrupt("return", true);
         case 18:
@@ -9888,7 +9890,7 @@ function _querySparql() {
           _context2.prev = 3;
           headers = {
             'Content-Type': 'application/sparql-query',
-            'Accept': 'application/json'
+            'Accept': 'application/sparql-results+json, application/json'
           }; // Add basic auth if credentials exist
           if (endpoint.credentials) {
             _endpoint$credentials2 = endpoint.credentials, user = _endpoint$credentials2.user, password = _endpoint$credentials2.password;
@@ -9899,7 +9901,6 @@ function _querySparql() {
           return fetch(endpoint.url, {
             method: 'POST',
             headers: headers,
-            mode: 'cors',
             body: query
           });
         case 8:
@@ -9912,7 +9913,7 @@ function _querySparql() {
           return response.text();
         case 12:
           errorText = _context2.sent;
-          throw new Error("SPARQL query failed: ".concat(response.status, " ").concat(errorText, "\n").concat(query));
+          throw new Error("SPARQL query failed for endpoint ".concat(endpoint.url, ": ").concat(response.status, " ").concat(errorText, "\n").concat(query));
         case 14:
           return _context2.abrupt("return", response.json());
         case 17:
@@ -9939,7 +9940,8 @@ function _testEndpoint() {
         case 0:
           _context3.prev = 0;
           headers = {
-            'Accept': 'application/json'
+            'Content-Type': 'application/sparql-query',
+            'Accept': 'application/sparql-results+json, application/json'
           };
           if (credentials) {
             user = credentials.user, password = credentials.password;
@@ -9952,10 +9954,7 @@ function _testEndpoint() {
           _context3.next = 6;
           return fetch(url, {
             method: 'POST',
-            headers: _objectSpread(_objectSpread({}, headers), {}, {
-              'Content-Type': 'application/sparql-query'
-            }),
-            mode: 'cors',
+            headers: headers,
             body: query
           });
         case 6:
@@ -9964,7 +9963,7 @@ function _testEndpoint() {
         case 10:
           _context3.prev = 10;
           _context3.t0 = _context3["catch"](0);
-          console.error('Endpoint test failed:', _context3.t0);
+          console.error("Endpoint test failed for ".concat(url, ":"), _context3.t0);
           return _context3.abrupt("return", false);
         case 14:
         case "end":
@@ -11388,14 +11387,12 @@ exports.initializeRouter = initializeRouter;
 var _state = __webpack_require__(5388);
 var _errors = __webpack_require__(2062);
 var _views = __webpack_require__(9775);
+// src/js/router.js
+
 /**
  * Initialize the router
  */
 function initializeRouter() {
-  /**
-   * Valid routes derived from view IDs
-   * @constant {string[]}
-   */
   var VALID_ROUTES = Object.values(_views.VIEWS).map(function (view) {
     return view.replace('-view', '');
   });
@@ -11407,8 +11404,6 @@ function initializeRouter() {
 
 /**
  * Handle route changes
- * @param {string} hash - URL hash including #
- * @param {string[]} validRoutes - List of valid routes
  */
 function handleRoute(hash, validRoutes) {
   try {
@@ -11423,7 +11418,7 @@ function handleRoute(hash, validRoutes) {
     }
     var currentView = _state.state.get('currentView');
 
-    // Fire pre-route change event
+    // Fire route change event
     var event = new CustomEvent('routeChange', {
       detail: {
         from: currentView,
@@ -11432,7 +11427,6 @@ function handleRoute(hash, validRoutes) {
       cancelable: true
     });
     if (!document.dispatchEvent(event)) {
-      // Route change was prevented
       if (currentView) {
         window.location.hash = currentView.replace('-view', '');
       }
@@ -11440,13 +11434,32 @@ function handleRoute(hash, validRoutes) {
     }
     _state.state.update('previousView', currentView);
     _state.state.update('currentView', viewId);
+
+    // Hide all views
     Object.values(_views.VIEWS).forEach(function (id) {
-      var view = document.getElementById(id);
-      if (view) {
-        view.classList.add('hidden');
+      var viewElement = document.getElementById(id);
+      if (viewElement) {
+        viewElement.classList.add('hidden');
       }
     });
+
+    // Show requested view
     view.classList.remove('hidden');
+
+    // Special handling for YASGUI
+    if (viewId === _views.VIEWS.YASGUI) {
+      // Import the YASGUI view module and initialize it
+      Promise.resolve(/* import() */).then(__webpack_require__.bind(__webpack_require__, 3881)).then(function (module) {
+        if (typeof module.initializeYasguiView === 'function') {
+          // Delay to ensure view is visible
+          setTimeout(function () {
+            return module.initializeYasguiView();
+          }, 100);
+        }
+      })["catch"](function (error) {
+        console.error('Error loading YASGUI module:', error);
+      });
+    }
   } catch (error) {
     _errors.ErrorHandler.handle(error);
     if (hash !== '#post') {
@@ -15520,129 +15533,90 @@ exports.ContainerHandlerLanguage = ContainerHandlerLanguage;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.initializeYasguiView = initializeYasguiView;
-var _yasguiMin = _interopRequireDefault(__webpack_require__(5219));
+exports.initializeYasguiView = initializeYasguiComponent;
+var _yasgui = _interopRequireDefault(__webpack_require__(5219));
 __webpack_require__(5722);
 var _state = __webpack_require__(5388);
-var _notifications = __webpack_require__(3121);
-var _views = __webpack_require__(9775);
+var _errors = __webpack_require__(2062);
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { "default": e }; }
-/**
- * YASGUI view component for SPARQL querying
- */
-// Direct import of the YASGUI constructor
+// src/js/ui/views/yasgui-view.js
 
-var yasgui = null;
+// Global instance reference
+var yasguiInstance = null;
 
 /**
  * Initialize the YASGUI component
  */
-function initializeYasguiView() {
+function initializeYasguiComponent() {
   var container = document.getElementById('yasgui-container');
   if (!container) {
-    console.warn('YASGUI container not found');
+    console.error('YASGUI container not found');
     return;
   }
   try {
-    // Clear any existing content
+    // Skip if already initialized
+    if (yasguiInstance) {
+      console.log('YASGUI already initialized');
+      return;
+    }
+
+    // Clear container
     container.innerHTML = '';
 
-    // Get default endpoint
-    var defaultEndpoint = getDefaultEndpoint();
-
-    // Initialize YASGUI with minimal config to avoid errors
-    yasgui = new _yasguiMin["default"](container, {
-      requestConfig: {
-        endpoint: defaultEndpoint
-      }
+    // Get endpoint configuration
+    var endpoints = _state.state.get('endpoints') || [];
+    var activeEndpoint = endpoints.find(function (e) {
+      return e.type === 'query' && e.status === 'active';
     });
+
+    // Create minimal configuration
+    var config = {
+      requestConfig: {
+        endpoint: activeEndpoint ? activeEndpoint.url : 'http://localhost:3030/semem/query',
+        method: 'POST'
+      }
+    };
+
+    // Add authentication if needed
+    if (activeEndpoint && activeEndpoint.credentials) {
+      var authString = btoa(activeEndpoint.credentials.user + ':' + activeEndpoint.credentials.password);
+      config.requestConfig.headers = {
+        'Authorization': 'Basic ' + authString
+      };
+    }
+
+    // Create the YASGUI instance
+    yasguiInstance = new _yasgui["default"](container, config);
+
+    // Set default query
+    var defaultQuery = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX squirt: <http://purl.org/stuff/squirt/>\n\nSELECT ?subject ?predicate ?object \nWHERE {\n  ?subject ?predicate ?object\n} \nLIMIT 10";
+
+    // Set the query for the first tab
+    var tab = yasguiInstance.getTab();
+    if (tab && tab.yasqe) {
+      tab.yasqe.setValue(defaultQuery);
+    }
     console.log('YASGUI initialized successfully');
-
-    // Once initialized, try to configure endpoints
-    try {
-      configureEndpoints();
-      _state.state.subscribe('endpoints', configureEndpoints);
-    } catch (configError) {
-      console.warn('Could not configure endpoints:', configError);
-    }
   } catch (error) {
-    console.error('Error initializing YASGUI:', error);
-    container.innerHTML = '<p class="error">Failed to load SPARQL Query Interface</p>';
-    (0, _notifications.showNotification)('Error initializing SPARQL interface', 'error');
+    _errors.ErrorHandler.handle(error);
+    console.error('Failed to initialize YASGUI:', error);
+    container.innerHTML = '<div class="error-message">Failed to initialize SPARQL editor: ' + error.message + '</div>';
   }
 }
 
-/**
- * Get default SPARQL endpoint URL from state
- */
-function getDefaultEndpoint() {
-  var endpoints = _state.state.get('endpoints') || [];
-  var queryEndpoint = endpoints.find(function (e) {
-    return e.type === 'query' && e.status === 'active';
-  });
-  return queryEndpoint ? queryEndpoint.url : 'http://localhost:3030/squirt/query';
-}
+// Make function available globally
+window.initializeYasguiComponent = initializeYasguiComponent;
 
-/**
- * Get default SPARQL endpoint object from state
- */
-function getDefaultEndpointObject() {
-  var endpoints = _state.state.get('endpoints') || [];
-  return endpoints.find(function (e) {
-    return e.type === 'query' && e.status === 'active';
-  });
-}
-
-/**
- * Generate auth headers for an endpoint that requires authentication
- */
-function getAuthHeaders(endpoint) {
-  if (!endpoint || !endpoint.credentials) return {};
-  var _endpoint$credentials = endpoint.credentials,
-    user = _endpoint$credentials.user,
-    password = _endpoint$credentials.password;
-  var auth = btoa("".concat(user, ":").concat(password));
-  return {
-    'Authorization': "Basic ".concat(auth)
-  };
-}
-
-/**
- * Configure YASGUI with available endpoints from state
- */
-function configureEndpoints() {
-  if (!yasgui) return;
-  var endpoints = _state.state.get('endpoints') || [];
-  var queryEndpoints = endpoints.filter(function (e) {
-    return e.type === 'query';
-  });
-  try {
-    // Get the first tab
-    var tab = yasgui.getTab();
-    if (!tab) return;
-
-    // Add endpoints to dropdown
-    var yasqe = tab.getYasqe();
-    if (yasqe) {
-      yasqe.options.sparql.endpoints = queryEndpoints.map(function (e) {
-        return {
-          name: e.label || e.url,
-          endpoint: e.url
-        };
-      });
-    }
-  } catch (error) {
-    console.warn('Failed to configure YASGUI endpoints:', error);
-  }
-}
-
-// Initialize YASGUI when the view is shown
-document.addEventListener('routeChange', function (e) {
-  if (e.detail.to === _views.VIEWS.YASGUI) {
-    // Small delay to ensure DOM is ready
-    setTimeout(initializeYasguiView, 100);
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+  // Add a button to initialize YASGUI for explicit user action
+  var container = document.getElementById('yasgui-container');
+  if (container) {
+    container.innerHTML = "\n      <div class=\"yasgui-init\">\n        <button type=\"button\" onclick=\"window.initializeYasguiComponent()\" class=\"button-primary\">\n          Load SPARQL Query Editor\n        </button>\n      </div>\n    ";
   }
 });
+
+// Export for module usage
 
 /***/ }),
 
@@ -36550,6 +36524,183 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ 5816:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.EndpointStatusIndicator = void 0;
+exports.initializeEndpointIndicator = initializeEndpointIndicator;
+var _state = __webpack_require__(5388);
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // src/js/ui/components/endpoint-indicator.js
+/**
+ * Manages the endpoint status indicator in the header
+ */
+var EndpointStatusIndicator = exports.EndpointStatusIndicator = /*#__PURE__*/function () {
+  function EndpointStatusIndicator() {
+    var _this = this;
+    _classCallCheck(this, EndpointStatusIndicator);
+    // Bind methods to preserve 'this' context
+    this.handleEndpointChange = this.handleEndpointChange.bind(this);
+    this.handleStatusChangeEvent = this.handleStatusChangeEvent.bind(this);
+    this.handleStatusCheckedEvent = this.handleStatusCheckedEvent.bind(this);
+    this.indicator = document.getElementById('endpoint-status-indicator');
+    if (!this.indicator) {
+      console.error('Endpoint status indicator element not found');
+      return;
+    }
+
+    // Initialize the indicator content
+    this.statusLight = this.indicator.querySelector('.status-light');
+
+    // Initialize status
+    this.updateStatus('checking', 'Checking endpoint status...');
+
+    // Subscribe to endpoint changes
+    _state.state.subscribe('endpoints', this.handleEndpointChange);
+
+    // Listen for endpoint status events
+    document.addEventListener('endpointStatusChanged', this.handleStatusChangeEvent);
+    document.addEventListener('endpointsStatusChecked', this.handleStatusCheckedEvent);
+
+    // Add click handler to force endpoint check
+    this.indicator.addEventListener('click', function () {
+      _this.updateStatus('checking', 'Checking endpoints...');
+
+      // Dispatch an event to request endpoint check
+      try {
+        var event = new CustomEvent('checkEndpointsRequest');
+        document.dispatchEvent(event);
+      } catch (error) {
+        console.error('Error dispatching endpoint check request:', error);
+      }
+    });
+  }
+
+  /**
+   * Handle endpoint state changes
+   */
+  return _createClass(EndpointStatusIndicator, [{
+    key: "handleEndpointChange",
+    value: function handleEndpointChange(endpoints) {
+      try {
+        if (!endpoints || endpoints.length === 0) {
+          this.updateStatus('inactive', 'No endpoints configured');
+          return;
+        }
+        var activeEndpoint = endpoints.find(function (e) {
+          return e.status === 'active';
+        });
+        if (activeEndpoint) {
+          this.updateStatus('active', "SPARQL endpoint available: ".concat(activeEndpoint.url));
+        } else if (endpoints.some(function (e) {
+          return e.status === 'checking';
+        })) {
+          this.updateStatus('checking', 'Checking endpoints...');
+        } else {
+          this.updateStatus('inactive', 'No available endpoints');
+        }
+      } catch (error) {
+        console.error('Error handling endpoint change:', error);
+      }
+    }
+
+    /**
+     * Handle endpoint status change event
+     */
+  }, {
+    key: "handleStatusChangeEvent",
+    value: function handleStatusChangeEvent(e) {
+      try {
+        if (e.detail) {
+          var _e$detail = e.detail,
+            status = _e$detail.status,
+            url = _e$detail.url,
+            label = _e$detail.label;
+          if (status === 'active') {
+            this.updateStatus('active', "SPARQL endpoint available: ".concat(url));
+          }
+        }
+      } catch (error) {
+        console.error('Error handling status change event:', error);
+      }
+    }
+
+    /**
+     * Handle endpoints status checked event
+     */
+  }, {
+    key: "handleStatusCheckedEvent",
+    value: function handleStatusCheckedEvent(e) {
+      try {
+        if (e.detail && e.detail.anyActive) {
+          // Find which endpoint is active
+          var endpoints = _state.state.get('endpoints') || [];
+          var activeEndpoint = endpoints.find(function (e) {
+            return e.status === 'active';
+          });
+          if (activeEndpoint) {
+            this.updateStatus('active', "SPARQL endpoint available: ".concat(activeEndpoint.url));
+          } else {
+            this.updateStatus('active', 'SPARQL endpoint is available');
+          }
+        } else {
+          this.updateStatus('inactive', 'No available endpoints');
+        }
+      } catch (error) {
+        console.error('Error handling status checked event:', error);
+      }
+    }
+
+    /**
+     * Update the visual status of the indicator
+     * @param {string} status - The status: 'active', 'inactive', or 'checking'
+     * @param {string} [message] - Optional tooltip message
+     */
+  }, {
+    key: "updateStatus",
+    value: function updateStatus(status) {
+      var message = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+      try {
+        if (!this.statusLight) return;
+
+        // Remove all status classes
+        this.statusLight.classList.remove('active', 'inactive', 'checking');
+
+        // Add the appropriate class
+        this.statusLight.classList.add(status);
+
+        // Update tooltip
+        this.indicator.title = message || status;
+      } catch (error) {
+        console.error('Error updating status:', error);
+      }
+    }
+  }]);
+}();
+/**
+ * Initialize the endpoint status indicator
+ */
+function initializeEndpointIndicator() {
+  try {
+    return new EndpointStatusIndicator();
+  } catch (error) {
+    console.error('Error initializing endpoint indicator:', error);
+    return null;
+  }
+}
+
+/***/ }),
+
 /***/ 5896:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -49805,6 +49956,16 @@ module.exports = class IdentifierIssuer {
 
 /***/ }),
 
+/***/ 7331:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
+
+
+/***/ }),
+
 /***/ 7382:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -59134,9 +59295,8 @@ module.exports = objectToString;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.EndpointManager = void 0;
+exports.endpointManager = exports.EndpointManager = void 0;
 var _state = __webpack_require__(5388);
-var _utils = __webpack_require__(8098);
 var _sparql = __webpack_require__(1981);
 var _errors = __webpack_require__(2062);
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -59157,7 +59317,7 @@ function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Can
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // src/js/services/sparql/endpoints.js
 var EndpointManager = exports.EndpointManager = /*#__PURE__*/function () {
   function EndpointManager() {
     _classCallCheck(this, EndpointManager);
@@ -59173,11 +59333,10 @@ var EndpointManager = exports.EndpointManager = /*#__PURE__*/function () {
           while (1) switch (_context.prev = _context.next) {
             case 0:
               _context.prev = 0;
-              _context.next = 3;
-              return this.loadFromFile();
-            case 3:
-              endpointsFromFile = _context.sent;
-              // Then try to load from localStorage (which may have user customizations)
+              console.log('Initializing endpoints manager...');
+
+              // First try to load endpoints from the config file
+              endpointsFromFile = this.loadFromConfig(); // Then try to load from localStorage (which may have user customizations)
               storedEndpoints = this.loadFromStorage(); // Merge the endpoints, giving preference to stored ones
               endpoints = endpointsFromFile;
               if (storedEndpoints && storedEndpoints.length > 0) {
@@ -59191,24 +59350,31 @@ var EndpointManager = exports.EndpointManager = /*#__PURE__*/function () {
                 endpoints = [].concat(_toConsumableArray(storedEndpoints), _toConsumableArray(newEndpoints));
               }
               if (!endpoints || endpoints.length === 0) {
+                console.warn('No endpoints found in config or storage, using defaults');
                 endpoints = this.getDefaultEndpoints();
               }
+              console.log("Loaded ".concat(endpoints.length, " endpoints"));
+
+              // Update state with endpoints
               _state.state.update('endpoints', endpoints);
+
+              // Start status checks
               this.startStatusChecks();
-              _context.next = 18;
-              break;
-            case 12:
-              _context.prev = 12;
+              return _context.abrupt("return", endpoints);
+            case 13:
+              _context.prev = 13;
               _context.t0 = _context["catch"](0);
+              console.error('Error initializing endpoints:', _context.t0);
               _errors.ErrorHandler.handle(_context.t0);
               fallback = this.getDefaultEndpoints();
               _state.state.update('endpoints', fallback);
               this.startStatusChecks();
-            case 18:
+              return _context.abrupt("return", fallback);
+            case 21:
             case "end":
               return _context.stop();
           }
-        }, _callee, this, [[0, 12]]);
+        }, _callee, this, [[0, 13]]);
       }));
       function initialize() {
         return _initialize.apply(this, arguments);
@@ -59226,143 +59392,147 @@ var EndpointManager = exports.EndpointManager = /*#__PURE__*/function () {
         return null;
       }
     }
+
+    // Load endpoints from imported config
   }, {
-    key: "loadFromFile",
-    value: function () {
-      var _loadFromFile = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
-        var response, endpoints;
-        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-          while (1) switch (_context2.prev = _context2.next) {
-            case 0:
-              _context2.prev = 0;
-              _context2.next = 3;
-              return fetch('/endpoint.json');
-            case 3:
-              response = _context2.sent;
-              if (response.ok) {
-                _context2.next = 6;
-                break;
-              }
-              throw new Error('Failed to load endpoints from file');
-            case 6:
-              _context2.next = 8;
-              return response.json();
-            case 8:
-              endpoints = _context2.sent;
-              return _context2.abrupt("return", endpoints.map(function (endpoint) {
-                return {
-                  url: endpoint.url,
-                  label: endpoint.name,
-                  type: endpoint.type,
-                  credentials: endpoint.credentials,
-                  status: 'unknown'
-                };
-              }));
-            case 12:
-              _context2.prev = 12;
-              _context2.t0 = _context2["catch"](0);
-              console.error('Error loading endpoints from file:', _context2.t0);
-              throw _context2.t0;
-            case 16:
-            case "end":
-              return _context2.stop();
-          }
-        }, _callee2, null, [[0, 12]]);
-      }));
-      function loadFromFile() {
-        return _loadFromFile.apply(this, arguments);
+    key: "loadFromConfig",
+    value: function loadFromConfig() {
+      try {
+        // Import config dynamically
+        var config = __webpack_require__(1219);
+
+        // If config exists and is an array, return it
+        if (config && Array.isArray(config)) {
+          console.log('Found endpoints in config.json:', config);
+          return config.map(function (endpoint) {
+            return {
+              url: endpoint.url,
+              label: endpoint.name,
+              type: endpoint.type,
+              credentials: endpoint.credentials,
+              status: 'unknown'
+            };
+          });
+        }
+        throw new Error('Invalid config format in config.json');
+      } catch (error) {
+        console.error('Error loading endpoints from config.json:', error);
+        return [];
       }
-      return loadFromFile;
-    }()
+    }
   }, {
     key: "getDefaultEndpoints",
     value: function getDefaultEndpoints() {
+      console.warn('Using default endpoints as fallback');
       return [{
-        //          url: 'http://localhost:3030/squirt/query',
-        url: 'http://localhost:4030/semem/query',
+        url: 'http://localhost:3030/semem/query',
         label: 'Local Query Endpoint',
         type: 'query',
-        status: 'unknown'
+        status: 'unknown',
+        credentials: {
+          user: 'admin',
+          password: 'admin123'
+        }
       }, {
-        //        url: 'http://localhost:3030/squirt/update',
-        url: 'http://localhost:4030/semem/update',
+        url: 'http://localhost:3030/semem/update',
         label: 'Local Update Endpoint',
         type: 'update',
-        status: 'unknown'
+        status: 'unknown',
+        credentials: {
+          user: 'admin',
+          password: 'admin123'
+        }
       }];
     }
   }, {
     key: "startStatusChecks",
-    value: function startStatusChecks() {
-      var _this = this;
-      var checkAll = /*#__PURE__*/function () {
-        var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-          var endpoints, _iterator, _step, endpoint, status;
-          return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-            while (1) switch (_context3.prev = _context3.next) {
-              case 0:
-                endpoints = _state.state.get('endpoints');
-                if (!(!endpoints || endpoints.length === 0)) {
-                  _context3.next = 3;
-                  break;
-                }
-                return _context3.abrupt("return");
-              case 3:
-                _iterator = _createForOfIteratorHelper(endpoints);
-                _context3.prev = 4;
-                _iterator.s();
-              case 6:
-                if ((_step = _iterator.n()).done) {
-                  _context3.next = 22;
-                  break;
-                }
-                endpoint = _step.value;
-                _context3.prev = 8;
-                _context3.next = 11;
-                return (0, _sparql.testEndpoint)(endpoint.url, endpoint.credentials);
-              case 11:
-                status = _context3.sent;
-                endpoint.status = status ? 'active' : 'inactive';
-                endpoint.lastChecked = new Date().toISOString();
-                _context3.next = 20;
-                break;
-              case 16:
-                _context3.prev = 16;
-                _context3.t0 = _context3["catch"](8);
-                console.error("Error checking endpoint ".concat(endpoint.url, ":"), _context3.t0);
-                endpoint.status = 'inactive';
-              case 20:
-                _context3.next = 6;
-                break;
-              case 22:
-                _context3.next = 27;
-                break;
-              case 24:
-                _context3.prev = 24;
-                _context3.t1 = _context3["catch"](4);
-                _iterator.e(_context3.t1);
-              case 27:
-                _context3.prev = 27;
-                _iterator.f();
-                return _context3.finish(27);
-              case 30:
-                _state.state.update('endpoints', _toConsumableArray(endpoints));
-                _this.saveToStorage();
-              case 32:
-              case "end":
-                return _context3.stop();
-            }
-          }, _callee3, null, [[4, 24, 27, 30], [8, 16]]);
-        }));
-        return function checkAll() {
-          return _ref.apply(this, arguments);
-        };
-      }();
-
-      // Run immediately and then on interval
-      checkAll();
-      setInterval(checkAll, this.statusCheckInterval);
-    }
+    value: function () {
+      var _startStatusChecks = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
+        var _this = this;
+        var checkAll;
+        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+          while (1) switch (_context3.prev = _context3.next) {
+            case 0:
+              checkAll = /*#__PURE__*/function () {
+                var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+                  var endpoints, _iterator, _step, endpoint, status;
+                  return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+                    while (1) switch (_context2.prev = _context2.next) {
+                      case 0:
+                        endpoints = _state.state.get('endpoints');
+                        if (!(!endpoints || endpoints.length === 0)) {
+                          _context2.next = 3;
+                          break;
+                        }
+                        return _context2.abrupt("return");
+                      case 3:
+                        console.log("Checking ".concat(endpoints.length, " endpoints..."));
+                        _iterator = _createForOfIteratorHelper(endpoints);
+                        _context2.prev = 5;
+                        _iterator.s();
+                      case 7:
+                        if ((_step = _iterator.n()).done) {
+                          _context2.next = 24;
+                          break;
+                        }
+                        endpoint = _step.value;
+                        _context2.prev = 9;
+                        _context2.next = 12;
+                        return (0, _sparql.testEndpoint)(endpoint.url, endpoint.credentials);
+                      case 12:
+                        status = _context2.sent;
+                        endpoint.status = status ? 'active' : 'inactive';
+                        endpoint.lastChecked = new Date().toISOString();
+                        console.log("Endpoint ".concat(endpoint.url, " status: ").concat(endpoint.status));
+                        _context2.next = 22;
+                        break;
+                      case 18:
+                        _context2.prev = 18;
+                        _context2.t0 = _context2["catch"](9);
+                        console.error("Error checking endpoint ".concat(endpoint.url, ":"), _context2.t0);
+                        endpoint.status = 'inactive';
+                      case 22:
+                        _context2.next = 7;
+                        break;
+                      case 24:
+                        _context2.next = 29;
+                        break;
+                      case 26:
+                        _context2.prev = 26;
+                        _context2.t1 = _context2["catch"](5);
+                        _iterator.e(_context2.t1);
+                      case 29:
+                        _context2.prev = 29;
+                        _iterator.f();
+                        return _context2.finish(29);
+                      case 32:
+                        _state.state.update('endpoints', _toConsumableArray(endpoints));
+                        _this.saveToStorage();
+                      case 34:
+                      case "end":
+                        return _context2.stop();
+                    }
+                  }, _callee2, null, [[5, 26, 29, 32], [9, 18]]);
+                }));
+                return function checkAll() {
+                  return _ref.apply(this, arguments);
+                };
+              }(); // Run immediately and then on interval
+              _context3.next = 3;
+              return checkAll();
+            case 3:
+              setInterval(checkAll, this.statusCheckInterval);
+            case 4:
+            case "end":
+              return _context3.stop();
+          }
+        }, _callee3, this);
+      }));
+      function startStatusChecks() {
+        return _startStatusChecks.apply(this, arguments);
+      }
+      return startStatusChecks;
+    }()
   }, {
     key: "saveToStorage",
     value: function saveToStorage() {
@@ -59448,13 +59618,171 @@ var EndpointManager = exports.EndpointManager = /*#__PURE__*/function () {
   }, {
     key: "getActiveEndpoint",
     value: function getActiveEndpoint(type) {
-      var endpoints = _state.state.get('endpoints');
+      var endpoints = _state.state.get('endpoints') || [];
       return endpoints.find(function (e) {
         return e.type === type && e.status === 'active';
       });
     }
+
+    // Add to src/js/services/sparql/endpoints.js in the EndpointManager class
+
+    /**
+     * Perform a non-blocking check of all endpoints
+     * @returns {Promise<Object>} Object with check results and status
+     */
+  }, {
+    key: "checkEndpointsHealth",
+    value: // Add to src/js/services/sparql/endpoints.js in the EndpointManager class
+    /**
+     * Perform a non-blocking check of all endpoints
+     * @returns {Promise<Object>} Object with check results and status
+     */
+    function () {
+      var _checkEndpointsHealth = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee6() {
+        var _this3 = this;
+        var endpoints, results, updatedEndpoints, anyActive, queryActive, updateActive, event;
+        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+          while (1) switch (_context6.prev = _context6.next) {
+            case 0:
+              // Create a copy of the current endpoints to avoid mutation issues
+              endpoints = _toConsumableArray(_state.state.get('endpoints') || []);
+              if (!(endpoints.length === 0)) {
+                _context6.next = 4;
+                break;
+              }
+              console.log('No endpoints to check');
+              return _context6.abrupt("return", {
+                success: false,
+                message: 'No endpoints configured'
+              });
+            case 4:
+              console.log("Checking health of ".concat(endpoints.length, " endpoints..."));
+
+              // Set endpoints to checking state
+              endpoints.forEach(function (endpoint) {
+                endpoint.status = 'checking';
+              });
+
+              // Update state to show checking status in UI
+              _state.state.update('endpoints', endpoints);
+
+              // Use Promise.all to run all checks in parallel
+              _context6.prev = 7;
+              _context6.next = 10;
+              return Promise.all(endpoints.map(/*#__PURE__*/function () {
+                var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(endpoint) {
+                  var isActive;
+                  return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+                    while (1) switch (_context5.prev = _context5.next) {
+                      case 0:
+                        _context5.prev = 0;
+                        _context5.next = 3;
+                        return _this3.checkEndpoint(endpoint.url, endpoint.credentials);
+                      case 3:
+                        isActive = _context5.sent;
+                        return _context5.abrupt("return", {
+                          url: endpoint.url,
+                          label: endpoint.label,
+                          type: endpoint.type,
+                          isActive: isActive,
+                          error: null
+                        });
+                      case 7:
+                        _context5.prev = 7;
+                        _context5.t0 = _context5["catch"](0);
+                        console.error("Error checking endpoint ".concat(endpoint.url, ":"), _context5.t0);
+                        return _context5.abrupt("return", {
+                          url: endpoint.url,
+                          label: endpoint.label,
+                          type: endpoint.type,
+                          isActive: false,
+                          error: _context5.t0.message
+                        });
+                      case 11:
+                      case "end":
+                        return _context5.stop();
+                    }
+                  }, _callee5, null, [[0, 7]]);
+                }));
+                return function (_x2) {
+                  return _ref2.apply(this, arguments);
+                };
+              }()));
+            case 10:
+              results = _context6.sent;
+              // Update endpoints with results
+              updatedEndpoints = endpoints.map(function (endpoint) {
+                var result = results.find(function (r) {
+                  return r.url === endpoint.url;
+                });
+                return _objectSpread(_objectSpread({}, endpoint), {}, {
+                  status: result !== null && result !== void 0 && result.isActive ? 'active' : 'inactive',
+                  lastChecked: new Date().toISOString(),
+                  lastError: (result === null || result === void 0 ? void 0 : result.error) || null
+                });
+              }); // Update state with final results
+              _state.state.update('endpoints', updatedEndpoints);
+
+              // Dispatch an event with the results for any listeners
+              try {
+                anyActive = results.some(function (r) {
+                  return r.isActive;
+                });
+                queryActive = results.some(function (r) {
+                  return r.isActive && r.type === 'query';
+                });
+                updateActive = results.some(function (r) {
+                  return r.isActive && r.type === 'update';
+                });
+                event = new CustomEvent('endpointsStatusChecked', {
+                  detail: {
+                    results: results,
+                    anyActive: anyActive,
+                    queryActive: queryActive,
+                    updateActive: updateActive
+                  }
+                });
+                document.dispatchEvent(event);
+              } catch (error) {
+                console.error('Error dispatching endpoints status event:', error);
+              }
+
+              // Return summary of results
+              return _context6.abrupt("return", {
+                success: true,
+                anyActive: results.some(function (r) {
+                  return r.isActive;
+                }),
+                queryActive: results.some(function (r) {
+                  return r.isActive && r.type === 'query';
+                }),
+                updateActive: results.some(function (r) {
+                  return r.isActive && r.type === 'update';
+                }),
+                results: results
+              });
+            case 17:
+              _context6.prev = 17;
+              _context6.t0 = _context6["catch"](7);
+              console.error('Error checking endpoints health:', _context6.t0);
+              return _context6.abrupt("return", {
+                success: false,
+                message: _context6.t0.message
+              });
+            case 21:
+            case "end":
+              return _context6.stop();
+          }
+        }, _callee6, null, [[7, 17]]);
+      }));
+      function checkEndpointsHealth() {
+        return _checkEndpointsHealth.apply(this, arguments);
+      }
+      return checkEndpointsHealth;
+    }()
   }]);
-}();
+}(); // Create and export a singleton instance
+var endpointManager = exports.endpointManager = new EndpointManager();
 
 /***/ }),
 
@@ -59565,6 +59893,16 @@ module.exports = {
   XSD_INTEGER: XSD + 'integer',
   XSD_STRING: XSD + 'string',
 };
+
+
+/***/ }),
+
+/***/ 9567:
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
 
 
 /***/ }),
@@ -60017,14 +60355,18 @@ var _rdfModel = __webpack_require__(9213);
 var _notifications = __webpack_require__(3121);
 var _settings = __webpack_require__(3996);
 var _views = __webpack_require__(9775);
+var _endpointIndicator = __webpack_require__(5816);
 __webpack_require__(5129);
 __webpack_require__(5790);
 __webpack_require__(338);
+__webpack_require__(7331);
+__webpack_require__(9567);
 __webpack_require__(627);
 __webpack_require__(3881);
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; } // Import dependencies with ES module syntax
+// Import singleton
 // Import CSS
 // Import view components
 // Initialize the application when DOM is loaded
@@ -60049,6 +60391,33 @@ document.addEventListener('DOMContentLoaded', /*#__PURE__*/_asyncToGenerator(/*#
   }, _callee, null, [[0, 5]]);
 })));
 
+// Also reinitialize endpoints when visibility changes (for page revisits)
+document.addEventListener('visibilitychange', /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {
+  return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+    while (1) switch (_context2.prev = _context2.next) {
+      case 0:
+        if (!(document.visibilityState === 'visible')) {
+          _context2.next = 10;
+          break;
+        }
+        console.log('Page visibility changed to visible, reinitializing endpoints');
+        _context2.prev = 2;
+        _context2.next = 5;
+        return _endpoints.endpointManager.initialize();
+      case 5:
+        _context2.next = 10;
+        break;
+      case 7:
+        _context2.prev = 7;
+        _context2.t0 = _context2["catch"](2);
+        _errors.ErrorHandler.handle(_context2.t0);
+      case 10:
+      case "end":
+        return _context2.stop();
+    }
+  }, _callee2, null, [[2, 7]]);
+})));
+
 /**
  * Initialize the application
  */
@@ -60059,17 +60428,18 @@ function initializeApp() {
  * Set up application views
  */
 function _initializeApp() {
-  _initializeApp = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-    var endpointManager;
-    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-      while (1) switch (_context3.prev = _context3.next) {
+  _initializeApp = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
+    var endpointIndicator;
+    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+      while (1) switch (_context5.prev = _context5.next) {
         case 0:
           console.log('Initializing application...');
-          _context3.prev = 1;
+          _context5.prev = 1;
           // Set up the application structure
           setupViews();
           setupNavigation();
           setupHamburgerMenu();
+          setupResponsiveNavigation();
 
           // Initialize notifications system
           (0, _notifications.initializeNotifications)();
@@ -60083,29 +60453,29 @@ function _initializeApp() {
           // Initialize routing
           (0, _router.initializeRouter)();
 
-          // Initialize services
-          endpointManager = new _endpoints.EndpointManager();
-          _context3.next = 12;
-          return endpointManager.initialize();
+          // Initialize services - use the singleton instance
+          _context5.next = 12;
+          return _endpoints.endpointManager.initialize();
         case 12:
           // Register service worker for PWA support
           registerServiceWorker();
 
           // Check for share target (for mobile devices)
           checkForShareTarget();
+          endpointIndicator = (0, _endpointIndicator.initializeEndpointIndicator)();
           console.log('Application initialized successfully');
-          _context3.next = 21;
+          _context5.next = 22;
           break;
-        case 17:
-          _context3.prev = 17;
-          _context3.t0 = _context3["catch"](1);
-          console.error('Error initializing application:', _context3.t0);
-          _errors.ErrorHandler.handle(_context3.t0);
-        case 21:
+        case 18:
+          _context5.prev = 18;
+          _context5.t0 = _context5["catch"](1);
+          console.error('Error initializing application:', _context5.t0);
+          _errors.ErrorHandler.handle(_context5.t0);
+        case 22:
         case "end":
-          return _context3.stop();
+          return _context5.stop();
       }
-    }, _callee3, null, [[1, 17]]);
+    }, _callee5, null, [[1, 18]]);
   }));
   return _initializeApp.apply(this, arguments);
 }
@@ -60179,6 +60549,101 @@ function setupNavigation() {
 }
 
 /**
+ * Setup responsive navigation for mobile and desktop
+ */
+function setupResponsiveNavigation() {
+  // Setup hamburger menu toggle
+  var hamburgerButton = document.querySelector('.hamburger-button');
+  var hamburgerMenu = document.querySelector('.hamburger-menu');
+  var nav = document.querySelector('nav');
+  if (hamburgerButton && hamburgerMenu && nav) {
+    hamburgerButton.addEventListener('click', function () {
+      hamburgerMenu.classList.toggle('active');
+      nav.classList.toggle('visible');
+    });
+
+    // Close menu when clicking on a link
+    nav.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        hamburgerMenu.classList.remove('active');
+        nav.classList.remove('visible');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function (event) {
+      if (!hamburgerMenu.contains(event.target) && !nav.contains(event.target)) {
+        hamburgerMenu.classList.remove('active');
+        nav.classList.remove('visible');
+      }
+    });
+  }
+
+  // Active nav highlighting
+  function setActiveNavItem(viewId) {
+    var navLinks = document.querySelectorAll('nav a');
+    navLinks.forEach(function (link) {
+      if (link.getAttribute('data-view') === viewId) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  }
+
+  // Add setActiveNavItem when route changes
+  document.addEventListener('routeChange', function (e) {
+    if (e.detail && e.detail.to) {
+      setActiveNavItem(e.detail.to);
+    }
+  });
+
+  // Initial active state based on current view
+  var currentView = window.location.hash.slice(1) || 'post';
+  setActiveNavItem("".concat(currentView, "-view"));
+
+  // Add theme detection code
+  function setThemeBasedOnPreference() {
+    var savedTheme = localStorage.getItem('squirt_theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else if (savedTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else if (savedTheme === 'system' || !savedTheme) {
+      // Check system preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+
+      // Listen for system preference changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+        var theme = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      });
+    }
+  }
+
+  // Initialize theme
+  setThemeBasedOnPreference();
+
+  // Add theme selector functionality
+  var themeSelector = document.getElementById('theme-selector');
+  if (themeSelector) {
+    themeSelector.addEventListener('change', function (e) {
+      var selectedTheme = e.target.value;
+      localStorage.setItem('squirt_theme', selectedTheme);
+      if (selectedTheme === 'system') {
+        setThemeBasedOnPreference();
+      } else {
+        document.documentElement.setAttribute('data-theme', selectedTheme);
+      }
+    });
+  }
+}
+
+/**
  * Set up hamburger menu for mobile devices
  */
 function setupHamburgerMenu() {
@@ -60238,32 +60703,32 @@ function checkForShareTarget() {
   // Check if this is a PWA launch with share data
   if (window.launchQueue) {
     window.launchQueue.setConsumer(/*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(params) {
+      var _ref3 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(params) {
         var file, text, contentField, form, typeSelector, urlField, titleField, _contentField;
-        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-          while (1) switch (_context2.prev = _context2.next) {
+        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+          while (1) switch (_context3.prev = _context3.next) {
             case 0:
               if (!(params.files && params.files.length)) {
-                _context2.next = 10;
+                _context3.next = 10;
                 break;
               }
               // Handle shared files
               file = params.files[0]; // Depending on the file type, process accordingly
               if (!file.type.includes('text')) {
-                _context2.next = 8;
+                _context3.next = 8;
                 break;
               }
-              _context2.next = 5;
+              _context3.next = 5;
               return file.text();
             case 5:
-              text = _context2.sent;
+              text = _context3.sent;
               // Pre-fill the post form
               contentField = document.getElementById('content-field');
               if (contentField) {
                 contentField.value = text;
               }
             case 8:
-              _context2.next = 11;
+              _context3.next = 11;
               break;
             case 10:
               if (params.data && params.data.url) {
@@ -60296,12 +60761,12 @@ function checkForShareTarget() {
               window.location.hash = 'post';
             case 12:
             case "end":
-              return _context2.stop();
+              return _context3.stop();
           }
-        }, _callee2);
+        }, _callee3);
       }));
       return function (_x) {
-        return _ref2.apply(this, arguments);
+        return _ref3.apply(this, arguments);
       };
     }());
   }
@@ -60356,6 +60821,26 @@ function checkForShareTarget() {
     }
   }
 }
+document.addEventListener('checkEndpointsRequest', /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+  return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+    while (1) switch (_context4.prev = _context4.next) {
+      case 0:
+        _context4.prev = 0;
+        _context4.next = 3;
+        return _endpoints.endpointManager.checkEndpointsHealth();
+      case 3:
+        _context4.next = 8;
+        break;
+      case 5:
+        _context4.prev = 5;
+        _context4.t0 = _context4["catch"](0);
+        console.error('Error checking endpoints health:', _context4.t0);
+      case 8:
+      case "end":
+        return _context4.stop();
+    }
+  }, _callee4, null, [[0, 5]]);
+})));
 })();
 
 /******/ })()

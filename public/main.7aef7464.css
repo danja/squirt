@@ -1,46 +1,102 @@
+/* src/css/styles.css - Main application styles with improved responsive layout */
 :root {
   --primary-color: #3498db;
+  --secondary-color: #2980b9;
   --error-color: #e74c3c;
   --success-color: #2ecc71;
   --background-color: #f9f9f9;
+  --card-background: #ffffff;
   --text-color: #2c3e50;
+  --border-color: #e1e1e1;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --border-radius: 8px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --primary-color: #3498db;
+  --secondary-color: #2980b9;
+  --error-color: #e74c3c;
+  --success-color: #2ecc71;
+  --background-color: #1a1a1a;
+  --card-background: #2c2c2c;
+  --text-color: #f9f9f9;
+  --border-color: #444444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.6;
-  margin: 0;
-  padding: 0;
   background: var(--background-color);
   color: var(--text-color);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
-  background: white;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--card-background);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-sm);
 }
 
 nav {
+  display: none; /* Hidden by default on mobile */
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+nav.visible {
   display: flex;
-  gap: 1rem;
 }
 
 nav a {
   color: var(--text-color);
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s, color 0.2s;
 }
 
-nav a:hover {
-  background: var(--background-color);
+nav a:hover, nav a.active {
+  background: var(--primary-color);
+  color: white;
 }
 
 main {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+.view {
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
 .hidden {
@@ -49,37 +105,41 @@ main {
 
 /* Settings Styles */
 .settings-section {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  background: var(--card-background);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--spacing-lg);
 }
 
 .settings-section h3 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
   color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-sm);
 }
 
 .endpoint-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  border-bottom: 1px solid #eee;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .endpoint-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--spacing-sm);
 }
 
 .endpoint-url {
   font-size: 0.875rem;
-  color: #666;
-  margin-top: 0.25rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-top: var(--spacing-xs);
+  word-break: break-all;
 }
 
 .endpoint-status {
@@ -88,6 +148,7 @@ main {
   border-radius: 50%;
   background: #999;
   transition: background-color 0.3s ease;
+  flex-shrink: 0;
 }
 
 .endpoint-status.checking {
@@ -104,100 +165,275 @@ main {
 }
 
 .endpoint-label[contenteditable] {
-  padding: 0.25rem;
+  padding: var(--spacing-xs);
   border-radius: 4px;
 }
 
 .endpoint-label[contenteditable]:focus {
   outline: 2px solid var(--primary-color);
-  background: white;
+  background: var(--card-background);
 }
 
 .endpoint-actions {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.endpoint-actions button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 #endpoint-form {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
 }
 
 @keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
-
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 /* YASGUI specific styles */
 .yasgui-container {
   width: 100%;
-  height: 600px;
-  margin-top: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  height: 500px;
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
   overflow: hidden;
 }
 
-/* Override YASGUI styles to match application theme */
-.yasgui .yasqe .CodeMirror {
-  font-family: monospace;
-  font-size: 14px;
+/* Hamburger menu */
+.hamburger-menu {
+  display: block;
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
 }
 
-.yasgui .tabPanel {
-  background-color: var(--background-color, #f9f9f9);
+.hamburger-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 24px;
+  width: 30px;
+  padding: 0;
 }
 
-.yasgui .tabItem.active {
-  background-color: var(--primary-color, #3498db);
+.hamburger-button span {
+  background-color: var(--text-color);
+  border-radius: 3px;
+  display: block;
+  height: 3px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.hamburger-menu.active .hamburger-button span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+
+.hamburger-menu.active .hamburger-button span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-button span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+/* Header layout */
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Dashboard grid layout for when we have multiple components */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-lg);
+}
+
+/* Storage management section */
+.storage-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.storage-section button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--primary-color);
   color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.yasgui button.btn-primary {
-  background-color: var(--primary-color, #3498db);
-  border-color: var(--primary-color, #3498db);
+.storage-section button:hover {
+  background: var(--secondary-color);
 }
 
-.yasgui button.btn-primary:hover {
-  background-color: #2980b9;
-  border-color: #2980b9;
+.storage-section button.danger {
+  background: var(--error-color);
 }
-/* Form Styles */
+
+#storage-usage {
+  padding: var(--spacing-md);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+}
+
+/* Media Queries for responsive design */
+@media (min-width: 768px) {
+  header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .hamburger-menu {
+    display: none;
+  }
+  
+  nav {
+    display: flex;
+    flex-direction: row;
+    margin-top: 0;
+  }
+  
+  .endpoint-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #endpoint-form {
+    grid-template-columns: 1fr 2fr auto;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  .yasgui-container {
+    height: 600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  header {
+    padding: var(--spacing-md) var(--spacing-xl);
+  }
+  
+  main {
+    padding: var(--spacing-xl);
+  }
+  
+  header h1 {
+    font-size: 2rem;
+  }
+  
+  .view {
+    padding: var(--spacing-xl);
+  }
+  
+  .yasgui-container {
+    height: 700px;
+  }
+}
+
+/* Add this to src/css/styles.css */
+.endpoint-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  position: absolute;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  cursor: pointer;
+  z-index: 100;
+}
+
+.status-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #999;
+  transition: background-color 0.3s ease;
+}
+
+.status-light.active {
+  background-color: var(--success-color);
+}
+
+.status-light.inactive {
+  background-color: var(--error-color);
+}
+
+.status-light.checking {
+  background-color: #999;
+  animation: pulse 1.5s infinite;
+}
+
+.status-tooltip-icon {
+  font-size: 12px;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .endpoint-status-indicator {
+    top: var(--spacing-md);
+    left: var(--spacing-md);
+  }
+}
+/* src/css/form-styles.css - Improved responsive form styles */
 .form-field {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-md);
 }
 
 .form-field label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--spacing-xs);
   font-weight: 500;
+  color: var(--text-color);
 }
 
 .form-field input,
 .form-field textarea,
 .form-field select {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+  color: var(--text-color);
   font-size: 1rem;
   font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-field textarea {
-  min-height: 100px;
+  min-height: 120px;
   resize: vertical;
 }
 
@@ -211,47 +447,56 @@ main {
 
 button[type="submit"],
 .button-primary {
+  display: inline-block;
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-lg);
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  text-align: center;
 }
 
 button[type="submit"]:hover,
 .button-primary:hover {
-  background-color: #2980b9;
+  background-color: var(--secondary-color);
 }
 
 /* Post form specific styles */
 #post-form {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--card-background);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
 }
 
 .form-fields {
-  margin-top: 1rem;
+  margin-top: var(--spacing-md);
+}
+
+/* Input with button combination */
+.input-with-button {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-direction: column;
 }
 
 /* Extract button */
 .extract-button {
-  margin-left: 8px;
-  padding: 0.5rem 1rem;
+  padding: var(--spacing-sm) var(--spacing-md);
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius);
   cursor: pointer;
   font-size: 0.875rem;
+  transition: background-color 0.2s;
 }
 
 .extract-button:hover {
-  background-color: #2980b9;
+  background-color: var(--secondary-color);
 }
 
 .extract-button:disabled {
@@ -261,10 +506,11 @@ button[type="submit"]:hover,
 
 /* Link preview */
 .link-preview {
-  margin-top: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
   overflow: hidden;
+  background: var(--card-background);
 }
 
 .preview-card {
@@ -286,19 +532,20 @@ button[type="submit"]:hover,
 }
 
 .preview-content {
-  padding: 1rem;
+  padding: var(--spacing-md);
 }
 
 .preview-title {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 var(--spacing-sm) 0;
   font-size: 1.25rem;
   color: var(--text-color);
 }
 
 .preview-description {
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 var(--spacing-sm) 0;
   font-size: 0.875rem;
-  color: #666;
+  color: var(--text-color);
+  opacity: 0.8;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -307,10 +554,137 @@ button[type="submit"]:hover,
 
 .preview-site {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-color);
+  opacity: 0.6;
 }
 
+#post-preview {
+  margin-top: var(--spacing-lg);
+}
+
+/* Notification styles */
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 300px;
+  pointer-events: none;
+}
+
+.notification {
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  color: white;
+  box-shadow: var(--shadow);
+  animation: notification-slide-in 0.3s ease-out;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.notification::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  animation: notification-timer 5s linear forwards;
+}
+
+.notification.success {
+  background-color: var(--success-color);
+}
+
+.notification.error {
+  background-color: var(--error-color);
+}
+
+.notification.info {
+  background-color: var(--primary-color);
+}
+
+.notification.warning {
+  background-color: #ed8936;
+}
+
+.notification.fade-out {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+@keyframes notification-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes notification-timer {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Wiki editor styles */
+.wiki-editor {
+  background: var(--card-background);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--spacing-lg);
+}
+
+.wiki-preview {
+  margin-top: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  background: var(--card-background);
+}
+
+.preview-content {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.wiki-entries {
+  margin-top: var(--spacing-lg);
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+}
+
+/* Media queries for form responsiveness */
 @media (min-width: 768px) {
+  .input-with-button {
+    flex-direction: row;
+  }
+  
+  .extract-button {
+    flex-shrink: 0;
+  }
+  
   .preview-card {
     flex-direction: row;
   }
@@ -323,40 +697,83 @@ button[type="submit"]:hover,
   .preview-content {
     flex: 1;
   }
+  
+  .storage-actions {
+    display: flex;
+    gap: var(--spacing-md);
+  }
 }
-
-/* YASGUI specific styles */
+/* src/css/yasgui-styles.css */
+/* Container for YASGUI component */
 .yasgui-container {
   width: 100%;
-  min-height: 600px;
+  height: 600px;
   margin-top: 1rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  overflow: hidden;
+  background: white;
 }
 
-/* Ensure YASGUI fits properly in the container */
-.yasgui {
-  width: 100%;
+/* Initialization button container */
+.yasgui-init {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 100%;
 }
 
-/* Override YASGUI styles to match application theme */
-.yasgui .yasqe .CodeMirror {
-  font-family: monospace;
-  font-size: 14px;
-  height: auto;
-}
-
-.yasgui .tabPanel {
-  background-color: var(--background-color, #f9f9f9);
-}
-
-.yasgui .tabItem.active {
+.yasgui-init button {
+  padding: 12px 24px;
+  font-size: 16px;
   background-color: var(--primary-color, #3498db);
   color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s;
 }
 
+.yasgui-init button:hover {
+  background-color: #2980b9;
+}
+
+/* Error message */
+.error-message {
+  padding: 15px;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+/* YASGUI specific styles */
+.yasgui {
+  width: 100% !important;
+  height: 600px !important;
+}
+
+/* Query editor styles */
+.yasgui .yasqe {
+  height: 40% !important;
+}
+
+.yasgui .yasqe .CodeMirror {
+  height: 100% !important;
+}
+
+/* Results area styles */
+.yasgui .yasr {
+  height: 60% !important;
+}
+
+/* Tab panel sizing */
+.yasgui .tabPanel {
+  height: 100% !important;
+}
+
+/* Ensure buttons have correct theme */
 .yasgui button.btn-primary {
   background-color: var(--primary-color, #3498db);
   border-color: var(--primary-color, #3498db);
@@ -367,16 +784,7 @@ button[type="submit"]:hover,
   border-color: #2980b9;
 }
 
-/* Fix layout issues */
-.yasgui .CodeMirror-scroll {
-  min-height: 200px;
-}
-
-.yasgui .yasr {
-  min-height: 300px;
-}
-
-/* Make table results more readable */
+/* Make results tables more readable */
 .yasgui .yasr_results table {
   margin: 1em 0;
   border-collapse: collapse;
@@ -400,46 +808,309 @@ button[type="submit"]:hover,
   background-color: var(--primary-color, #3498db);
   color: white;
 }
+/* src/css/layout-fixes.css - Layout fixes for desktop view and YASGUI component */
 
-/* Fix for potential responsive issues */
-@media (max-width: 768px) {
+/* Fix for YASGUI container to show full results */
+.yasgui-container {
+  width: 100%;
+  height: 700px;
+  margin-top: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Ensure the YASGUI component fills its container */
+.yasgui {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Fix YASGUI results panel */
+.yasgui .yasr {
+  height: 60% !important;
+  overflow: auto !important;
+}
+
+/* Fix YASGUI query editor */
+.yasgui .yasqe {
+  height: 40% !important;
+}
+
+.yasgui .yasqe .CodeMirror {
+  height: 100% !important;
+}
+
+/* Fix markdown editor alignment */
+.wiki-editor {
+  margin-bottom: var(--spacing-lg);
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+/* ===== CodeMirror Fixes ===== */
+/* These specific overrides fix the horizontal scrollbar issues */
+
+/* Main container fixes */
+.CodeMirror {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  height: auto !important;
+  min-height: 200px;
+  font-family: monospace;
+  line-height: 1.5;
+  overflow: hidden !important;
+}
+
+/* Fix the scroll container that causes the middle scrollbar */
+.CodeMirror-scroll {
+  margin-bottom: 0 !important;
+  margin-right: 0 !important;
+  padding-bottom: 0 !important;
+  padding-right: 0 !important;
+  overflow-x: hidden !important;
+  /* Important override to prevent the 50px offset that causes the scrollbar */
+  height: auto !important;
+}
+
+/* Ensure sizer doesn't create overflow */
+.CodeMirror-sizer {
+  margin-bottom: 0 !important;
+  border-right-width: 0 !important;
+}
+
+/* Prevent scrollbars */
+.CodeMirror-hscrollbar,
+.CodeMirror-vscrollbar,
+.CodeMirror-scrollbar-filler,
+.CodeMirror-gutter-filler {
+  display: none !important;
+}
+
+/* Force text wrapping in CodeMirror */
+.CodeMirror-wrap pre.CodeMirror-line,
+.CodeMirror-wrap pre.CodeMirror-line-like {
+  word-wrap: break-word !important;
+  white-space: pre-wrap !important;
+  word-break: normal !important;
+}
+
+/* Ensure container knows to enable wrapping */
+.CodeMirror-wrap {
+  word-wrap: break-word !important;
+}
+
+/* Make editor toolbar more consistent */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  padding: 5px;
+}
+
+/* Fix preview panel alignment */
+.wiki-preview {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+}
+
+/* Fix wiki entries styling */
+.wiki-entries {
+  margin-top: var(--spacing-lg);
+}
+
+.entry-item {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+}
+
+/* Better desktop spacing */
+@media (min-width: 1024px) {
+  .yasgui-container {
+    height: 800px;
+  }
+  
+  .CodeMirror {
+    min-height: 300px;
+  }
+  
+  /* Fix desktop layout for markdown editors */
+  main {
+    max-width: 1200px;
+    padding: var(--spacing-xl);
+  }
+  
+  .view {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Fix editor content overflow */
+.form-field textarea, 
+.wiki-editor .form-field textarea {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+/* Additional Mobile Layout Improvements */
+
+/* Responsive layout for YASGUI component */
+.yasgui-container {
+  min-height: 300px; /* Smaller on mobile */
+}
+
+/* Improved form spacing on mobile */
+@media (max-width: 767px) {
+  .view {
+    padding: var(--spacing-md);
+  }
+  
+  #post-form {
+    padding: var(--spacing-md);
+  }
+  
+  .hamburger-menu {
+    display: block;
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    z-index: 101;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* Ensure forms are mobile-friendly */
+  button[type="submit"],
+  .button-primary {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* Adjust endpoint actions on mobile */
+  .endpoint-actions {
+    margin-top: var(--spacing-sm);
+  }
+  
+  /* Adjust navigation when visible on mobile */
+  nav.visible {
+    border-top: 1px solid var(--border-color);
+    padding-top: var(--spacing-sm);
+  }
+  
+  /* Storage section buttons on mobile */
+  .storage-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  /* Better spacing for wiki editor on mobile */
+  .wiki-editor {
+    padding: var(--spacing-md);
+  }
+  
+  .editor-toolbar {
+    gap: 2px;
+    justify-content: center;
+  }
+  
+  /* Fix notification container position on mobile */
+  .notifications-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Two-column grid for dashboard on medium screens */
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* Adjust YASGUI height for medium screens */
   .yasgui-container {
     min-height: 400px;
   }
   
-  .yasgui .yasqe .CodeMirror {
-    font-size: 12px;
+  /* Better padding for medium screens */
+  .view {
+    padding: var(--spacing-lg);
   }
   
-  .yasgui .yasr_header {
+  /* Header layout for medium screens */
+  header {
+    display: flex;
     flex-direction: column;
+  }
+  
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 
-/* Fix for potential font issues */
-.yasgui .yasqe .cm-atom,
-.yasgui .yasqe .cm-string {
-  font-family: monospace;
+/* All screen sizes - improve contrast for form elements */
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  opacity: 0.6;
 }
 
-/* Fix for button alignment */
-.yasgui .yasqe_buttons {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+/* Improve active state for all interactive elements */
+button:active,
+.button-primary:active,
+input[type="submit"]:active {
+  transform: translateY(1px);
 }
 
-/* Fix potential flex issues */
-.yasqe .CodeMirror {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+/* Fix layout when keyboard is visible on mobile */
+@media (max-height: 450px) and (max-width: 767px) {
+  header {
+    position: static;
+  }
+  
+  main {
+    padding-top: var(--spacing-sm);
+  }
 }
 
-/* Ensure SVG icons are visible */
-.yasgui svg {
-  fill: currentColor;
+/* Print styles - hide unnecessary elements when printing */
+@media print {
+  header,
+  nav,
+  .hamburger-menu,
+  .notifications-container,
+  button {
+    display: none !important;
+  }
+  
+  main {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .view {
+    box-shadow: none;
+    padding: 0;
+  }
 }
+
 /* BASICS */
 
 .CodeMirror {

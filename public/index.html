@@ -1,3 +1,4 @@
+<!-- src/html/index.html - Improved responsive layout structure -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,11 +18,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Squirt">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<link rel="icon" href="favicon.ico"><script defer src="main.bundle.js"></script><link href="main.324fa52b.css" rel="stylesheet"></head>
+<link rel="icon" href="favicon.ico"><script defer src="main.bundle.js"></script><link href="main.7aef7464.css" rel="stylesheet"></head>
 
 <body>
     <header>
-        <h1>Squirt</h1>
+        <div class="header-container">
+            <h1>Squirt</h1>
+            <div class="hamburger-menu">
+                <button class="hamburger-button" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div> 
+        </div>
+<div id="endpoint-status-indicator" class="endpoint-status-indicator" title="Checking endpoint status...">
+    <div class="status-light checking"></div>
+    <span class="status-tooltip-icon">?</span>
+</div>
         <nav>
             <a href="#" data-view="post-view">Post</a>
             <a href="#" data-view="wiki-view">Wiki</a>
@@ -30,9 +44,9 @@
             <a href="#" data-view="profile-view">Profile</a>
             <a href="#" data-view="settings-view">Settings</a>
         </nav>
+        
     </header>
     
-
     <main>
         <!-- Post View -->
         <div id="post-view" class="view">
@@ -50,9 +64,9 @@
                 <div class="form-fields">
                     <div class="form-field">
                         <label for="url">URL</label>
-                        <div style="display: flex; align-items: center;">
-                            <input type="url" id="url" name="url" placeholder="https://example.com" required style="flex: 1;">
-                            <button type="button" id="extract-metadata" class="extract-button" style="margin-left: 8px;">Extract</button>
+                        <div class="input-with-button">
+                            <input type="url" id="url" name="url" placeholder="https://example.com" required>
+                            <button type="button" id="extract-metadata" class="extract-button">Extract</button>
                         </div>
                     </div>
                     
@@ -75,7 +89,7 @@
                 <button type="submit" class="button-primary">Post</button>
             </form>
             
-            <div id="post-preview" style="margin-top: 20px;"></div>
+            <div id="post-preview"></div>
         </div>
 
         <!-- Wiki View -->
@@ -94,7 +108,7 @@
                     <label for="wiki-tags">Tags (comma separated)</label>
                     <input type="text" id="wiki-tags" name="tags" placeholder="tag1, tag2, tag3">
                 </div>
-                <button type="button" id="save-wiki">Save</button>
+                <button type="button" id="save-wiki" class="button-primary">Save</button>
             </div>
             <div class="wiki-entries"></div>
         </div>
@@ -112,7 +126,7 @@
                 <div class="form-field">
                     <textarea id="sparql-query" rows="10" placeholder="Enter SPARQL query..."></textarea>
                 </div>
-                <button type="button" id="run-query">Run Query</button>
+                <button type="button" id="run-query" class="button-primary">Run Query</button>
                 <div id="query-results" class="results-container"></div>
             </div>
         </div>
@@ -131,9 +145,9 @@
                 </div>
                 <div class="form-field">
                     <label for="profile-bio">Bio</label>
-                    <textarea id="profile-bio" name="bio"></textarea>
+                    <textarea id="profile-bio" name="bio" rows="5"></textarea>
                 </div>
-                <button type="submit">Save Profile</button>
+                <button type="submit" class="button-primary">Save Profile</button>
             </form>
         </div>
 
@@ -141,37 +155,47 @@
         <div id="settings-view" class="view hidden">
             <h2>Settings</h2>
             
-            <!-- Appearance Section -->
-            <div class="settings-section">
-                <h3>Appearance</h3>
-                <div class="form-field">
-                    <label for="theme-selector">Theme</label>
-                    <select id="theme-selector">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="system">System Preference</option>
-                    </select>
+            <div class="dashboard-grid">
+                <!-- Appearance Section -->
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="form-field">
+                        <label for="theme-selector">Theme</label>
+                        <select id="theme-selector">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System Preference</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Endpoints Section -->
-            <div class="settings-section">
-                <h3>SPARQL Endpoints</h3>
-                <div id="endpoints-list"></div>
-                <form id="endpoint-form" class="form-group">
-                    <input type="text" id="endpoint-label" placeholder="Endpoint Label" required>
-                    <input type="url" id="endpoint-url" placeholder="Enter SPARQL endpoint URL" required>
-                    <button type="submit">Add Endpoint</button>
-                </form>
-            </div>
-            
-            <!-- Storage Section -->
-            <div class="settings-section storage-section">
-                <h3>Storage</h3>
-                <div id="storage-usage">Calculating storage usage...</div>
+                
+                <!-- Endpoints Section -->
+                <div class="settings-section">
+                    <h3>SPARQL Endpoints</h3>
+                    <div id="endpoints-list"></div>
+                    <form id="endpoint-form" class="form-group">
+                        <input type="text" id="endpoint-label" placeholder="Endpoint Label" required>
+                        <input type="url" id="endpoint-url" placeholder="Enter SPARQL endpoint URL" required>
+                        <button type="submit" class="button-primary">Add</button>
+                    </form>
+                </div>
+                
+                <!-- Storage Section -->
+                <div class="settings-section storage-section">
+                    <h3>Storage</h3>
+                    <div id="storage-usage">Calculating storage usage...</div>
+                    <div class="storage-actions">
+                        <button id="export-data" class="button-primary">Export Data</button>
+                        <button id="import-data" class="button-primary">Import Data</button>
+                        <button id="clear-data" class="button-primary danger">Clear All Data</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- Notifications Container -->
+    <div class="notifications-container"></div>
 </body>
 
 </html>
