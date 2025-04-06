@@ -1,18 +1,19 @@
 // src/js/plugins/yasgui-plugin.js
+// YASGUI SPARQL query editor plugin
+
 import { PluginBase } from '../core/plugin-base.js';
 import { state } from '../core/state.js';
 import { ErrorHandler } from '../core/errors.js';
 import { showNotification } from '../ui/components/notifications.js';
 
 /**
- * YASGUI Plugin implementation
+ * Plugin that provides YASGUI SPARQL query editor functionality
  */
-class YasguiPlugin extends PluginBase {
-  constructor() {
-    super('yasgui-plugin', {
-      title: 'SPARQL Query Editor',
-      settings: {
-        defaultQuery: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+export class YasguiPlugin extends PluginBase {
+  constructor(id = 'yasgui-plugin', options = {}) {
+    super(id, {
+      autoInitialize: true,
+      defaultQuery: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX squirt: <http://purl.org/stuff/squirt/>
 
@@ -20,238 +21,234 @@ SELECT ?subject ?predicate ?object
 WHERE {
   ?subject ?predicate ?object
 } 
-LIMIT 10`
-      }
+LIMIT 10`,
+      ...options
     });
-    
+
     this.yasguiInstance = null;
     this.resizeObserver = null;
   }
 
   /**
-   * Initialize the plugin
-   * @param {HTMLElement} container - The container element
-   * @returns {YasguiPlugin} Plugin instance
+   * Initialize the YASGUI plugin by loading required resources
    */
-  async initialize(container) {
-    await super.initialize(container);
-    
-    // We don't load YASGUI yet, just prepare the container
-    this.container.innerHTML = `
-      <div class="yasgui-container">
-        <div class="yasgui-init">
-          <button type="button" class="yasgui-load-button button-primary">
-            Load SPARQL Query Editor
-          </button>
-        </div>
-      </div>
-    `;
-    
-    // Add click handler to load button
-    const loadButton = this.container.querySelector('.yasgui-load-button');
-    if (loadButton) {
-      loadButton.addEventListener('click', () => {
-        this.loadYasgui();
-      });
+  async initialize() {
+    if (this.isInitialized) return;
+
+    try {
+      // Load YASGUI dynamically
+      await this.loadYasguiDependencies();
+
+      super.initialize();
+      console.log('YASGUI plugin initialized');
+    } catch (error) {
+      ErrorHandler.handle(error);
+      throw new Error(`Failed to initialize YASGUI plugin: ${error.message}`);
     }
-    
-    return this;
   }
 
   /**
-   * Mount the plugin
-   * @param {HTMLElement} container - The container element
-   * @returns {YasguiPlugin} Plugin instance
+   * Dynamically load the YASGUI library and CSS
+   */
+  async loadYasguiDependencies() {
+    try {
+      // First try to use the Yasgui that might already be loaded
+      if (window.Yasgui) {
+        this.Yasgui = window.Yasgui;
+        return;
+      }
+
+      // Otherwise, dynamically import it
+      const module = await import('@triply/yasgui');
+      this.Yasgui = module.default;
+
+      // Import CSS if not already loaded
+      if (!document.querySelector('link[href*="yasgui.min.css"]')) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/@triply/yasgui/build/yasgui.min.css';
+        document.head.appendChild(link);
+      }
+    } catch (error) {
+      throw new Error(`Failed to load YASGUI dependencies: ${error.message}`);
+    }
+  }
+
+  /**
+   * Set up the YASGUI component in the container
    */
   async mount(container) {
     await super.mount(container);
-    
-    // If YASGUI is already loaded, just show it
-    if (this.yasguiInstance) {
-      this.refreshLayout();
-      return this;
-    }
-    
-    // Otherwise, load it automatically
-    this.loadYasgui();
-    return this;
-  }
 
-  /**
-   * Dynamically load YASGUI
-   * @returns {Promise<Object>} YASGUI instance
-   */
-  async loadYasgui() {
-    if (this.yasguiInstance) {
-      return this.yasguiInstance;
-    }
-    
     try {
-      // Show loading indicator
-      this.container.innerHTML = `
-        <div class="yasgui-container yasgui-container-loading">
-          <div class="loading-spinner"></div>
-        </div>
-      `;
-      
-      // Dynamically import YASGUI
-      const [Yasgui, endpoints] = await Promise.all([
-        import(/* webpackChunkName: "yasgui" */ '@triply/yasgui'),
-        import(/* webpackChunkName: "endpoints" */ '../services/sparql/endpoints.js')
-      ]);
-      
-      // Also import styles
-      await import(/* webpackChunkName: "yasgui-styles" */ '@triply/yasgui/build/yasgui.min.css');
-      
-      // Get the container element
-      const yasguiContainer = document.createElement('div');
-      yasguiContainer.className = 'yasgui-wrapper';
-      this.container.innerHTML = '';
-      this.container.appendChild(yasguiContainer);
-      
+      // Clear container
+      container.innerHTML = '<div class="yasgui-wrapper"></div>';
+      const wrapper = container.querySelector('.yasgui-wrapper');
+
       // Get endpoint configuration
-      const activeEndpoint = endpoints.endpointManager.getActiveEndpoint('query');
-      
-      if (!activeEndpoint) {
-        showNotification('No active SPARQL endpoint found. Using default endpoint.', 'warning');
-      }
-      
-      // Create configuration
+      const endpoints = state.get('endpoints') || [];
+      const activeEndpoint = endpoints.find(e => e.type === 'query' && e.status === 'active');
+
+      // Create minimal configuration
       const config = {
         requestConfig: {
           endpoint: activeEndpoint ? activeEndpoint.url : 'http://localhost:4030/semem/query',
           method: 'POST'
-        },
-        copyEndpointOnNewTab: true,
-        autofocus: true
+        }
       };
-      
+
       // Add authentication if needed
       if (activeEndpoint && activeEndpoint.credentials) {
-        const authString = btoa(`${activeEndpoint.credentials.user}:${activeEndpoint.credentials.password}`);
+        const authString = btoa(activeEndpoint.credentials.user + ':' + activeEndpoint.credentials.password);
         config.requestConfig.headers = {
-          'Authorization': `Basic ${authString}`
+          'Authorization': 'Basic ' + authString
         };
       }
-      
-      // Create YASGUI instance
-      this.yasguiInstance = Yasgui.default(yasguiContainer, config);
-      
+
+      // Create the YASGUI instance
+      this.yasguiInstance = new this.Yasgui(wrapper, config);
+
       // Set default query
       const tab = this.yasguiInstance.getTab();
       if (tab && tab.yasqe) {
-        tab.yasqe.setValue(this.settings.defaultQuery);
+        tab.yasqe.setValue(this.options.defaultQuery);
       }
-      
-      // Setup resize observer
+
+      // Set up resize handling
       this.setupResizeObserver();
-      
-      // Force refresh after a short delay to ensure proper layout
-      setTimeout(() => this.refreshLayout(), 200);
-      
-      return this.yasguiInstance;
-      
+
+      // Handle endpoint changes
+      this.addEventListener(document, 'endpointsStatusChecked', this.handleEndpointChange.bind(this));
+
+      console.log('YASGUI plugin mounted successfully');
     } catch (error) {
-      console.error('Failed to load YASGUI:', error);
       ErrorHandler.handle(error);
-      
-      this.container.innerHTML = `
-        <div class="plugin-error">
-          <h3>Failed to load SPARQL Query Editor</h3>
-          <p>${error.message}</p>
-          <button class="retry-button button-primary">Retry</button>
-        </div>
-      `;
-      
-      const retryButton = this.container.querySelector('.retry-button');
-      if (retryButton) {
-        retryButton.addEventListener('click', () => {
-          this.loadYasgui();
-        });
-      }
-      
+      container.innerHTML = `<div class="error-message">Failed to initialize SPARQL editor: ${error.message}</div>`;
       throw error;
     }
   }
 
   /**
-   * Setup resize observer for YASGUI
+   * Handle endpoint change events
+   */
+  handleEndpointChange(event) {
+    if (!this.yasguiInstance) return;
+
+    try {
+      const { queryActive } = event.detail;
+      if (queryActive) {
+        // Get the active endpoint
+        const endpoints = state.get('endpoints') || [];
+        const activeEndpoint = endpoints.find(e => e.type === 'query' && e.status === 'active');
+
+        if (activeEndpoint) {
+          // Update all tabs with the new endpoint
+          this.yasguiInstance.getTab().yasqe.options.requestConfig.endpoint = activeEndpoint.url;
+
+          // Update authentication if needed
+          if (activeEndpoint.credentials) {
+            const authString = btoa(activeEndpoint.credentials.user + ':' + activeEndpoint.credentials.password);
+            this.yasguiInstance.getTab().yasqe.options.requestConfig.headers = {
+              'Authorization': 'Basic ' + authString
+            };
+          } else {
+            // Remove auth if not needed
+            delete this.yasguiInstance.getTab().yasqe.options.requestConfig.headers;
+          }
+
+          showNotification('SPARQL endpoint updated', 'success');
+        }
+      }
+    } catch (error) {
+      ErrorHandler.handle(error);
+    }
+  }
+
+  /**
+   * Set up resize observer to handle container size changes
    */
   setupResizeObserver() {
-    // Clean up any existing observer
+    // Clean up existing observer
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
-    
-    // Skip if ResizeObserver not available
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-    
+
+    // Create new observer
     this.resizeObserver = new ResizeObserver(entries => {
-      // Refresh layout when container size changes
-      this.refreshLayout();
+      for (const entry of entries) {
+        if (entry.target === this.container) {
+          this.handleResize();
+        }
+      }
     });
-    
-    // Observe the container
-    this.resizeObserver.observe(this.container);
+
+    // Observe container
+    if (this.container) {
+      this.resizeObserver.observe(this.container);
+    }
+
+    // Initial resize
+    this.handleResize();
   }
 
   /**
-   * Refresh YASGUI layout
+   * Handle container resize events
    */
-  refreshLayout() {
-    if (!this.yasguiInstance) return;
-    
-    try {
-      const tab = this.yasguiInstance.getTab();
-      if (tab && tab.yasqe) {
-        tab.yasqe.refresh();
-      }
-    } catch (error) {
-      console.warn('Error refreshing YASGUI layout:', error);
+  handleResize() {
+    if (!this.yasguiInstance || !this.container) return;
+
+    // Get container dimensions
+    const { width, height } = this.container.getBoundingClientRect();
+
+    // Apply min-height to ensure the component is visible
+    const wrapper = this.container.querySelector('.yasgui-wrapper');
+    if (wrapper) {
+      wrapper.style.minHeight = '500px';
+      wrapper.style.height = `${height}px`;
+      wrapper.style.width = `${width}px`;
+    }
+
+    // Force YASGUI to redraw
+    if (this.yasguiInstance.store) {
+      this.yasguiInstance.store.dispatch({
+        type: 'YASGUI_RESIZE'
+      });
     }
   }
 
   /**
-   * Unmount the plugin
-   * @returns {YasguiPlugin} Plugin instance
+   * Clean up the YASGUI component
    */
   async unmount() {
-    await super.unmount();
-    
-    // Just hide YASGUI, don't destroy it
-    if (this.container) {
-      this.container.style.display = 'none';
-    }
-    
-    return this;
-  }
+    if (!this.isMounted) return;
 
-  /**
-   * Destroy the plugin
-   * @returns {boolean} Success status
-   */
-  async destroy() {
     // Clean up resize observer
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
-    
-    // Destroy YASGUI instance if it exists
+
+    // Clean up YASGUI instance
     if (this.yasguiInstance) {
-      try {
-        this.yasguiInstance.destroy();
-      } catch (error) {
-        console.warn('Error destroying YASGUI instance:', error);
-      }
+      // No explicit destroy method, so we'll just remove references
       this.yasguiInstance = null;
     }
-    
-    return super.destroy();
+
+    // Clear container
+    if (this.container) {
+      this.container.innerHTML = '';
+    }
+
+    await super.unmount();
+    console.log('YASGUI plugin unmounted');
+  }
+
+  /**
+   * Release all resources
+   */
+  async destroy() {
+    await this.unmount();
+    await super.destroy();
+    console.log('YASGUI plugin destroyed');
   }
 }
-
-// Export the plugin instance
-export default new YasguiPlugin();

@@ -1,97 +1,137 @@
 // src/js/core/plugin-base.js
+// Base class for all plugins with standardized lifecycle methods
+
 /**
- * Base class for all plugins
- * Implements the standard plugin lifecycle methods
+ * Base class for all plugins in the application
+ * Each plugin should extend this class and implement its methods
  */
 export class PluginBase {
-  constructor(id, options = {}) {
-    this.id = id;
-    this.title = options.title || id;
-    this.container = null;
-    this.initialized = false;
-    this.mounted = false;
-    this.settings = { ...options.settings };
-  }
-
   /**
-   * Initialize the plugin (called once when plugin is first loaded)
-   * @param {HTMLElement} container - The container element for the plugin
-   * @returns {PluginBase} Plugin instance for chaining
+   * Creates a new plugin instance
+   * @param {string} id - Unique identifier for this plugin
+   * @param {Object} options - Configuration options for the plugin
    */
-  async initialize(container) {
-    this.container = container;
-    this.initialized = true;
-    console.log(`Plugin ${this.id} initialized`);
-    return this;
+  constructor(id, options = {}) {
+    if (!id) {
+      throw new Error('Plugin ID is required');
+    }
+
+    this.id = id;
+    this.options = options;
+    this.container = null;
+    this.isInitialized = false;
+    this.isMounted = false;
+    this._eventListeners = [];
   }
 
   /**
-   * Mount the plugin (called when plugin should become active)
-   * @param {HTMLElement} container - The container element for the plugin
-   * @returns {PluginBase} Plugin instance for chaining
+   * Initialize the plugin - fetch required resources, prepare internal state
+   * @returns {Promise<void>}
+   */
+  async initialize() {
+    if (this.isInitialized) {
+      console.warn(`Plugin ${this.id} is already initialized`);
+      return;
+    }
+
+    // Plugins should override this method with their initialization logic
+    this.isInitialized = true;
+  }
+
+  /**
+   * Mount the plugin to a container in the DOM
+   * @param {HTMLElement} container - The DOM element to mount this plugin to
+   * @returns {Promise<void>}
    */
   async mount(container) {
-    if (!this.initialized) {
+    if (!this.isInitialized) {
       throw new Error(`Plugin ${this.id} must be initialized before mounting`);
     }
-    
-    // Update container reference if provided
-    if (container) {
-      this.container = container;
+
+    if (this.isMounted) {
+      console.warn(`Plugin ${this.id} is already mounted`);
+      return;
     }
-    
-    this.mounted = true;
-    console.log(`Plugin ${this.id} mounted`);
-    return this;
+
+    if (!container) {
+      throw new Error(`Cannot mount plugin ${this.id}: container is required`);
+    }
+
+    this.container = container;
+    this.isMounted = true;
+
+    // Plugins should override this method with their mounting logic
   }
 
   /**
-   * Unmount the plugin (called when plugin should become inactive)
-   * @returns {PluginBase} Plugin instance for chaining
+   * Unmount the plugin from its container
+   * @returns {Promise<void>}
    */
   async unmount() {
-    this.mounted = false;
-    console.log(`Plugin ${this.id} unmounted`);
-    return this;
+    if (!this.isMounted) {
+      return;
+    }
+
+    // Plugins should override this method with their unmounting logic
+
+    this.container = null;
+    this.isMounted = false;
   }
 
   /**
-   * Destroy the plugin (called when plugin is being unloaded)
-   * @returns {boolean} Success status
+   * Destroy the plugin, releasing all resources
+   * @returns {Promise<void>}
    */
   async destroy() {
-    await this.unmount();
-    this.initialized = false;
-    this.container = null;
-    console.log(`Plugin ${this.id} destroyed`);
-    return true;
+    if (this.isMounted) {
+      await this.unmount();
+    }
+
+    // Remove all event listeners
+    this._eventListeners.forEach(({ target, type, listener, options }) => {
+      target.removeEventListener(type, listener, options);
+    });
+    this._eventListeners = [];
+
+    // Plugins should override this method with additional cleanup logic
+
+    this.isInitialized = false;
   }
 
   /**
-   * Get plugin settings
-   * @returns {Object} Plugin settings
+   * Add an event listener that will be automatically cleaned up on destroy
+   * @param {EventTarget} target - The event target (usually a DOM element or window)
+   * @param {string} type - The event type to listen for
+   * @param {Function} listener - The event listener function
+   * @param {Object} options - Options for addEventListener
    */
-  getSettings() {
-    return { ...this.settings };
+  addEventListener(target, type, listener, options) {
+    target.addEventListener(type, listener, options);
+    this._eventListeners.push({ target, type, listener, options });
   }
 
   /**
-   * Update plugin settings
-   * @param {Object} newSettings - New settings to merge with existing
-   * @returns {Object} Updated settings
+   * Remove a specific event listener
+   * @param {EventTarget} target - The event target
+   * @param {string} type - The event type
+   * @param {Function} listener - The event listener function
+   * @param {Object} options - Options for removeEventListener
    */
-  updateSettings(newSettings) {
-    this.settings = { ...this.settings, ...newSettings };
-    return this.settings;
+  removeEventListener(target, type, listener, options) {
+    target.removeEventListener(type, listener, options);
+    this._eventListeners = this._eventListeners.filter(
+      item => !(item.target === target &&
+        item.type === type &&
+        item.listener === listener)
+    );
   }
 
   /**
-   * Reset plugin settings to defaults
-   * @param {Object} defaults - Default settings
-   * @returns {Object} Reset settings
+   * Handle configuration updates
+   * @param {Object} newOptions - New configuration options
    */
-  resetSettings(defaults = {}) {
-    this.settings = { ...defaults };
-    return this.settings;
+  updateOptions(newOptions) {
+    this.options = { ...this.options, ...newOptions };
+    // Plugins should override this method to apply changes based on new options
   }
 }

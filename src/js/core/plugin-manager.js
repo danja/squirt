@@ -1,321 +1,289 @@
 // src/js/core/plugin-manager.js
+// Central registry and lifecycle manager for all plugins
+
 import { ErrorHandler } from './errors.js';
 import { state } from './state.js';
 
 /**
- * Manages the application plugin system
+ * Manages the lifecycle and registration of all plugins in the application
  */
-class PluginManager {
+export class PluginManager {
   constructor() {
-    this.plugins = {};
-    this.loadedPlugins = {};
-    this.activePlugin = null;
-    this.viewMap = {};
-  }
+    this.plugins = new Map();
+    this.containers = new Map();
+    this.activePlugins = new Set();
 
-  /**
-   * Initialize the plugin manager
-   * @param {HTMLElement} mainContainerEl - The main container element for the application
-   */
-  initialize(mainContainerEl) {
-    this.mainContainerEl = mainContainerEl;
-
-    // Listen for route changes to load/unload plugins
-    document.addEventListener('routeChange', (e) => {
-      const { from, to } = e.detail;
-
-      // Unload previous plugin if exists
-      if (from && this.viewMap[from]) {
-        this.unloadPlugin(this.viewMap[from]);
-      }
-
-      // Load new plugin if exists
-      if (to && this.viewMap[to]) {
-        this.loadPlugin(this.viewMap[to]);
-      }
-    });
-
-    // Update state to indicate plugin manager is ready
-    state.update('pluginManagerReady', true);
-
-    console.log('Plugin manager initialized');
-    return this;
+    // Subscribe to route changes to activate/deactivate plugins
+    this.handleRouteChange = this.handleRouteChange.bind(this);
+    document.addEventListener('routeChange', this.handleRouteChange);
   }
 
   /**
    * Register a plugin with the manager
-   * @param {string} id - Unique plugin identifier
    * @param {string} viewId - The view ID this plugin is associated with
-   * @param {Object} options - Plugin registration options
-   * @param {Function} options.loader - Function that returns a Promise resolving to the plugin module
-   * @param {string} options.title - Human-readable plugin title
-   * @param {string[]} options.dependencies - Array of dependency IDs this plugin requires
+   * @param {PluginBase} pluginInstance - Instance of a PluginBase-derived class
+   * @param {Object} options - Plugin configuration options
    */
-  register(id, viewId, options) {
-    if (this.plugins[id]) {
-      console.warn(`Plugin ${id} is already registered`);
-      return this;
+  register(viewId, pluginInstance, options = {}) {
+    const pluginId = pluginInstance.id;
+
+    if (this.plugins.has(pluginId)) {
+      throw new Error(`Plugin ${pluginId} is already registered`);
     }
 
-    // Register the plugin with its metadata
-    this.plugins[id] = {
-      id,
+    this.plugins.set(pluginId, {
+      instance: pluginInstance,
       viewId,
-      title: options.title || id,
-      loader: options.loader,
-      dependencies: options.dependencies || [],
-      loaded: false,
-      instance: null
-    };
+      options: {
+        autoActivate: true, // Automatically activate plugin when view is shown
+        ...options
+      }
+    });
 
-    // Map the view ID to this plugin
-    this.viewMap[viewId] = id;
-
-    console.log(`Plugin registered: ${id} for view ${viewId}`);
-    return this;
+    console.log(`Plugin "${pluginId}" registered for view "${viewId}"`);
   }
 
   /**
-   * Dynamically load a plugin by ID
-   * @param {string} id - Plugin ID to load
-   * @returns {Promise<Object>} The loaded plugin instance
-   */
-  async loadPlugin(id) {
-    try {
-      const plugin = this.plugins[id];
-
-      if (!plugin) {
-        throw new Error(`Plugin ${id} is not registered`);
-      }
-
-      // Skip if already loaded and active
-      if (plugin.loaded && this.activePlugin === id) {
-        console.log(`Plugin ${id} is already loaded and active`);
-        return plugin.instance;
-      }
-
-      // Set loading state
-      state.update('pluginLoading', true);
-      state.update('currentPlugin', id);
-
-      // Get the container for this plugin
-      const container = this.getPluginContainer(plugin.viewId);
-
-      // Show loading indicator in container
-      if (container) {
-        this.showLoading(container, plugin.title);
-      } else {
-        console.warn(`No container found for plugin ${id} in view ${plugin.viewId}`);
-      }
-
-      // Load dependencies first if any
-      if (plugin.dependencies.length > 0) {
-        await Promise.all(
-          plugin.dependencies.map(depId => this.loadPlugin(depId))
-        );
-      }
-
-      let pluginModule;
-
-      // If not loaded yet, dynamically import the plugin
-      if (!plugin.loaded) {
-        console.log(`Loading plugin: ${id}`);
-        try {
-          // Use the loader function to import the module
-          pluginModule = await plugin.loader();
-
-          // Initialize the plugin with our container
-          if (pluginModule.default) {
-            plugin.instance = await pluginModule.default.initialize(container);
-          } else {
-            throw new Error(`Plugin ${id} does not export a default initialize method`);
-          }
-
-          plugin.loaded = true;
-          this.loadedPlugins[id] = plugin;
-
-        } catch (loadError) {
-          console.error(`Failed to load plugin ${id}:`, loadError);
-          if (container) {
-            this.showError(container, plugin.title, loadError.message);
-          }
-          throw loadError;
-        }
-      }
-
-      // Activate the plugin
-      await this.activatePlugin(id);
-
-      // Clear loading state
-      state.update('pluginLoading', false);
-
-      return plugin.instance;
-
-    } catch (error) {
-      state.update('pluginLoading', false);
-      ErrorHandler.handle(error);
-      throw error;
-    }
-  }
-
-  /**
-   * Activate a loaded plugin
-   * @param {string} id - Plugin ID to activate
-   */
-  async activatePlugin(id) {
-    try {
-      const plugin = this.loadedPlugins[id];
-
-      if (!plugin || !plugin.loaded || !plugin.instance) {
-        throw new Error(`Plugin ${id} is not loaded and cannot be activated`);
-      }
-
-      // Deactivate current plugin if different
-      if (this.activePlugin && this.activePlugin !== id) {
-        await this.deactivatePlugin(this.activePlugin);
-      }
-
-      console.log(`Activating plugin: ${id}`);
-
-      // Get the container for this plugin
-      const container = this.getPluginContainer(plugin.viewId);
-
-      // Call the plugin's mount method
-      if (typeof plugin.instance.mount === 'function' && container) {
-        await plugin.instance.mount(container);
-      }
-
-      this.activePlugin = id;
-
-    } catch (error) {
-      console.error(`Failed to activate plugin ${id}:`, error);
-      ErrorHandler.handle(error);
-    }
-  }
-
-  /**
-   * Deactivate an active plugin
-   * @param {string} id - Plugin ID to deactivate
-   */
-  async deactivatePlugin(id) {
-    try {
-      const plugin = this.loadedPlugins[id];
-
-      if (!plugin || !plugin.loaded) {
-        return;
-      }
-
-      console.log(`Deactivating plugin: ${id}`);
-
-      // Call the plugin's unmount method
-      if (plugin.instance && typeof plugin.instance.unmount === 'function') {
-        await plugin.instance.unmount();
-      }
-
-      if (this.activePlugin === id) {
-        this.activePlugin = null;
-      }
-
-    } catch (error) {
-      console.error(`Failed to deactivate plugin ${id}:`, error);
-      ErrorHandler.handle(error);
-    }
-  }
-
-  /**
-   * Unload a plugin completely
-   * @param {string} id - Plugin ID to unload
-   */
-  async unloadPlugin(id) {
-    try {
-      // First deactivate
-      await this.deactivatePlugin(id);
-
-      const plugin = this.loadedPlugins[id];
-
-      if (!plugin || !plugin.loaded) {
-        return;
-      }
-
-      console.log(`Unloading plugin: ${id}`);
-
-      // Call the plugin's destroy method
-      if (plugin.instance && typeof plugin.instance.destroy === 'function') {
-        await plugin.instance.destroy();
-      }
-
-      // Clean up references
-      plugin.loaded = false;
-      plugin.instance = null;
-      delete this.loadedPlugins[id];
-
-    } catch (error) {
-      console.error(`Failed to unload plugin ${id}:`, error);
-      ErrorHandler.handle(error);
-    }
-  }
-
-  /**
-   * Get the container element for a specific view
+   * Create a container for a plugin in the specified view
    * @param {string} viewId - The view ID
+   * @param {string} pluginId - The plugin ID
+   * @param {string} [containerId] - Optional container ID, defaults to plugin-container-{pluginId}
    * @returns {HTMLElement} The container element
    */
-  getPluginContainer(viewId) {
-    // First try to find the specific container for this view
-    let container = document.getElementById(`plugin-container-${viewId}`);
-
-    // If not found, try to use the view itself as container
-    if (!container) {
-      container = document.getElementById(viewId);
+  createContainer(viewId, pluginId, containerId = null) {
+    const view = document.getElementById(viewId);
+    if (!view) {
+      throw new Error(`View "${viewId}" not found`);
     }
+
+    // Use provided ID or generate a default one
+    const id = containerId || `plugin-container-${pluginId}`;
+
+    // Check if container already exists
+    let container = document.getElementById(id);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = id;
+      container.className = 'plugin-container';
+      container.dataset.plugin = pluginId;
+
+      // Either append to view or to a specific plugin section if it exists
+      const pluginSection = view.querySelector('.plugins-section');
+      if (pluginSection) {
+        pluginSection.appendChild(container);
+      } else {
+        view.appendChild(container);
+      }
+    }
+
+    // Store reference to container
+    this.containers.set(pluginId, container);
 
     return container;
   }
 
   /**
-   * Show loading indicator in the container
-   * @param {HTMLElement} container - The container element
-   * @param {string} pluginTitle - Title of the plugin being loaded
+   * Initialize all registered plugins
+   * @returns {Promise<void>}
    */
-  showLoading(container, pluginTitle) {
-    if (!container) return;
+  async initializeAll() {
+    const promises = [];
 
-    container.innerHTML = `
-      <div class="plugin-loading">
-        <div class="loading-spinner"></div>
-        <p>Loading ${pluginTitle}...</p>
-      </div>
-    `;
+    for (const [pluginId, pluginData] of this.plugins.entries()) {
+      try {
+        promises.push(this.initializePlugin(pluginId));
+      } catch (error) {
+        ErrorHandler.handle(error);
+        console.error(`Failed to initialize plugin ${pluginId}:`, error);
+      }
+    }
+
+    await Promise.all(promises);
+    console.log('All plugins initialized');
+
+    // Check current route to activate appropriate plugins
+    const currentView = state.get('currentView');
+    if (currentView) {
+      this.activatePluginsForView(currentView);
+    }
   }
 
   /**
-   * Show error message in the container
-   * @param {HTMLElement} container - The container element
-   * @param {string} pluginTitle - Title of the plugin
-   * @param {string} errorMessage - Error message to display
+   * Initialize a specific plugin
+   * @param {string} pluginId - The plugin ID to initialize
+   * @returns {Promise<void>}
    */
-  showError(container, pluginTitle, errorMessage) {
-    if (!container) return;
-
-    container.innerHTML = `
-      <div class="plugin-error">
-        <h3>Failed to load ${pluginTitle}</h3>
-        <p>${errorMessage}</p>
-        <button id="retry-plugin-load" class="button-primary">Retry</button>
-      </div>
-    `;
-
-    const retryButton = container.querySelector('#retry-plugin-load');
-    if (retryButton) {
-      retryButton.addEventListener('click', () => {
-        const id = this.viewMap[container.id];
-        if (id) {
-          this.loadPlugin(id);
-        }
-      });
+  async initializePlugin(pluginId) {
+    const pluginData = this.plugins.get(pluginId);
+    if (!pluginData) {
+      throw new Error(`Plugin ${pluginId} is not registered`);
     }
+
+    try {
+      await pluginData.instance.initialize();
+      console.log(`Plugin ${pluginId} initialized successfully`);
+    } catch (error) {
+      ErrorHandler.handle(error);
+      throw new Error(`Failed to initialize plugin ${pluginId}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Activate plugins for a specific view
+   * @param {string} viewId - The view ID to activate plugins for
+   */
+  async activatePluginsForView(viewId) {
+    // Collect plugins that need to be activated for this view
+    const pluginsToActivate = [];
+
+    for (const [pluginId, pluginData] of this.plugins.entries()) {
+      if (pluginData.viewId === viewId && pluginData.options.autoActivate) {
+        pluginsToActivate.push(pluginId);
+      }
+    }
+
+    // Activate the plugins
+    for (const pluginId of pluginsToActivate) {
+      await this.activatePlugin(pluginId);
+    }
+  }
+
+  /**
+   * Deactivate plugins that are not associated with the current view
+   * @param {string} currentViewId - The current active view ID
+   */
+  async deactivatePluginsNotInView(currentViewId) {
+    const pluginsToDeactivate = [];
+
+    // Find active plugins that don't belong to the current view
+    for (const pluginId of this.activePlugins) {
+      const pluginData = this.plugins.get(pluginId);
+      if (pluginData && pluginData.viewId !== currentViewId) {
+        pluginsToDeactivate.push(pluginId);
+      }
+    }
+
+    // Deactivate the plugins
+    for (const pluginId of pluginsToDeactivate) {
+      await this.deactivatePlugin(pluginId);
+    }
+  }
+
+  /**
+   * Activate a specific plugin by mounting it to its container
+   * @param {string} pluginId - The plugin ID to activate
+   * @returns {Promise<void>}
+   */
+  async activatePlugin(pluginId) {
+    const pluginData = this.plugins.get(pluginId);
+    if (!pluginData) {
+      throw new Error(`Plugin ${pluginId} is not registered`);
+    }
+
+    const { instance, viewId } = pluginData;
+
+    if (this.activePlugins.has(pluginId)) {
+      console.warn(`Plugin ${pluginId} is already active`);
+      return;
+    }
+
+    try {
+      // Ensure container exists
+      let container = this.containers.get(pluginId);
+      if (!container) {
+        container = this.createContainer(viewId, pluginId);
+      }
+
+      // Mount plugin to container
+      await instance.mount(container);
+      this.activePlugins.add(pluginId);
+      console.log(`Plugin ${pluginId} activated successfully`);
+    } catch (error) {
+      ErrorHandler.handle(error);
+      console.error(`Failed to activate plugin ${pluginId}:`, error);
+    }
+  }
+
+  /**
+   * Deactivate a specific plugin by unmounting it
+   * @param {string} pluginId - The plugin ID to deactivate
+   * @returns {Promise<void>}
+   */
+  async deactivatePlugin(pluginId) {
+    const pluginData = this.plugins.get(pluginId);
+    if (!pluginData) {
+      throw new Error(`Plugin ${pluginId} is not registered`);
+    }
+
+    const { instance } = pluginData;
+
+    if (!this.activePlugins.has(pluginId)) {
+      return; // Not active, nothing to do
+    }
+
+    try {
+      await instance.unmount();
+      this.activePlugins.delete(pluginId);
+      console.log(`Plugin ${pluginId} deactivated successfully`);
+    } catch (error) {
+      ErrorHandler.handle(error);
+      console.error(`Failed to deactivate plugin ${pluginId}:`, error);
+    }
+  }
+
+  /**
+   * Get a plugin instance by ID
+   * @param {string} pluginId - The plugin ID to retrieve
+   * @returns {PluginBase|null} The plugin instance, or null if not found
+   */
+  getPlugin(pluginId) {
+    const pluginData = this.plugins.get(pluginId);
+    return pluginData ? pluginData.instance : null;
+  }
+
+  /**
+   * Handle route change events to activate/deactivate plugins
+   * @param {CustomEvent} event - The routeChange event
+   */
+  async handleRouteChange(event) {
+    const { to } = event.detail;
+    if (!to) return;
+
+    // Deactivate plugins from the previous view
+    await this.deactivatePluginsNotInView(to);
+
+    // Activate plugins for the new view
+    await this.activatePluginsForView(to);
+  }
+
+  /**
+   * Destroy all plugins and clean up resources
+   */
+  async destroy() {
+    // Deactivate all active plugins
+    for (const pluginId of this.activePlugins) {
+      await this.deactivatePlugin(pluginId);
+    }
+
+    // Destroy all plugins
+    for (const [pluginId, pluginData] of this.plugins.entries()) {
+      try {
+        await pluginData.instance.destroy();
+      } catch (error) {
+        ErrorHandler.handle(error);
+        console.error(`Failed to destroy plugin ${pluginId}:`, error);
+      }
+    }
+
+    // Clear collections
+    this.plugins.clear();
+    this.containers.clear();
+    this.activePlugins.clear();
+
+    // Remove event listeners
+    document.removeEventListener('routeChange', this.handleRouteChange);
   }
 }
 
-// Export singleton instance
+// Create and export a singleton instance
 export const pluginManager = new PluginManager();

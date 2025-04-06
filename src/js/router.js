@@ -1,4 +1,4 @@
-// src/js/router.js
+// src/js/router.js - Updated to work with plugin system
 import { state } from './core/state.js';
 import { ErrorHandler } from './core/errors.js';
 import { VIEWS } from './core/views.js';
@@ -20,7 +20,7 @@ export function initializeRouter() {
 /**
  * Handle route changes
  */
-function handleRoute(hash, validRoutes) {
+async function handleRoute(hash, validRoutes) {
     try {
         const route = hash.slice(1) || 'post';
 
@@ -37,9 +37,8 @@ function handleRoute(hash, validRoutes) {
 
         const currentView = state.get('currentView');
 
-        // Early check if the view is already active
+        // Only process if view is changing
         if (currentView === viewId) {
-            console.log(`View ${viewId} is already active`);
             return;
         }
 
@@ -59,6 +58,7 @@ function handleRoute(hash, validRoutes) {
             return;
         }
 
+        // Update state
         state.update('previousView', currentView);
         state.update('currentView', viewId);
 
@@ -73,8 +73,7 @@ function handleRoute(hash, validRoutes) {
         // Show requested view
         view.classList.remove('hidden');
 
-        // Let the plugin manager handle plugin loading/unloading
-        // The plugin manager listens for routeChange events directly
+        console.log(`Navigated to view: ${viewId}`);
     } catch (error) {
         ErrorHandler.handle(error);
         if (hash !== '#post') {
