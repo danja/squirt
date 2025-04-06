@@ -2,12 +2,10 @@
 import { eventBus, EVENTS } from './core/events/event-bus.js';
 import { errorHandler } from './core/errors/index.js';
 import { store } from './core/state/index.js';
-import { createStorageService, storageService } from './services/storage/storage-service.js';
-import { createSparqlService } from './services/sparql/sparql-service.js';
-import { createEndpointsService } from './services/endpoints/endpoints-service.js';
-import { createRDFService } from './services/rdf/rdf-service.js';
+import { storageService } from './services/storage/storage-service.js';
 import { initRouter } from './ui/router.js';
 import { initNotifications } from './ui/notifications/notifications.js';
+import { pluginManager } from './core/plugin-manager.js';
 
 // Import CSS
 import './css/styles.css';
@@ -15,9 +13,21 @@ import './css/form-styles.css';
 import './css/yasgui-styles.css';
 import './css/layout-fixes.css';
 import './css/mobile-fixes.css';
+import './css/plugin-styles.css';
+
+// Namespaces utility
+export const namespaces = {
+  rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+  rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+  dc: 'http://purl.org/dc/terms/',
+  foaf: 'http://xmlns.com/foaf/0.1/',
+  squirt: 'http://purl.org/stuff/squirt/'
+};
 
 // Services container
-const services = {};
+export const services = {
+  storage: storageService
+};
 
 /**
  * Initialize the application
@@ -26,14 +36,21 @@ export async function initializeApp() {
   try {
     console.log('Initializing application...');
 
-    // Load configuration
-    const config = await loadConfig();
 
-    // Initialize services
-    await initializeServices(config);
+    window.services = services;
 
-    // Initialize UI
-    initializeUI();
+
+    initNotifications();
+    initRouter();
+
+
+    await pluginManager.initializeAll();
+
+
+    setupNotifications();
+
+
+    setupHamburgerMenu();
 
     // Register service worker for PWA support
     registerServiceWorker();
@@ -43,165 +60,62 @@ export async function initializeApp() {
 
     return { success: true };
   } catch (error) {
-    errorHandler.handle(error, {
-      showToUser: true,
-      context: 'Application initialization'
-    });
-
-    return {
-      success: false,
-      error
-    };
+    errorHandler.handle(error);
+    return { success: false, error };
   }
 }
-
 /**
- * Load application configuration
+ * Set up temporary notifications system
  */
-async function loadConfig() {
-  try {
-    // Try to load from config.json
-    const response = await fetch('./config.json');
+function setupNotifications() {
+  // Create container if it doesn't exist
+  let container = document.querySelector('.notifications-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'notifications-container';
+    document.body.appendChild(container);
+  }
 
-    if (response.ok) {
-      return await response.json();
+  // Simple show notification function
+  window.showNotification = (message, type = 'info', duration = 5000) => {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+
+    container.appendChild(notification);
+
+    if (duration > 0) {
+      setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+      }, duration);
     }
 
-    console.warn('Could not load config.json, using default configuration');
-    return getDefaultConfig();
-  } catch (error) {
-    console.warn('Error loading configuration:', error);
-    return getDefaultConfig();
-  }
-}
-
-/**
- * Get default configuration
- */
-function getDefaultConfig() {
-  return {
-    endpoints: [
-      {
-        name: 'Local Query',
-        type: 'query',
-        url: 'http://localhost:4030/semem/query',
-        credentials: {
-          user: 'admin',
-          password: 'admin123'
-        }
-      },
-      {
-        name: 'Local Update',
-        type: 'update',
-        url: 'http://localhost:4030/semem/update',
-        credentials: {
-          user: 'admin',
-          password: 'admin123'
-        }
-      }
-    ]
+    return notification;
   };
-}
 
-/**
- * Initialize all services
- */
-async function initializeServices(config) {
-  // Create storage service
-  services.storage = storageService;
-
-  // Create endpoints service
-  services.endpoints = createEndpointsService(
-    services.storage,
-    config,
-    testEndpoint
-  );
-
-  // Initialize endpoints
-  await services.endpoints.initialize();
-
-  // Create SPARQL service
-  services.sparql = createSparqlService(
-    (type) => services.endpoints.getActiveEndpoint(type)
-  );
-
-  // Create RDF service
-  services.rdf = createRDFService(
-    services.storage,
-    services.sparql
-  );
-
-  // Make services globally available (for debugging and components)
-  window.services = services;
-}
-
-/**
- * Test an endpoint
- */
-async function testEndpoint(url, credentials) {
-  if (!services.sparql) {
-    // Create temporary SPARQL service if not available yet
-    const tempService = createSparqlService(() => null);
-    return tempService.testEndpoint(url, credentials);
-  }
-
-  return services.sparql.testEndpoint(url, credentials);
-}
-
-/**
- * Initialize UI components
- */
-function initializeUI() {
-  // Initialize router
-  initRouter();
-
-  // Initialize notifications system
-  initNotifications();
-
-  // Set up UI event listeners
-  setupEventListeners();
-
-  // Register UI components that need services
-  registerUIComponents();
-}
-
-/**
- * Set up event listeners
- */
-function setupEventListeners() {
-  // Listen for window visibility changes (for page revisits)
-  document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible') {
-      console.log('Page visibility changed to visible, checking endpoints');
-      if (services.endpoints) {
-        services.endpoints.checkEndpointsHealth();
-      }
-    }
+  // Listen for notification events
+  eventBus.on(EVENTS.NOTIFICATION_SHOW, (data) => {
+    window.showNotification(data.message, data.type, data.duration);
   });
+}
 
-  // Setup hamburger menu toggle
+/**
+ * Setup hamburger menu toggle
+ */
+function setupHamburgerMenu() {
   const hamburgerButton = document.querySelector('.hamburger-button');
-  const hamburgerMenu = document.querySelector('.hamburger-menu');
   const nav = document.querySelector('nav');
 
-  if (hamburgerButton && hamburgerMenu && nav) {
+  if (hamburgerButton && nav) {
     hamburgerButton.addEventListener('click', () => {
-      hamburgerMenu.classList.toggle('active');
       nav.classList.toggle('visible');
     });
   }
 }
 
 /**
- * Register UI components that need services
- */
-function registerUIComponents() {
-  // Components will be registered when their views are initialized
-  // This happens through the router
-}
-
-/**
- * Register service worker for PWA support
+ * Register the service worker for PWA functionality
  */
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -209,6 +123,18 @@ function registerServiceWorker() {
       navigator.serviceWorker.register('/service-worker.js')
         .then(registration => {
           console.log('Service Worker registered with scope:', registration.scope);
+
+          // Setup background sync if available
+          if ('SyncManager' in window) {
+            registration.sync.register('sync-posts')
+              .then(() => console.log('Background sync registered'))
+              .catch(error => console.error('Background sync registration failed:', error));
+          }
+
+          // Setup push notifications if available
+          if ('PushManager' in window) {
+            askNotificationPermission();
+          }
         })
         .catch(error => {
           console.error('Service Worker registration failed:', error);
@@ -217,8 +143,35 @@ function registerServiceWorker() {
   }
 }
 
-// Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeApp);
+/**
+ * Request permission for push notifications
+ */
+function askNotificationPermission() {
+  // Check if permission is already granted
+  if (Notification.permission === 'granted') {
+    console.log('Notification permission already granted');
+    return;
+  }
 
-// Export for testing
-export { initializeApp, services };
+  // Don't request if already denied
+  if (Notification.permission === 'denied') {
+    console.warn('Notification permission was previously denied');
+    return;
+  }
+
+  // Ask for permission when user interacts with the app
+  document.addEventListener('click', function askPermission() {
+    Notification.requestPermission()
+      .then(permission => {
+        if (permission === 'granted') {
+          console.log('Notification permission granted');
+          // Remove the event listener once permission is granted
+          document.removeEventListener('click', askPermission);
+        }
+      });
+  }, { once: false });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initializeApp();
+});

@@ -5,36 +5,37 @@ import { store } from '../core/state/index.js';
 import { setCurrentView } from '../core/state/actions.js';
 import { getCurrentView } from '../core/state/selectors.js';
 
-// Define valid routes
 const VIEWS = {
     POST: 'post-view',
     WIKI: 'wiki-view',
+    CHAT: 'chat-view',
     YASGUI: 'yasgui-view',
     DEVELOPER: 'developer-view',
     PROFILE: 'profile-view',
     SETTINGS: 'settings-view'
 };
 
-// Map from route path to view ID
+
 const ROUTE_MAP = {
     'post': VIEWS.POST,
     'wiki': VIEWS.WIKI,
+    'chat': VIEWS.CHAT,
     'sparql': VIEWS.YASGUI,
     'dev': VIEWS.DEVELOPER,
     'profile': VIEWS.PROFILE,
     'settings': VIEWS.SETTINGS
 };
 
-// Map from view ID to module paths for lazy loading
+
 const VIEW_MODULES = {
     [VIEWS.POST]: () => import('./views/post-view.js'),
     [VIEWS.WIKI]: () => import('./views/wiki-view.js'),
+    [VIEWS.CHAT]: () => import('./views/chat-view.js'),
     [VIEWS.YASGUI]: () => import('./views/yasgui-view.js'),
     [VIEWS.DEVELOPER]: () => import('./views/developer-view.js'),
     [VIEWS.PROFILE]: () => import('./views/profile-view.js'),
     [VIEWS.SETTINGS]: () => import('./views/settings-view.js')
 };
-
 // Active view handlers
 const activeViewHandlers = {};
 

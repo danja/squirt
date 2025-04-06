@@ -3,63 +3,99 @@
 ├── babel.config.json
 ├── jasmine.json
 ├── jest.config.js
+├── LICENSE
+├── _notes
+│   ├── architecture-required_2025-04-06.md
+│   ├── requirements_2025-04-06.md
+│   └── _trellis.ttl
 ├── package.json
 ├── package-lock.json
 ├── public
 │   ├── favicon.ico
 │   ├── index.html
-│   ├── main.324fa52b.css
-│   ├── main.bundle.js
-│   ├── manifest.json
-│   └── service-worker.js
+│   ├── main.7aef7464.css
+│   └── main.bundle.js
+├── README.md
 ├── repomix.config.json
 ├── squirt_repomix.md
 ├── src
+│   ├── app.js
 │   ├── config.json
+│   ├── core
+│   │   ├── errors
+│   │   │   ├── error-handler.js
+│   │   │   ├── error-types.js
+│   │   │   └── index.js
+│   │   ├── errors.js
+│   │   ├── events
+│   │   │   ├── event-bus.js
+│   │   │   └── event-constants.js
+│   │   ├── plugin-base.js
+│   │   ├── plugin-manager.js
+│   │   ├── state
+│   │   │   ├── index.js
+│   │   │   └── store.js
+│   │   ├── state.js
+│   │   └── views.js
 │   ├── css
 │   │   ├── form-styles.css
 │   │   ├── layout-fixes.css
 │   │   ├── mobile-fixes.css
+│   │   ├── plugin-styles.css
 │   │   ├── styles.css
 │   │   └── yasgui-styles.css
+│   ├── domain
+│   │   └── rdf
+│   │       └── model.js
 │   ├── html
 │   │   └── index.html
-│   └── js
-│       ├── app.js
-│       ├── core
-│       │   ├── errors.js
-│       │   ├── state.js
-│       │   └── views.js
-│       ├── router.js
-│       ├── services
-│       │   ├── rdf
-│       │   │   ├── rdf-extractor.js
-│       │   │   └── rdf-model.js
-│       │   ├── sparql
-│       │   │   ├── endpoints.js
-│       │   │   └── sparql.js
-│       │   └── templates
-│       │       └── post-article.njk
-│       ├── ui
-│       │   ├── components
-│       │   │   ├── endpoint-indicator.js
-│       │   │   ├── endpoints-list.js
-│       │   │   ├── forms.js
-│       │   │   └── notifications.js
-│       │   └── views
-│       │       ├── settings.js
-│       │       ├── wiki-editor.js
-│       │       └── yasgui-view.js
-│       └── utils
-│           └── utils.js
-├── storage
+│   ├── plugins
+│   │   ├── index.js
+│   │   ├── wiki-plugin.js
+│   │   └── yasgui-plugin.js
+│   ├── services
+│   │   ├── endpoints
+│   │   │   └── endpoints-service.js
+│   │   ├── rdf
+│   │   │   ├── rdf-extractor.js
+│   │   │   └── rdf-model.js
+│   │   ├── sparql
+│   │   │   ├── endpoints.js
+│   │   │   ├── sparql.js
+│   │   │   └── sparql-service.js
+│   │   ├── storage
+│   │   │   └── storage-service.js
+│   │   └── templates
+│   │       └── post-article.njk
+│   ├── ui
+│   │   ├── components
+│   │   │   ├── endpoint-indicator.js
+│   │   │   ├── endpoints-list.js
+│   │   │   ├── forms.js
+│   │   │   └── notifications.js
+│   │   ├── notifications
+│   │   │   ├── notifications.js
+│   │   │   └── router.js
+│   │   ├── router.js
+│   │   └── views
+│   │       ├── settings-view.js
+│   │       ├── wiki-view.js
+│   │       └── yasgui-view.js
+│   └── utils
+│       ├── namespaces.js
+│       └── utils.js
 ├── test
 │   ├── setup.js
 │   └── spec
 │       ├── about.md
+│       ├── enpoints.spec.js
+│       ├── integration-test.js
+│       ├── rdf-model.spec.js
+│       ├── refactoring-plan.md
+│       ├── refactoring-summary.md
 │       ├── sparql1.spec.js
 │       └── sparql.spec.js
 ├── tree.xml
 └── webpack.config.js
 
-18 directories, 45 files
+26 directories, 73 files

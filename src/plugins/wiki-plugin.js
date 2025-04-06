@@ -2,7 +2,7 @@
 // Wiki editor plugin with markdown support
 
 import { PluginBase } from '../core/plugin-base.js';
-import { rdfModel } from '../services/rdf/rdf-model.js';
+import { rdfModel } from '../js/services/rdf/rdf-model.js';
 import { ErrorHandler } from '../core/errors.js';
 import { showNotification } from '../ui/components/notifications.js';
 

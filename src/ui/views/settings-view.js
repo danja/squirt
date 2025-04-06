@@ -1,7 +1,7 @@
 import { state } from '../../core/state.js';
 import { setupEndpointsList } from '../components/endpoints-list.js';
 import { showNotification, initializeNotifications } from '../components/notifications.js';
-import { rdfModel } from '../../services/rdf/rdf-model.js';
+import { rdfModel } from '../../js/services/rdf/rdf-model.js';
 
 /**
  * Initialize the settings view
@@ -12,14 +12,14 @@ export function initializeSettingsView() {
         console.warn('Settings view not found');
         return;
     }
-    
+
     // Setup components
     setupEndpointsList();
     initializeNotifications();
-    
+
     // Setup theme selector if it exists
     setupThemeSelector();
-    
+
     // Setup storage management
     setupStorageManagement();
 }
@@ -30,16 +30,16 @@ export function initializeSettingsView() {
 function setupThemeSelector() {
     const themeSelector = document.getElementById('theme-selector');
     if (!themeSelector) return;
-    
+
     // Get current theme from localStorage or use default
     const currentTheme = localStorage.getItem('squirt_theme') || 'light';
-    
+
     // Set initial value
     themeSelector.value = currentTheme;
-    
+
     // Apply theme to document
     document.documentElement.setAttribute('data-theme', currentTheme);
-    
+
     // Listen for changes
     themeSelector.addEventListener('change', () => {
         const theme = themeSelector.value;
@@ -55,7 +55,7 @@ function setupThemeSelector() {
 function setupStorageManagement() {
     const storageSection = document.querySelector('.storage-section');
     if (!storageSection) return;
-    
+
     // Create export button if it doesn't exist
     if (!document.getElementById('export-data')) {
         const exportBtn = document.createElement('button');
@@ -64,7 +64,7 @@ function setupStorageManagement() {
         exportBtn.addEventListener('click', exportData);
         storageSection.appendChild(exportBtn);
     }
-    
+
     // Create import button if it doesn't exist
     if (!document.getElementById('import-data')) {
         const importBtn = document.createElement('button');
@@ -77,7 +77,7 @@ function setupStorageManagement() {
             fileInput.accept = '.ttl,.json';
             fileInput.style.display = 'none';
             document.body.appendChild(fileInput);
-            
+
             // Listen for file selection
             fileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -86,13 +86,13 @@ function setupStorageManagement() {
                 }
                 document.body.removeChild(fileInput);
             });
-            
+
             // Trigger file dialog
             fileInput.click();
         });
         storageSection.appendChild(importBtn);
     }
-    
+
     // Create clear data button if it doesn't exist
     if (!document.getElementById('clear-data')) {
         const clearBtn = document.createElement('button');
@@ -106,7 +106,7 @@ function setupStorageManagement() {
         });
         storageSection.appendChild(clearBtn);
     }
-    
+
     // Add storage usage info
     updateStorageUsage();
 }
@@ -118,15 +118,15 @@ async function exportData() {
     try {
         // Get RDF dataset
         const dataset = state.get('rdfDataset');
-        
+
         if (!dataset || dataset.size === 0) {
             showNotification('No data to export', 'warning');
             return;
         }
-        
+
         // Convert to Turtle format
         const turtle = dataset.toString();
-        
+
         // Create a download link
         const blob = new Blob([turtle], { type: 'text/turtle' });
         const url = URL.createObjectURL(blob);
@@ -135,17 +135,17 @@ async function exportData() {
         a.href = url;
         a.download = `squirt_export_${date}.ttl`;
         a.style.display = 'none';
-        
+
         // Trigger download
         document.body.appendChild(a);
         a.click();
-        
+
         // Clean up
         setTimeout(() => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }, 100);
-        
+
         showNotification('Data exported successfully', 'success');
     } catch (error) {
         console.error('Error exporting data:', error);
@@ -160,27 +160,27 @@ async function exportData() {
 async function importData(file) {
     try {
         const reader = new FileReader();
-        
+
         reader.onload = async (e) => {
             try {
                 const content = e.target.result;
-                
+
                 // Try to parse as Turtle
                 try {
                     const dataset = await rdfModel.parseFromString(content);
-                    
+
                     // Merge with existing dataset
                     const currentDataset = state.get('rdfDataset');
                     dataset.forEach(quad => {
                         currentDataset.add(quad);
                     });
-                    
+
                     // Update state
                     state.update('rdfDataset', currentDataset);
-                    
+
                     // Save to cache
                     rdfModel.saveToCache(currentDataset);
-                    
+
                     showNotification('Data imported successfully', 'success');
                 } catch (parseError) {
                     console.error('Error parsing imported data:', parseError);
@@ -191,11 +191,11 @@ async function importData(file) {
                 showNotification('Failed to import data', 'error');
             }
         };
-        
+
         reader.onerror = () => {
             showNotification('Failed to read file', 'error');
         };
-        
+
         reader.readAsText(file);
     } catch (error) {
         console.error('Error importing data:', error);
@@ -210,24 +210,24 @@ function clearAllData() {
     try {
         // Clear RDF dataset
         state.update('rdfDataset', rdfModel.createEmptyDataset());
-        
+
         // Clear localStorage except for settings
         const themeSettings = localStorage.getItem('squirt_theme');
         const endpointSettings = localStorage.getItem('squirt_endpoints');
-        
+
         localStorage.clear();
-        
+
         // Restore settings
         if (themeSettings) {
             localStorage.setItem('squirt_theme', themeSettings);
         }
-        
+
         if (endpointSettings) {
             localStorage.setItem('squirt_endpoints', endpointSettings);
         }
-        
+
         showNotification('All data has been cleared', 'success');
-        
+
         // Update storage usage display
         updateStorageUsage();
     } catch (error) {
@@ -247,7 +247,7 @@ function updateStorageUsage() {
         usageElement.id = 'storage-usage';
         document.querySelector('.storage-section')?.appendChild(usageElement);
     }
-    
+
     // Calculate localStorage usage
     let total = 0;
     for (const key in localStorage) {
@@ -255,7 +255,7 @@ function updateStorageUsage() {
             total += localStorage[key].length * 2; // Approximate size in bytes
         }
     }
-    
+
     // Format size
     let size;
     if (total < 1024) {
@@ -265,7 +265,7 @@ function updateStorageUsage() {
     } else {
         size = `${(total / (1024 * 1024)).toFixed(2)} MB`;
     }
-    
+
     // Update display
     usageElement.textContent = `Storage used: ${size}`;
 }

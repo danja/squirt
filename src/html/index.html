@@ -9,15 +9,25 @@
     <meta name="theme-color" content="#3498db">
     <title>Squirt</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    
-    <!-- PWA manifest -->
+
+    <!-- PWA support -->
     <link rel="manifest" href="/manifest.json">
+    <meta name="description" content="Post information to the web easily with Squirt">
     
     <!-- iOS PWA support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Squirt">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    
+    <!-- iOS splash screens -->
+    <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
 </head>
 
 <body>
@@ -36,14 +46,15 @@
     <div class="status-light checking"></div>
     <span class="status-tooltip-icon">?</span>
 </div>
-        <nav>
-            <a href="#" data-view="post-view">Post</a>
-            <a href="#" data-view="wiki-view">Wiki</a>
-            <a href="#" data-view="yasgui-view">SPARQL</a>
-            <a href="#" data-view="developer-view">Developer</a>
-            <a href="#" data-view="profile-view">Profile</a>
-            <a href="#" data-view="settings-view">Settings</a>
-        </nav>
+<nav>
+    <a href="#" data-view="post-view">Post</a>
+    <a href="#" data-view="wiki-view">Wiki</a>
+    <a href="#" data-view="chat-view">Chat</a>
+    <a href="#" data-view="yasgui-view">SPARQL</a>
+    <a href="#" data-view="developer-view">Developer</a>
+    <a href="#" data-view="profile-view">Profile</a>
+    <a href="#" data-view="settings-view">Settings</a>
+</nav>
         
     </header>
     
@@ -117,7 +128,18 @@
             <h2>SPARQL Query Editor</h2>
             <div id="yasgui-container" class="yasgui-container"></div>
         </div>
-        
+       
+        <div id="chat-view" class="view hidden">
+            <h2>Chat</h2>
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-container">
+                    <textarea id="chat-input" placeholder="Type a message..."></textarea>
+                    <button id="send-message" class="button-primary">Send</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Developer View -->
         <div id="developer-view" class="view hidden">
             <h2>Developer Tools</h2>

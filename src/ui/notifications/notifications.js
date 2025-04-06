@@ -11,24 +11,24 @@ let notificationsContainer;
  */
 export function initNotifications() {
   console.log('Initializing notifications system');
-  
+
   // Create container if it doesn't exist
   if (!notificationsContainer) {
     notificationsContainer = document.querySelector('.notifications-container');
-    
+
     if (!notificationsContainer) {
       notificationsContainer = document.createElement('div');
       notificationsContainer.className = 'notifications-container';
       document.body.appendChild(notificationsContainer);
     }
   }
-  
+
   // Subscribe to state changes
   store.subscribe(renderNotifications);
-  
+
   // Subscribe to notification events
   eventBus.on(EVENTS.NOTIFICATION_SHOW, handleNotificationEvent);
-  
+
   // Add global function for components to use
   window.showNotification = showNotification;
 }
@@ -53,7 +53,7 @@ function handleNotificationEvent(notification) {
  */
 export function showNotification(message, type = 'info', duration = 5000) {
   const id = Date.now();
-  
+
   // Add to state
   store.dispatch(showNotificationAction({
     id,
@@ -62,14 +62,14 @@ export function showNotification(message, type = 'info', duration = 5000) {
     duration,
     timestamp: new Date().toISOString()
   }));
-  
+
   // Set timeout to remove if duration is specified
   if (duration > 0) {
     setTimeout(() => {
       store.dispatch(hideNotification(id));
     }, duration);
   }
-  
+
   return id;
 }
 
@@ -86,22 +86,22 @@ export function hideNotificationById(id) {
  */
 function renderNotifications() {
   const notifications = getNotifications(store.getState());
-  
+
   // Clear existing DOM notifications
   const existingElements = notificationsContainer.querySelectorAll('.notification');
   const existingIds = new Set();
-  
+
   existingElements.forEach(element => {
     const id = parseInt(element.dataset.id, 10);
     existingIds.add(id);
-    
+
     // If notification is no longer in state, remove it with animation
     if (!notifications.find(n => n.id === id)) {
       element.classList.add('fade-out');
       setTimeout(() => element.remove(), 300);
     }
   });
-  
+
   // Add new notifications
   notifications.forEach(notification => {
     if (!existingIds.has(notification.id)) {
@@ -119,7 +119,7 @@ function createNotificationElement(notification) {
   element.className = `notification ${notification.type}`;
   element.dataset.id = notification.id;
   element.textContent = notification.message;
-  
+
   // Add close button if duration is 0 (permanent)
   if (notification.duration === 0) {
     const closeButton = document.createElement('button');
@@ -130,10 +130,10 @@ function createNotificationElement(notification) {
     });
     element.appendChild(closeButton);
   }
-  
+
   // Add to container
   notificationsContainer.appendChild(element);
-  
+
   return element;
 }
 
