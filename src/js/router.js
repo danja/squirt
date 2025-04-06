@@ -2,6 +2,7 @@
 import { state } from './core/state.js';
 import { ErrorHandler } from './core/errors.js';
 import { VIEWS } from './core/views.js';
+import { pluginManager } from './core/plugin-manager.js';
 
 /**
  * Initialize the router
@@ -22,20 +23,26 @@ export function initializeRouter() {
 function handleRoute(hash, validRoutes) {
     try {
         const route = hash.slice(1) || 'post';
-        
+
         if (!validRoutes.includes(route)) {
             throw new Error(`Invalid route: ${route}`);
         }
 
         const viewId = `${route}-view`;
         const view = document.getElementById(viewId);
-        
+
         if (!view) {
             throw new Error(`View not found: ${viewId}`);
         }
 
         const currentView = state.get('currentView');
-        
+
+        // Early check if the view is already active
+        if (currentView === viewId) {
+            console.log(`View ${viewId} is already active`);
+            return;
+        }
+
         // Fire route change event
         const event = new CustomEvent('routeChange', {
             detail: {
@@ -62,25 +69,12 @@ function handleRoute(hash, validRoutes) {
                 viewElement.classList.add('hidden');
             }
         });
-        
+
         // Show requested view
         view.classList.remove('hidden');
-        
-        // Special handling for YASGUI
-        if (viewId === VIEWS.YASGUI) {
-            // Import the YASGUI view module and initialize it
-            import('./ui/views/yasgui-view.js')
-                .then(module => {
-                    if (typeof module.initializeYasguiView === 'function') {
-                        // Delay to ensure view is visible
-                        setTimeout(() => module.initializeYasguiView(), 100);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading YASGUI module:', error);
-                });
-        }
 
+        // Let the plugin manager handle plugin loading/unloading
+        // The plugin manager listens for routeChange events directly
     } catch (error) {
         ErrorHandler.handle(error);
         if (hash !== '#post') {

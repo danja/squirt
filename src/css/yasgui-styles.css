@@ -7,6 +7,22 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   background: white;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Loading state - visible container but still loading */
+.yasgui-container-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.yasgui-container-loading::after {
+  content: "Loading SPARQL editor...";
+  font-size: 1rem;
+  color: var(--text-color);
 }
 
 /* Initialization button container */
@@ -15,6 +31,7 @@
   justify-content: center;
   align-items: center;
   height: 100%;
+  background: #f9f9f9;
 }
 
 .yasgui-init button {
@@ -33,6 +50,11 @@
   background-color: #2980b9;
 }
 
+.yasgui-init button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
 /* Error message */
 .error-message {
   padding: 15px;
@@ -41,6 +63,19 @@
   border: 1px solid #f5c6cb;
   border-radius: 4px;
   margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-message button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 /* YASGUI specific styles */
@@ -56,6 +91,7 @@
 
 .yasgui .yasqe .CodeMirror {
   height: 100% !important;
+  font-family: monospace !important;
 }
 
 /* Results area styles */
@@ -70,13 +106,13 @@
 
 /* Ensure buttons have correct theme */
 .yasgui button.btn-primary {
-  background-color: var(--primary-color, #3498db);
-  border-color: var(--primary-color, #3498db);
+  background-color: var(--primary-color, #3498db) !important;
+  border-color: var(--primary-color, #3498db) !important;
 }
 
 .yasgui button.btn-primary:hover {
-  background-color: #2980b9;
-  border-color: #2980b9;
+  background-color: #2980b9 !important;
+  border-color: #2980b9 !important;
 }
 
 /* Make results tables more readable */
@@ -102,4 +138,21 @@
   text-align: left;
   background-color: var(--primary-color, #3498db);
   color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .yasgui-container {
+    height: 500px;
+  }
+  
+  .yasgui .yasqe .CodeMirror {
+    font-size: 13px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .yasgui-container {
+    height: 700px;
+  }
 }
