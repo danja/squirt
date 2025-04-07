@@ -6,6 +6,9 @@
 ├── LICENSE
 ├── _notes
 │   ├── architecture-required_2025-04-06.md
+│   ├── certs
+│   │   ├── localhost.crt
+│   │   └── localhost.key
 │   ├── requirements_2025-04-06.md
 │   └── _trellis.ttl
 ├── package.json
@@ -14,9 +17,11 @@
 │   ├── favicon.ico
 │   ├── index.html
 │   ├── main.7aef7464.css
-│   └── main.bundle.js
+│   ├── main.bundle.js
+│   └── manifest-json.json
 ├── README.md
 ├── repomix.config.json
+├── service-worker.js
 ├── squirt_repomix.md
 ├── src
 │   ├── app.js
@@ -78,6 +83,8 @@
 │   │   │   └── router.js
 │   │   ├── router.js
 │   │   └── views
+│   │       ├── chat-view.js
+│   │       ├── profile-view.js
 │   │       ├── settings-view.js
 │   │       ├── wiki-view.js
 │   │       └── yasgui-view.js
@@ -88,8 +95,11 @@
 │   ├── setup.js
 │   └── spec
 │       ├── about.md
+│       ├── chat-view.spec.js
 │       ├── enpoints.spec.js
 │       ├── integration-test.js
+│       ├── profile.view.spec.js
+│       ├── pwa.spec.js
 │       ├── rdf-model.spec.js
 │       ├── refactoring-plan.md
 │       ├── refactoring-summary.md
@@ -98,4 +108,4 @@
 ├── tree.xml
 └── webpack.config.js
 
-26 directories, 73 files
+27 directories, 82 files

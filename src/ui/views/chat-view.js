@@ -1,58 +1,57 @@
-// src/ui/views/chat-view.js
-import { eventBus, EVENTS } from '../../core/events/event-bus.js';
-import { errorHandler } from '../../core/errors/index.js';
-import { store } from '../../core/state/index.js';
-import { showNotification } from '../notifications/notifications.js';
-import { rdfModel } from '../../domain/rdf/model.js';
+import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { errorHandler } from '../../core/errors/index.js'
+import { store } from '../../core/state/index.js'
+import { showNotification } from '../notifications/notifications.js'
+import { rdfModel } from '../../domain/rdf/model.js'
 
 /**
- * Initialize the chat view
- * @returns {Object} View controller with methods for updating and cleaning up
+ * Initialize the Chat view
+ * @returns {Object} View handler with update and cleanup methods
  */
 export function initView() {
     try {
-        console.log('Initializing Chat view');
-        
-        const view = document.getElementById('chat-view');
+        console.log('Initializing Chat view')
+
+        const view = document.getElementById('chat-view')
         if (!view) {
-            throw new Error('Chat view element not found');
+            throw new Error('Chat view element not found')
         }
-        
-        // Create view structure if it doesn't exist
+
+        // Create chat interface if not already present
         if (!view.querySelector('.chat-container')) {
-            createChatInterface(view);
+            createChatInterface(view)
         }
-        
-        // Set up event listeners
-        setupEventListeners();
-        
+
+        // Set up event listeners for the chat view
+        setupEventListeners()
+
         // Load existing messages
-        loadMessages();
-        
+        loadMessages()
+
         return {
             update() {
-                console.log('Updating Chat view');
-                loadMessages();
+                console.log('Updating Chat view')
+                loadMessages()
             },
-            
+
             cleanup() {
-                console.log('Cleaning up Chat view');
-                // Remove any event listeners specific to this view
+                console.log('Cleaning up Chat view')
+                // Remove any event listeners if needed
             }
-        };
+        }
     } catch (error) {
         errorHandler.handle(error, {
             showToUser: true,
             context: 'Initializing Chat view'
-        });
-        
-        return {};
+        })
+
+        return {}
     }
 }
 
 /**
- * Create the chat interface UI elements
- * @param {HTMLElement} container - The view container element
+ * Create the chat interface elements
+ * @param {HTMLElement} container - The container element
  */
 function createChatInterface(container) {
     container.innerHTML = `
@@ -64,12 +63,12 @@ function createChatInterface(container) {
                 <button id="send-message" class="button-primary">Send</button>
             </div>
         </div>
-    `;
-    
-    // Add styles if not already in the document
+    `
+
+    // Add styles for the chat interface if not already present
     if (!document.getElementById('chat-styles')) {
-        const styleElement = document.createElement('style');
-        styleElement.id = 'chat-styles';
+        const styleElement = document.createElement('style')
+        styleElement.id = 'chat-styles'
         styleElement.textContent = `
             .chat-container {
                 display: flex;
@@ -80,7 +79,7 @@ function createChatInterface(container) {
                 box-shadow: var(--shadow);
                 overflow: hidden;
             }
-            
+
             .chat-messages {
                 flex: 1;
                 overflow-y: auto;
@@ -88,43 +87,43 @@ function createChatInterface(container) {
                 display: flex;
                 flex-direction: column;
             }
-            
+
             .chat-message {
                 margin-bottom: var(--spacing-md);
                 padding: var(--spacing-sm) var(--spacing-md);
                 border-radius: var(--border-radius);
                 max-width: 80%;
             }
-            
+
             .chat-message.outgoing {
                 align-self: flex-end;
                 background-color: var(--primary-color);
                 color: white;
             }
-            
+
             .chat-message.incoming {
                 align-self: flex-start;
                 background-color: var(--card-background);
                 border: 1px solid var(--border-color);
             }
-            
+
             .chat-message-content {
                 word-break: break-word;
             }
-            
+
             .chat-message-time {
                 font-size: 0.75rem;
                 opacity: 0.7;
                 margin-top: var(--spacing-xs);
                 text-align: right;
             }
-            
+
             .chat-input-container {
                 display: flex;
                 padding: var(--spacing-md);
                 border-top: 1px solid var(--border-color);
             }
-            
+
             #chat-input {
                 flex: 1;
                 border: 1px solid var(--border-color);
@@ -133,165 +132,165 @@ function createChatInterface(container) {
                 resize: none;
                 min-height: 3rem;
             }
-            
+
             #send-message {
                 margin-left: var(--spacing-md);
                 align-self: flex-end;
             }
-            
+
             @media (max-width: 768px) {
                 .chat-container {
                     height: calc(100vh - 200px);
                 }
-                
+
                 .chat-message {
                     max-width: 90%;
                 }
             }
-        `;
-        document.head.appendChild(styleElement);
+        `
+        document.head.appendChild(styleElement)
     }
 }
 
 /**
- * Set up event listeners for the chat interface
+ * Set up event listeners for the chat view
  */
 function setupEventListeners() {
-    const sendButton = document.getElementById('send-message');
-    const chatInput = document.getElementById('chat-input');
-    
+    const sendButton = document.getElementById('send-message')
+    const chatInput = document.getElementById('chat-input')
+
     if (sendButton && chatInput) {
         // Send message on button click
         sendButton.addEventListener('click', () => {
-            sendMessage(chatInput.value);
-        });
-        
-        // Send message on Enter key (but allow Shift+Enter for new line)
+            sendMessage(chatInput.value)
+        })
+
+        // Send message on Enter key (without Shift)
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(chatInput.value);
+                e.preventDefault()
+                sendMessage(chatInput.value)
             }
-        });
+        })
     }
-    
-    // Listen for new messages from other clients/sources
+
+    // Listen for new posts from other components
     eventBus.on(EVENTS.POST_CREATED, (post) => {
         if (post.type === 'chat') {
-            addMessageToUI(post, false);
+            addMessageToUI(post, false)
         }
-    });
+    })
 }
 
 /**
- * Send a chat message
+ * Send a new chat message
  * @param {string} content - The message content
  */
 function sendMessage(content) {
     if (!content || !content.trim()) {
-        return;
+        return
     }
-    
+
     try {
-        const chatInput = document.getElementById('chat-input');
-        
-        // Create chat message post
+        const chatInput = document.getElementById('chat-input')
+
+        // Create post data for the message
         const postData = {
             type: 'chat',
             content: content.trim(),
             tags: ['chat'],
             created: new Date().toISOString()
-        };
-        
-        // Save to RDF store
-        const postId = rdfModel.createPost(postData);
-        
-        // Clear input field
-        if (chatInput) {
-            chatInput.value = '';
         }
-        
+
+        // Create the post in the RDF model
+        const postId = rdfModel.createPost(postData)
+
+        // Clear the input field
+        if (chatInput) {
+            chatInput.value = ''
+        }
+
         // Add message to UI
         addMessageToUI({
             id: postId,
             ...postData
-        }, true);
-        
+        }, true)
+
         // Try to sync with endpoint
         rdfModel.syncWithEndpoint().catch(error => {
-            console.warn('Message saved locally but failed to sync with endpoint', error);
-        });
-        
+            console.warn('Message saved locally but failed to sync with endpoint', error)
+        })
+
     } catch (error) {
         errorHandler.handle(error, {
             showToUser: true,
             context: 'Sending chat message'
-        });
+        })
     }
 }
 
 /**
  * Add a message to the UI
- * @param {Object} message - The message data
- * @param {boolean} outgoing - Whether this is an outgoing message
+ * @param {Object} message - The message object
+ * @param {boolean} outgoing - Whether the message is outgoing (from the current user)
  */
 function addMessageToUI(message, outgoing = false) {
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-    
-    const messageElement = document.createElement('div');
-    messageElement.className = `chat-message ${outgoing ? 'outgoing' : 'incoming'}`;
-    messageElement.dataset.id = message.id;
-    
-    const content = document.createElement('div');
-    content.className = 'chat-message-content';
-    content.textContent = message.content;
-    
-    const time = document.createElement('div');
-    time.className = 'chat-message-time';
-    time.textContent = new Date(message.created).toLocaleTimeString();
-    
-    messageElement.appendChild(content);
-    messageElement.appendChild(time);
-    
-    chatMessages.appendChild(messageElement);
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const chatMessages = document.getElementById('chat-messages')
+    if (!chatMessages) return
+
+    const messageElement = document.createElement('div')
+    messageElement.className = `chat-message ${outgoing ? 'outgoing' : 'incoming'}`
+    messageElement.dataset.id = message.id
+
+    const content = document.createElement('div')
+    content.className = 'chat-message-content'
+    content.textContent = message.content
+
+    const time = document.createElement('div')
+    time.className = 'chat-message-time'
+    time.textContent = new Date(message.created).toLocaleTimeString()
+
+    messageElement.appendChild(content)
+    messageElement.appendChild(time)
+
+    chatMessages.appendChild(messageElement)
+
+    // Scroll to the bottom to show the new message
+    chatMessages.scrollTop = chatMessages.scrollHeight
 }
 
 /**
- * Load existing messages from the store
+ * Load existing messages from the RDF store
  */
 function loadMessages() {
     try {
-        const chatMessages = document.getElementById('chat-messages');
-        if (!chatMessages) return;
-        
+        const chatMessages = document.getElementById('chat-messages')
+        if (!chatMessages) return
+
         // Clear existing messages
-        chatMessages.innerHTML = '';
-        
+        chatMessages.innerHTML = ''
+
         // Get chat posts from RDF store
         const messages = rdfModel.getPosts({
             type: 'chat',
             limit: 50
-        });
-        
-        // Sort by creation time
-        messages.sort((a, b) => new Date(a.created) - new Date(b.created));
-        
-        // Add to UI
+        })
+
+        // Sort messages by creation time
+        messages.sort((a, b) => new Date(a.created) - new Date(b.created))
+
+        // Add messages to UI
         messages.forEach(message => {
-            // Simple heuristic to determine if message is outgoing or incoming
-            // This should be enhanced with proper user identification
-            const isOutgoing = message.created % 2 === 0; // Dummy logic for demo
-            addMessageToUI(message, isOutgoing);
-        });
-        
+            // For demo purposes, alternate between incoming and outgoing messages
+            // In a real app, you would check the message sender
+            const isOutgoing = message.created % 2 === 0
+            addMessageToUI(message, isOutgoing)
+        })
+
     } catch (error) {
         errorHandler.handle(error, {
             showToUser: true,
             context: 'Loading chat messages'
-        });
+        })
     }
 }
