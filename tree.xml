@@ -15,10 +15,7 @@
 ├── package-lock.json
 ├── public
 │   ├── favicon.ico
-│   ├── index.html
-│   ├── main.7aef7464.css
-│   ├── main.bundle.js
-│   └── manifest-json.json
+│   └── index.html
 ├── README.md
 ├── repomix.config.json
 ├── service-worker.js
@@ -38,7 +35,9 @@
 │   │   ├── plugin-base.js
 │   │   ├── plugin-manager.js
 │   │   ├── state
+│   │   │   ├── actions.js
 │   │   │   ├── index.js
+│   │   │   ├── selectors.js
 │   │   │   └── store.js
 │   │   ├── state.js
 │   │   └── views.js
@@ -83,6 +82,8 @@
 │   │   ├── router.js
 │   │   └── views
 │   │       ├── chat-view.js
+│   │       ├── developer-view.js
+│   │       ├── post-view.js
 │   │       ├── profile-view.js
 │   │       ├── settings-view.js
 │   │       ├── wiki-view.js
@@ -107,4 +108,4 @@
 ├── tree.xml
 └── webpack.config.js
 
-27 directories, 81 files
+27 directories, 82 files
