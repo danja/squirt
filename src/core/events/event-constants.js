@@ -1,9 +1,9 @@
-// src/core/events/event-constants.js
 /**
- * Application event type constants
+ * Application event constants
+ * @type {Object}
  */
 export const EVENTS = {
-    // Application events
+    // Application lifecycle events
     APP_INITIALIZED: 'app:initialized',
 
     // State events
@@ -38,4 +38,4 @@ export const EVENTS = {
 
     // Error events
     ERROR_OCCURRED: 'error:occurred'
-};
+}

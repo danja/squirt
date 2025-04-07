@@ -1,231 +1,146 @@
-import { SparqlError, NetworkError } from '../../core/errors/error-types.js'
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { state } from '../../core/state.js'
+import { errorHandler } from '../../core/errors/index.js'
 
 /**
- * Service for SPARQL operations
+ * Get active endpoint of specified type
+ * @param {string} type - Endpoint type ('query' or 'update')
+ * @returns {Object} Endpoint configuration
+ * @throws {Error} If no active endpoint is available
  */
-export class SparqlService {
-  /**
-   * Create SPARQL service
-   * @param {Function} getEndpointFn - Function to get active endpoint
-   */
-  constructor(getEndpointFn) {
-    this.getEndpointFn = getEndpointFn
+export function getEndpoint(type) {
+  const endpoints = state.get('endpoints') || []
+  const endpoint = endpoints.find(e => e.type === type && e.status === 'active')
+
+  if (!endpoint) {
+    throw new Error(`No active ${type} endpoint available. Please check your SPARQL configuration.`)
   }
 
-  /**
-   * Execute SPARQL query
-   * @param {string} query - SPARQL query string
-   * @returns {Promise<Object>} Query results
-   */
-  async querySparql(query) {
-    if (!query) {
-      throw new SparqlError('Query is required')
-    }
+  return endpoint
+}
 
-    try {
-      const endpoint = this.getEndpointFn('query')
-
-      if (!endpoint) {
-        throw new SparqlError('No active query endpoint available')
-      }
-
-      const headers = {
-        'Content-Type': 'application/sparql-query',
-        'Accept': 'application/sparql-results+json, application/json'
-      }
-
-      // Add authentication if provided
-      if (endpoint.credentials) {
-        const { user, password } = endpoint.credentials
-        const auth = btoa(`${user}:${password}`)
-        headers['Authorization'] = `Basic ${auth}`
-      }
-
-      eventBus.emit(EVENTS.SPARQL_QUERY_STARTED, { query, endpoint: endpoint.url })
-
-      try {
-        const response = await fetch(endpoint.url, {
-          method: 'POST',
-          headers,
-          body: query
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new SparqlError(`SPARQL query failed: ${response.status} ${errorText}`, {
-            query,
-            endpoint: endpoint.url,
-            status: response.status,
-            response: errorText
-          })
-        }
-
-        const result = await response.json()
-
-        eventBus.emit(EVENTS.SPARQL_QUERY_COMPLETED, {
-          query,
-          endpoint: endpoint.url,
-          resultCount: result.results?.bindings?.length || 0
-        })
-
-        return result
-      } catch (error) {
-        if (error instanceof SparqlError) {
-          throw error
-        }
-
-        if (error.message.includes('fetch')) {
-          throw new NetworkError(`Network error when querying endpoint ${endpoint.url}`, {
-            query,
-            endpoint: endpoint.url,
-            originalError: error
-          })
-        }
-
-        throw new SparqlError(`Error querying endpoint ${endpoint.url}`, {
-          query,
-          endpoint: endpoint.url,
-          originalError: error
-        })
-      }
-    } catch (error) {
-      eventBus.emit(EVENTS.SPARQL_QUERY_FAILED, {
-        query,
-        error
-      })
-      throw error
-    }
+/**
+ * Post RDF dataset to SPARQL endpoint
+ * @param {Object} dataset - RDF dataset
+ * @returns {Promise<boolean>} Success status
+ * @throws {Error} If posting fails
+ */
+export async function postToSparql(dataset) {
+  if (!dataset) {
+    throw new Error('Dataset is required')
   }
 
-  /**
-   * Post RDF data to SPARQL endpoint
-   * @param {Object} dataset - RDF dataset
-   * @returns {Promise<boolean>} True if successful
-   */
-  async postToSparql(dataset) {
-    if (!dataset) {
-      throw new SparqlError('Dataset is required')
+  const endpoint = getEndpoint('update')
+  const insertQuery = `
+    INSERT DATA {
+      ${dataset.toString()}
+    }
+  `
+
+  try {
+    const headers = {
+      'Content-Type': 'application/sparql-update',
+      'Accept': 'application/json, */*'
     }
 
-    try {
-      const endpoint = this.getEndpointFn('update')
-
-      if (!endpoint) {
-        throw new SparqlError('No active update endpoint available')
-      }
-
-      const insertQuery = `
-        INSERT DATA {
-          ${dataset.toString()}
-        }
-      `
-
-      const headers = {
-        'Content-Type': 'application/sparql-update',
-        'Accept': 'application/json, */*'
-      }
-
-      // Add authentication if provided
-      if (endpoint.credentials) {
-        const { user, password } = endpoint.credentials
-        const auth = btoa(`${user}:${password}`)
-        headers['Authorization'] = `Basic ${auth}`
-      }
-
-      eventBus.emit(EVENTS.SPARQL_UPDATE_STARTED, {
-        endpoint: endpoint.url,
-        datasetSize: dataset.size
-      })
-
-      try {
-        const response = await fetch(endpoint.url, {
-          method: 'POST',
-          headers,
-          body: insertQuery
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          throw new SparqlError(`SPARQL update failed: ${response.status} ${errorText}`, {
-            endpoint: endpoint.url,
-            status: response.status,
-            response: errorText
-          })
-        }
-
-        eventBus.emit(EVENTS.SPARQL_UPDATE_COMPLETED, {
-          endpoint: endpoint.url,
-          datasetSize: dataset.size
-        })
-
-        return true
-      } catch (error) {
-        if (error instanceof SparqlError) {
-          throw error
-        }
-
-        if (error.message.includes('fetch')) {
-          throw new NetworkError(`Network error when updating endpoint ${endpoint.url}`, {
-            endpoint: endpoint.url,
-            originalError: error
-          })
-        }
-
-        throw new SparqlError(`Error updating endpoint ${endpoint.url}`, {
-          endpoint: endpoint.url,
-          originalError: error
-        })
-      }
-    } catch (error) {
-      eventBus.emit(EVENTS.SPARQL_UPDATE_FAILED, {
-        error
-      })
-      throw error
+    // Add authentication if provided
+    if (endpoint.credentials) {
+      const { user, password } = endpoint.credentials
+      const auth = btoa(`${user}:${password}`)
+      headers['Authorization'] = `Basic ${auth}`
     }
-  }
 
-  /**
-   * Test if an endpoint is active
-   * @param {string} url - Endpoint URL
-   * @param {Object} credentials - Authentication credentials
-   * @returns {Promise<boolean>} True if endpoint is active
-   */
-  async testEndpoint(url, credentials) {
-    try {
-      const headers = {
-        'Content-Type': 'application/sparql-query',
-        'Accept': 'application/sparql-results+json, application/json'
-      }
+    const response = await fetch(endpoint.url, {
+      method: 'POST',
+      headers,
+      body: insertQuery
+    })
 
-      if (credentials) {
-        const { user, password } = credentials
-        const auth = btoa(`${user}:${password}`)
-        headers['Authorization'] = `Basic ${auth}`
-      }
-
-      // Simple ASK query to test endpoint
-      const query = 'ASK { ?s ?p ?o } LIMIT 1'
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: query
-      })
-
-      return response.ok
-    } catch (error) {
-      console.warn(`Endpoint test failed for ${url}:`, error)
-      return false
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`SPARQL update failed for endpoint ${endpoint.url}: ${response.status} ${errorText}`)
     }
+    return true
+  } catch (error) {
+    errorHandler.handle(error)
+    throw error
   }
 }
 
 /**
- * Create a new SPARQL service
- * @param {Function} getEndpointFn - Function to get active endpoint
- * @returns {SparqlService} SPARQL service
+ * Execute SPARQL query
+ * @param {string} query - SPARQL query
+ * @returns {Promise<Object>} Query results
+ * @throws {Error} If query fails
  */
-export function createSparqlService(getEndpointFn) {
-  return new SparqlService(getEndpointFn)
+export async function querySparql(query) {
+  if (!query) {
+    throw new Error('Query is required')
+  }
+
+  const endpoint = getEndpoint('query')
+
+  try {
+    const headers = {
+      'Content-Type': 'application/sparql-query',
+      'Accept': 'application/sparql-results+json, application/json'
+    }
+
+    // Add authentication if provided
+    if (endpoint.credentials) {
+      const { user, password } = endpoint.credentials
+      const auth = btoa(`${user}:${password}`)
+      headers['Authorization'] = `Basic ${auth}`
+    }
+
+    const response = await fetch(endpoint.url, {
+      method: 'POST',
+      headers,
+      body: query
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`SPARQL query failed for endpoint ${endpoint.url}: ${response.status} ${errorText}\n${query}`)
+    }
+
+    return response.json()
+  } catch (error) {
+    errorHandler.handle(error)
+    throw error
+  }
+}
+
+/**
+ * Test if an endpoint is available
+ * @param {string} url - Endpoint URL
+ * @param {Object} credentials - Credentials for authentication
+ * @returns {Promise<boolean>} Endpoint status
+ */
+export async function testEndpoint(url, credentials) {
+  try {
+    const headers = {
+      'Content-Type': 'application/sparql-query',
+      'Accept': 'application/sparql-results+json, application/json'
+    }
+
+    if (credentials) {
+      const { user, password } = credentials
+      const auth = btoa(`${user}:${password}`)
+      headers['Authorization'] = `Basic ${auth}`
+    }
+
+    // Simple ASK query to test endpoint
+    const query = 'ASK { ?s ?p ?o } LIMIT 1'
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: query
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error(`Endpoint test failed for ${url}:`, error)
+    return false
+  }
 }

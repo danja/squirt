@@ -11,7 +11,7 @@ let notificationsContainer
 export function initNotifications() {
   console.log('Initializing notifications system')
 
-  // Find or create notifications container
+  // Create or find notifications container
   if (!notificationsContainer) {
     notificationsContainer = document.querySelector('.notifications-container')
 
@@ -22,19 +22,19 @@ export function initNotifications() {
     }
   }
 
-  // Subscribe to store changes to render notifications
+  // Subscribe to state changes to render notifications
   store.subscribe(renderNotifications)
 
-  // Subscribe to notification show events
+  // Listen for notification events
   eventBus.on(EVENTS.NOTIFICATION_SHOW, handleNotificationEvent)
 
-  // Create global notification function
+  // Expose showNotification to window for easy access
   window.showNotification = showNotification
 }
 
 /**
- * Handle notification events
- * @param {Object} notification - Notification data
+ * Handle notification event
+ * @param {Object} notification - Notification details
  */
 function handleNotificationEvent(notification) {
   showNotification(
@@ -47,14 +47,14 @@ function handleNotificationEvent(notification) {
 /**
  * Show a notification
  * @param {string} message - Notification message
- * @param {string} type - Notification type ('info', 'success', 'error', 'warning')
- * @param {number} duration - Duration in ms (0 for persistent)
+ * @param {string} type - Notification type (info, success, error, warning)
+ * @param {number} duration - Display duration in ms, 0 for permanent
  * @returns {number} Notification ID
  */
 export function showNotification(message, type = 'info', duration = 5000) {
   const id = Date.now()
 
-  // Add notification to store
+  // Dispatch notification to store
   store.dispatch(showNotificationAction({
     id,
     message,
@@ -63,7 +63,7 @@ export function showNotification(message, type = 'info', duration = 5000) {
     timestamp: new Date().toISOString()
   }))
 
-  // Set timeout to auto-hide notification
+  // Auto-hide after duration if specified
   if (duration > 0) {
     setTimeout(() => {
       store.dispatch(hideNotification(id))
@@ -82,7 +82,7 @@ export function hideNotificationById(id) {
 }
 
 /**
- * Render notifications from store
+ * Render notifications based on current state
  */
 function renderNotifications() {
   const notifications = getNotifications(store.getState())
@@ -95,7 +95,7 @@ function renderNotifications() {
     const id = parseInt(element.dataset.id, 10)
     existingIds.add(id)
 
-    // Remove elements that are no longer in the store
+    // Remove elements that are no longer in state
     if (!notifications.find(n => n.id === id)) {
       element.classList.add('fade-out')
       setTimeout(() => element.remove(), 300)
@@ -111,8 +111,8 @@ function renderNotifications() {
 }
 
 /**
- * Create a notification DOM element
- * @param {Object} notification - Notification data
+ * Create notification DOM element
+ * @param {Object} notification - Notification details
  * @returns {HTMLElement} Notification element
  */
 function createNotificationElement(notification) {
@@ -138,7 +138,7 @@ function createNotificationElement(notification) {
   return element
 }
 
-// Helper functions for common notification types
+// Convenience methods
 export const showSuccess = (msg, duration) => showNotification(msg, 'success', duration)
 export const showError = (msg, duration) => showNotification(msg, 'error', duration)
 export const showInfo = (msg, duration) => showNotification(msg, 'info', duration)

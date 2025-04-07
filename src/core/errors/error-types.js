@@ -1,117 +1,107 @@
-// src/core/errors/error-types.js
 /**
- * Base application error class
+ * Base error class for all application errors
+ * @extends Error
  */
 export class AppError extends Error {
-  constructor(message, code, details = {}) {
-    super(message);
-    this.name = this.constructor.name;
-    this.code = code;
-    this.details = details;
-    this.timestamp = new Date();
+  /**
+   * Create a new AppError
+   * @param {string} message - Error message
+   * @param {string} code - Error code
+   * @param {Object} details - Error details
+   */
+  constructor(message, code = 'APP_ERROR', details = {}) {
+    super(message)
+    this.name = this.constructor.name
+    this.code = code
+    this.details = details
+    this.timestamp = new Date()
+    this.userMessage = message // Default user message is same as error message
 
     // Capture stack trace
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
+      Error.captureStackTrace(this, this.constructor)
     }
-  }
-}
-
-/**
- * Network-related errors
- */
-export class NetworkError extends AppError {
-  constructor(message, details = {}) {
-    super(message, 'NETWORK_ERROR', details);
-  }
-}
-
-/**
- * SPARQL endpoint errors
- */
-export class SparqlError extends AppError {
-  constructor(message, details = {}) {
-    super(message, 'SPARQL_ERROR', details);
-  }
-}
-
-/**
- * Storage errors (localStorage, etc.)
- */
-export class StorageError extends AppError {
-  constructor(message, details = {}) {
-    super(message, 'STORAGE_ERROR', details);
-  }
-}
-
-/**
- * Configuration errors
- */
-export class ConfigError extends AppError {
-  constructor(message, details = {}) {
-    super(message, 'CONFIG_ERROR', details);
-  }
-}
-
-/**
- * RDF-specific errors
- */
-export class RDFError extends AppError {
-  constructor(message, details = {}) {
-    super(message, 'RDF_ERROR', details);
-  }
-}
-
-// src/core/errors/error-handler.js
-import { eventBus, EVENTS } from '../events/event-bus.js';
-
-/**
- * Simple error handler for the application
- */
-class ErrorHandler {
-  constructor() {
-    this.errorLog = [];
   }
 
   /**
-   * Handle an error
-   * @param {Error} error - The error to handle
-   * @param {Object} options - Options for handling
-   * @returns {Error} - The handled error
+   * Get user-friendly message
+   * @returns {string} User-friendly message
    */
-  handle(error, options = {}) {
-    const { showToUser = true, rethrow = false } = options;
+  getUserMessage() {
+    return this.userMessage || this.message
+  }
 
-    // Log to console
-    console.error('Error:', error);
-
-    // Add to log
-    this.errorLog.unshift({
-      error,
-      timestamp: new Date()
-    });
-
-    // Emit error event
-    eventBus.emit(EVENTS.ERROR_OCCURRED, error);
-
-    // Show to user if needed
-    if (showToUser && typeof window.showNotification === 'function') {
-      window.showNotification(
-        error.message || 'An unexpected error occurred',
-        'error'
-      );
-    }
-
-    // Rethrow if needed
-    if (rethrow) {
-      throw error;
-    }
-
-    return error;
+  /**
+   * Set user-friendly message
+   * @param {string} message - User-friendly message
+   */
+  setUserMessage(message) {
+    this.userMessage = message
   }
 }
 
-export const errorHandler = new ErrorHandler();
+/**
+ * Network-related error
+ * @extends AppError
+ */
+export class NetworkError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'NETWORK_ERROR', details)
+    this.setUserMessage('Network error. Please check your connection and try again.')
+  }
+}
 
-// src/core/errors/index.js
-export * from './error-types.js';
+/**
+ * SPARQL-related error
+ * @extends AppError
+ */
+export class SparqlError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'SPARQL_ERROR', details)
+    this.setUserMessage('SPARQL endpoint error. Please check your endpoint settings.')
+  }
+}
+
+/**
+ * Storage-related error
+ * @extends AppError
+ */
+export class StorageError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'STORAGE_ERROR', details)
+    this.setUserMessage('Storage error. Some data may not be saved.')
+  }
+}
+
+/**
+ * Configuration-related error
+ * @extends AppError
+ */
+export class ConfigError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'CONFIG_ERROR', details)
+    this.setUserMessage('Configuration error. Please check your application settings.')
+  }
+}
+
+/**
+ * RDF-related error
+ * @extends AppError
+ */
+export class RDFError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'RDF_ERROR', details)
+    this.setUserMessage('Data processing error. Please try again.')
+  }
+}
+
+/**
+ * Validation-related error
+ * @extends AppError
+ */
+export class ValidationError extends AppError {
+  constructor(message, details = {}) {
+    super(message, 'VALIDATION_ERROR', details)
+    this.setUserMessage('Validation error. Please check your input and try again.')
+  }
+}

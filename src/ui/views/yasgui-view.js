@@ -9,7 +9,7 @@ let resizeObserver = null
 
 /**
  * Initialize the YASGUI view
- * @returns {Object} View handler with update and cleanup methods
+ * @returns {Object} View controller with update and cleanup methods
  */
 export function initView() {
     try {
@@ -33,7 +33,8 @@ export function initView() {
 
             cleanup() {
                 console.log('Cleaning up YASGUI view')
-                // Destroy resize observer if exists
+
+                // Clean up resize observer
                 if (resizeObserver) {
                     resizeObserver.disconnect()
                     resizeObserver = null
@@ -46,7 +47,7 @@ export function initView() {
             context: 'Initializing YASGUI view'
         })
 
-        // Display error in view
+        // Show error in container
         const container = document.getElementById('yasgui-container')
         if (container) {
             container.innerHTML = `
@@ -62,7 +63,7 @@ export function initView() {
 }
 
 /**
- * Initialize YASGUI component
+ * Initialize YASGUI SPARQL editor
  */
 async function initializeYasgui() {
     const container = document.getElementById('yasgui-container')
@@ -74,10 +75,10 @@ async function initializeYasgui() {
     container.innerHTML = '<div class="yasgui-container-loading"></div>'
 
     try {
-        // Load YASGUI
+        // Load YASGUI dependencies
         const Yasgui = await loadYasguiDependencies()
 
-        // Get active endpoint from store
+        // Get active endpoint from state
         const activeEndpoint = getActiveEndpoint(store.getState(), 'query')
 
         // Configure YASGUI
@@ -88,7 +89,7 @@ async function initializeYasgui() {
             }
         }
 
-        // Add authentication if present
+        // Add authentication if provided
         if (activeEndpoint && activeEndpoint.credentials) {
             const authString = btoa(activeEndpoint.credentials.user + ':' + activeEndpoint.credentials.password)
             config.requestConfig.headers = {
@@ -96,10 +97,8 @@ async function initializeYasgui() {
             }
         }
 
-        // Clear container
+        // Clear container and create YASGUI instance
         container.innerHTML = ''
-
-        // Create YASGUI instance
         yasguiInstance = new Yasgui(container, config)
 
         // Set default query if no query exists
@@ -140,21 +139,21 @@ LIMIT 10`)
 
 /**
  * Load YASGUI dependencies
- * @returns {Object} YASGUI constructor
+ * @returns {Promise<Object>} Yasgui constructor
  */
 async function loadYasguiDependencies() {
     try {
-        // Check if already loaded
+        // Use global Yasgui if already loaded
         if (window.Yasgui) {
             return window.Yasgui
         }
 
-        // Load YASGUI from CDN
+        // Dynamically load Yasgui script
         const yasguiScript = document.createElement('script')
         yasguiScript.src = 'https://cdn.jsdelivr.net/npm/@triply/yasgui/build/yasgui.min.js'
         document.head.appendChild(yasguiScript)
 
-        // Load YASGUI CSS if not already loaded
+        // Load CSS if not already loaded
         if (!document.querySelector('link[href*="yasgui.min.css"]')) {
             const link = document.createElement('link')
             link.rel = 'stylesheet'
@@ -184,7 +183,7 @@ async function loadYasguiDependencies() {
  * @param {HTMLElement} container - Container element
  */
 function setupResizeObserver(container) {
-    // Disconnect existing observer
+    // Clean up existing observer
     if (resizeObserver) {
         resizeObserver.disconnect()
     }
@@ -198,10 +197,10 @@ function setupResizeObserver(container) {
         }
     })
 
-    // Start observing
+    // Observe container
     resizeObserver.observe(container)
 
-    // Initial resize
+    // Initial size adjustment
     handleResize()
 }
 
@@ -215,25 +214,25 @@ function handleResize() {
     const container = document.getElementById('yasgui-container')
     const { width, height } = container.getBoundingClientRect()
 
-    // Force YASGUI to resize
+    // Trigger YASGUI resize if store exists
     if (yasguiInstance.store) {
         yasguiInstance.store.dispatch({
             type: 'YASGUI_RESIZE'
         })
     }
 
-    // Apply dimensions to editor components
+    // Adjust YASQE and YASR heights
     const yasqeElement = container.querySelector('.yasqe')
     const yasrElement = container.querySelector('.yasr')
 
     if (yasqeElement && yasrElement) {
-        // Set YASQE height to 40% of container
+        // Set heights proportionally
         yasqeElement.style.height = `${Math.floor(height * 0.4)}px`
 
-        // Set YASR height to 60% of container
+        // Result area gets remaining height
         yasrElement.style.height = `${Math.floor(height * 0.6)}px`
 
-        // Force CodeMirror to refresh
+        // Refresh CodeMirror if available
         const cmElement = yasqeElement.querySelector('.CodeMirror')
         if (cmElement && cmElement.CodeMirror) {
             cmElement.CodeMirror.refresh()
@@ -242,15 +241,14 @@ function handleResize() {
 }
 
 /**
- * Handle endpoint change events
- * @param {Object} data - Event data
+ * Handle endpoint change event
  */
-function handleEndpointChange(data) {
+function handleEndpointChange() {
     updateYasguiEndpoint()
 }
 
 /**
- * Update YASGUI with current endpoint
+ * Update YASGUI endpoint based on current state
  */
 function updateYasguiEndpoint() {
     if (!yasguiInstance) return
@@ -266,7 +264,7 @@ function updateYasguiEndpoint() {
             // Update endpoint URL
             tab.yasqe.options.requestConfig.endpoint = activeEndpoint.url
 
-            // Update authentication if present
+            // Update authentication
             if (activeEndpoint.credentials) {
                 const authString = btoa(activeEndpoint.credentials.user + ':' + activeEndpoint.credentials.password)
                 tab.yasqe.options.requestConfig.headers = {

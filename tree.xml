@@ -76,8 +76,7 @@
 │   │   ├── components
 │   │   │   ├── endpoint-indicator.js
 │   │   │   ├── endpoints-list.js
-│   │   │   ├── forms.js
-│   │   │   └── notifications.js
+│   │   │   └── forms.js
 │   │   ├── notifications
 │   │   │   ├── notifications.js
 │   │   │   └── router.js
@@ -108,4 +107,4 @@
 ├── tree.xml
 └── webpack.config.js
 
-27 directories, 82 files
+27 directories, 81 files
