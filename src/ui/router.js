@@ -1,13 +1,9 @@
+// src/ui/router.js
 import { eventBus, EVENTS } from '../core/events/event-bus.js'
 import { errorHandler } from '../core/errors/index.js'
-import { store } from '../core/state/index.js'
-import { setCurrentView } from '../core/state/actions.js'
-import { getCurrentView } from '../core/state/selectors.js'
+import { state } from '../core/state.js'
 
-/**
- * View constants
- * @type {Object}
- */
+// View Constants
 const VIEWS = {
     POST: 'post-view',
     WIKI: 'wiki-view',
@@ -18,10 +14,7 @@ const VIEWS = {
     SETTINGS: 'settings-view'
 }
 
-/**
- * Map hash routes to view IDs
- * @type {Object}
- */
+// Route mapping
 const ROUTE_MAP = {
     'post': VIEWS.POST,
     'wiki': VIEWS.WIKI,
@@ -32,10 +25,7 @@ const ROUTE_MAP = {
     'settings': VIEWS.SETTINGS
 }
 
-/**
- * Map view IDs to module imports
- * @type {Object}
- */
+// Lazy-loaded view modules
 const VIEW_MODULES = {
     [VIEWS.POST]: () => import('./views/post-view.js'),
     [VIEWS.WIKI]: () => import('./views/wiki-view.js'),
@@ -46,10 +36,7 @@ const VIEW_MODULES = {
     [VIEWS.SETTINGS]: () => import('./views/settings-view.js')
 }
 
-/**
- * Store for active view handlers
- * @type {Object}
- */
+// Active view handlers
 const activeViewHandlers = {}
 
 /**
@@ -74,14 +61,14 @@ function handleRouteChange() {
         const hash = window.location.hash.slice(1) || 'post'
         const viewId = ROUTE_MAP[hash] || VIEWS.POST
 
-        const currentView = getCurrentView(store.getState())
+        const currentView = state.get('currentView')
 
-        // Skip if already on this view
+        // Skip if already on the same view
         if (currentView === viewId) {
             return
         }
 
-        // Create custom event for route change
+        // Create route change event
         const event = new CustomEvent('routeChange', {
             detail: {
                 from: currentView,
@@ -90,9 +77,9 @@ function handleRouteChange() {
             cancelable: true
         })
 
-        // Allow other components to cancel navigation
+        // Allow event to be canceled
         if (!document.dispatchEvent(event)) {
-            // Navigation was canceled, restore previous hash
+            // Revert to previous hash if canceled
             if (currentView) {
                 const route = Object.keys(ROUTE_MAP).find(key => ROUTE_MAP[key] === currentView)
                 if (route) {
@@ -102,13 +89,22 @@ function handleRouteChange() {
             return
         }
 
-        // Update store with new view
-        store.dispatch(setCurrentView(viewId))
+        // Update state using state manager's update method instead of store.dispatch
+        state.update('currentView', viewId)
 
-        // Show the selected view
+        // Also update UI state if that's in a different structure
+        if (state.get('ui')) {
+            state.update('ui', {
+                ...state.get('ui'),
+                previousView: state.get('ui')?.currentView,
+                currentView: viewId
+            })
+        }
+
+        // Show the view in UI
         showView(viewId)
 
-        // Initialize the view if needed
+        // Initialize view if needed
         initializeView(viewId)
 
         // Update active navigation link
@@ -125,7 +121,7 @@ function handleRouteChange() {
             context: 'Route change'
         })
 
-        // Fallback to post view on error
+        // Redirect to main view if error
         if (window.location.hash !== '#post') {
             window.location.hash = 'post'
         }
@@ -133,7 +129,7 @@ function handleRouteChange() {
 }
 
 /**
- * Show a view and hide others
+ * Show the specified view and hide others
  * @param {string} viewId - ID of the view to show
  */
 function showView(viewId) {
@@ -146,21 +142,21 @@ function showView(viewId) {
 }
 
 /**
- * Initialize a view
+ * Initialize a view if it hasn't been initialized yet
  * @param {string} viewId - ID of the view to initialize
  */
 async function initializeView(viewId) {
     try {
-        // Check if view already initialized
+        // Check if view is already initialized
         if (activeViewHandlers[viewId]) {
-            // Update view if it has an update method
+            // Just update if already initialized
             if (typeof activeViewHandlers[viewId].update === 'function') {
                 activeViewHandlers[viewId].update()
             }
             return
         }
 
-        // Get module loader for this view
+        // Get module loader for the view
         const moduleLoader = VIEW_MODULES[viewId]
         if (!moduleLoader) {
             console.warn(`No module defined for view ${viewId}`)
@@ -186,7 +182,7 @@ async function initializeView(viewId) {
 }
 
 /**
- * Update active navigation link
+ * Update the active state of navigation links
  * @param {string} viewId - ID of the active view
  */
 function updateActiveNavLink(viewId) {
@@ -197,7 +193,7 @@ function updateActiveNavLink(viewId) {
 }
 
 /**
- * Setup navigation links
+ * Setup navigation link event handlers
  */
 function setupNavLinks() {
     document.querySelectorAll('nav a').forEach(link => {
@@ -210,7 +206,7 @@ function setupNavLinks() {
                     window.location.hash = route
                 }
 
-                // Close mobile menu if open
+                // Hide mobile menu if active
                 const menu = document.querySelector('.hamburger-menu')
                 if (menu && menu.classList.contains('active')) {
                     menu.classList.remove('active')
@@ -221,5 +217,4 @@ function setupNavLinks() {
     })
 }
 
-// Export for use in other modules
 export { VIEWS, ROUTE_MAP }
