@@ -1,4 +1,4 @@
-Work has started on the app described below. Our job is to complete it.
+Work on the app described below is nearing completion.
 
 Please read this, review the code under `src`, think deeply and create a plan of action.
 
