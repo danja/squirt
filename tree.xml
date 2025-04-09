@@ -9,6 +9,7 @@
 │   ├── certs
 │   │   ├── localhost.crt
 │   │   └── localhost.key
+│   ├── prompt_2025-04-09.md
 │   ├── requirements_2025-04-06.md
 │   └── _trellis.ttl
 ├── package.json
@@ -36,9 +37,12 @@
 │   │   ├── plugin-manager.js
 │   │   ├── state
 │   │   │   ├── actions.js
+│   │   │   ├── action-types.js
 │   │   │   ├── index.js
+│   │   │   ├── reducers.js
 │   │   │   ├── selectors.js
-│   │   │   └── store.js
+│   │   │   ├── store.js
+│   │   │   └── utils.js
 │   │   ├── state.js
 │   │   └── views.js
 │   ├── css
@@ -77,8 +81,7 @@
 │   │   │   ├── endpoints-list.js
 │   │   │   └── forms.js
 │   │   ├── notifications
-│   │   │   ├── notifications.js
-│   │   │   └── router.js
+│   │   │   └── notifications.js
 │   │   ├── router.js
 │   │   └── views
 │   │       ├── chat-view.js
@@ -108,4 +111,4 @@
 ├── tree.xml
 └── webpack.config.js
 
-27 directories, 82 files
+27 directories, 85 files

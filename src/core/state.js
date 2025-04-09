@@ -1,5 +1,9 @@
+import { store } from './state/index.js'
+import * as actions from './state/actions.js'
+
 /**
- * Simple state management for backwards compatibility
+ * @deprecated Use Redux store and actions directly instead.
+ * Import from './state/index.js' for store and selectors.
  */
 export class StateManager {
     constructor() {
@@ -11,41 +15,105 @@ export class StateManager {
             drafts: []
         }
         this.listeners = new Map()
+
+        // Initialize with Redux store state
+        this.state = { ...store.getState() }
+
+        // Subscribe to Redux store updates
+        store.subscribe(() => {
+            const newState = store.getState()
+
+            // Find which keys changed
+            const changedKeys = Object.keys(newState).filter(
+                key => newState[key] !== this.state[key]
+            )
+
+            // Update local state
+            this.state = { ...newState }
+
+            // Notify listeners of changes
+            for (const key of changedKeys) {
+                const listenerSet = this.listeners.get(key)
+                if (listenerSet) {
+                    listenerSet.forEach(listener => {
+                        try {
+                            listener(newState[key])
+                        } catch (error) {
+                            console.error('Error in state listener:', error)
+                        }
+                    })
+                }
+            }
+        })
     }
 
     /**
-     * Subscribe to state changes
-     * @param {string} key - State key
-     * @param {Function} callback - Change handler
+     * @deprecated Use store.subscribe() directly
      */
     subscribe(key, callback) {
         if (!this.listeners.has(key)) {
             this.listeners.set(key, new Set())
         }
         this.listeners.get(key).add(callback)
-    }
 
-    /**
-     * Update state
-     * @param {string} key - State key
-     * @param {*} value - New value
-     */
-    update(key, value) {
-        this.state[key] = value
-        if (this.listeners.has(key)) {
-            this.listeners.get(key).forEach(callback => callback(value))
+        // Return unsubscribe function
+        return () => {
+            const listeners = this.listeners.get(key)
+            if (listeners) {
+                listeners.delete(callback)
+                if (listeners.size === 0) {
+                    this.listeners.delete(key)
+                }
+            }
         }
     }
 
     /**
-     * Get state value
-     * @param {string} key - State key
-     * @returns {*} State value
+     * @deprecated Use Redux actions directly
+     */
+    update(key, value) {
+        // Translate to Redux actions for specific keys
+        switch (key) {
+            case 'currentView':
+                store.dispatch(actions.setCurrentView(value))
+                break
+            case 'posts':
+                store.dispatch(actions.setPosts(value))
+                break
+            case 'endpoints':
+                store.dispatch(actions.setEndpoints(value))
+                break
+            case 'ui':
+                // Handle nested ui state
+                if (value && value.theme) {
+                    store.dispatch(actions.setTheme(value.theme))
+                }
+                if (value && value.currentView) {
+                    store.dispatch(actions.setCurrentView(value.currentView))
+                }
+                // Handle notifications if needed
+                if (value && value.notifications) {
+                    value.notifications.forEach(notification => {
+                        store.dispatch(actions.showNotification(notification))
+                    })
+                }
+                break
+            default:
+                console.warn(`No specific action found for state key: ${key}. State update may be lost.`)
+                break
+        }
+    }
+
+    /**
+     * @deprecated Use Redux selectors directly
      */
     get(key) {
         return this.state[key]
     }
 }
 
-// Create singleton instance
+// Export the singleton instance for backward compatibility
 export const state = new StateManager()
+
+// Also export the Redux store for direct access in new code
+export { store }

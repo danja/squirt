@@ -206,7 +206,7 @@ __webpack_require__.r(__webpack_exports__);
 /***/ }),
 
 /***/ 1188:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 
@@ -214,17 +214,35 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.state = exports.StateManager = void 0;
+Object.defineProperty(exports, "store", ({
+  enumerable: true,
+  get: function get() {
+    return _index.store;
+  }
+}));
+var _index = __webpack_require__(5531);
+var actions = _interopRequireWildcard(__webpack_require__(1272));
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
 function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
 function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
 function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
- * Simple state management for backwards compatibility
+ * @deprecated Use Redux store and actions directly instead.
+ * Import from './state/index.js' for store and selectors.
  */
 var StateManager = exports.StateManager = /*#__PURE__*/function () {
   function StateManager() {
+    var _this = this;
     _classCallCheck(this, StateManager);
     this.state = {
       endpoints: [],
@@ -234,42 +252,114 @@ var StateManager = exports.StateManager = /*#__PURE__*/function () {
       drafts: []
     };
     this.listeners = new Map();
+
+    // Initialize with Redux store state
+    this.state = _objectSpread({}, _index.store.getState());
+
+    // Subscribe to Redux store updates
+    _index.store.subscribe(function () {
+      var newState = _index.store.getState();
+
+      // Find which keys changed
+      var changedKeys = Object.keys(newState).filter(function (key) {
+        return newState[key] !== _this.state[key];
+      });
+
+      // Update local state
+      _this.state = _objectSpread({}, newState);
+
+      // Notify listeners of changes
+      var _iterator = _createForOfIteratorHelper(changedKeys),
+        _step;
+      try {
+        var _loop = function _loop() {
+          var key = _step.value;
+          var listenerSet = _this.listeners.get(key);
+          if (listenerSet) {
+            listenerSet.forEach(function (listener) {
+              try {
+                listener(newState[key]);
+              } catch (error) {
+                console.error('Error in state listener:', error);
+              }
+            });
+          }
+        };
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          _loop();
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+    });
   }
 
   /**
-   * Subscribe to state changes
-   * @param {string} key - State key
-   * @param {Function} callback - Change handler
+   * @deprecated Use store.subscribe() directly
    */
   return _createClass(StateManager, [{
     key: "subscribe",
     value: function subscribe(key, callback) {
+      var _this2 = this;
       if (!this.listeners.has(key)) {
         this.listeners.set(key, new Set());
       }
       this.listeners.get(key).add(callback);
+
+      // Return unsubscribe function
+      return function () {
+        var listeners = _this2.listeners.get(key);
+        if (listeners) {
+          listeners["delete"](callback);
+          if (listeners.size === 0) {
+            _this2.listeners["delete"](key);
+          }
+        }
+      };
     }
 
     /**
-     * Update state
-     * @param {string} key - State key
-     * @param {*} value - New value
+     * @deprecated Use Redux actions directly
      */
   }, {
     key: "update",
     value: function update(key, value) {
-      this.state[key] = value;
-      if (this.listeners.has(key)) {
-        this.listeners.get(key).forEach(function (callback) {
-          return callback(value);
-        });
+      // Translate to Redux actions for specific keys
+      switch (key) {
+        case 'currentView':
+          _index.store.dispatch(actions.setCurrentView(value));
+          break;
+        case 'posts':
+          _index.store.dispatch(actions.setPosts(value));
+          break;
+        case 'endpoints':
+          _index.store.dispatch(actions.setEndpoints(value));
+          break;
+        case 'ui':
+          // Handle nested ui state
+          if (value && value.theme) {
+            _index.store.dispatch(actions.setTheme(value.theme));
+          }
+          if (value && value.currentView) {
+            _index.store.dispatch(actions.setCurrentView(value.currentView));
+          }
+          // Handle notifications if needed
+          if (value && value.notifications) {
+            value.notifications.forEach(function (notification) {
+              _index.store.dispatch(actions.showNotification(notification));
+            });
+          }
+          break;
+        default:
+          console.warn("No specific action found for state key: ".concat(key, ". State update may be lost."));
+          break;
       }
     }
 
     /**
-     * Get state value
-     * @param {string} key - State key
-     * @returns {*} State value
+     * @deprecated Use Redux selectors directly
      */
   }, {
     key: "get",
@@ -277,107 +367,39 @@ var StateManager = exports.StateManager = /*#__PURE__*/function () {
       return this.state[key];
     }
   }]);
-}(); // Create singleton instance
+}(); // Export the singleton instance for backward compatibility
 var state = exports.state = new StateManager();
+
+// Also export the Redux store for direct access in new code
 
 /***/ }),
 
 /***/ 1272:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.updatePost = exports.updateEndpoint = exports.showNotification = exports.setTheme = exports.setPosts = exports.setEndpoints = exports.setCurrentView = exports.removePost = exports.removeEndpoint = exports.hideNotification = exports.addPost = exports.addEndpoint = exports.UPDATE_POST = exports.UPDATE_ENDPOINT = exports.SHOW_NOTIFICATION = exports.SET_THEME = exports.SET_POSTS = exports.SET_ENDPOINTS = exports.SET_CURRENT_VIEW = exports.REMOVE_POST = exports.REMOVE_ENDPOINT = exports.HIDE_NOTIFICATION = exports.ADD_POST = exports.ADD_ENDPOINT = void 0;
-// Action types
-var SET_ENDPOINTS = exports.SET_ENDPOINTS = 'endpoints/SET_ENDPOINTS';
-var ADD_ENDPOINT = exports.ADD_ENDPOINT = 'endpoints/ADD_ENDPOINT';
-var REMOVE_ENDPOINT = exports.REMOVE_ENDPOINT = 'endpoints/REMOVE_ENDPOINT';
-var UPDATE_ENDPOINT = exports.UPDATE_ENDPOINT = 'endpoints/UPDATE_ENDPOINT';
-var SET_POSTS = exports.SET_POSTS = 'posts/SET_POSTS';
-var ADD_POST = exports.ADD_POST = 'posts/ADD_POST';
-var UPDATE_POST = exports.UPDATE_POST = 'posts/UPDATE_POST';
-var REMOVE_POST = exports.REMOVE_POST = 'posts/REMOVE_POST';
-var SET_CURRENT_VIEW = exports.SET_CURRENT_VIEW = 'ui/SET_CURRENT_VIEW';
-var SET_THEME = exports.SET_THEME = 'ui/SET_THEME';
-var SHOW_NOTIFICATION = exports.SHOW_NOTIFICATION = 'ui/SHOW_NOTIFICATION';
-var HIDE_NOTIFICATION = exports.HIDE_NOTIFICATION = 'ui/HIDE_NOTIFICATION';
-
-// Action creators
-var setEndpoints = exports.setEndpoints = function setEndpoints(endpoints) {
-  return {
-    type: SET_ENDPOINTS,
-    payload: endpoints
-  };
-};
-var addEndpoint = exports.addEndpoint = function addEndpoint(endpoint) {
-  return {
-    type: ADD_ENDPOINT,
-    payload: endpoint
-  };
-};
-var removeEndpoint = exports.removeEndpoint = function removeEndpoint(url) {
-  return {
-    type: REMOVE_ENDPOINT,
-    payload: url
-  };
-};
-var updateEndpoint = exports.updateEndpoint = function updateEndpoint(data) {
-  return {
-    type: UPDATE_ENDPOINT,
-    payload: data
-  };
-};
-var setPosts = exports.setPosts = function setPosts(posts) {
-  return {
-    type: SET_POSTS,
-    payload: posts
-  };
-};
-var addPost = exports.addPost = function addPost(post) {
-  return {
-    type: ADD_POST,
-    payload: post
-  };
-};
-var updatePost = exports.updatePost = function updatePost(data) {
-  return {
-    type: UPDATE_POST,
-    payload: data
-  };
-};
-var removePost = exports.removePost = function removePost(id) {
-  return {
-    type: REMOVE_POST,
-    payload: id
-  };
-};
-var setCurrentView = exports.setCurrentView = function setCurrentView(viewId) {
-  return {
-    type: SET_CURRENT_VIEW,
-    payload: viewId
-  };
-};
-var setTheme = exports.setTheme = function setTheme(theme) {
-  return {
-    type: SET_THEME,
-    payload: theme
-  };
-};
-var showNotification = exports.showNotification = function showNotification(notification) {
-  return {
-    type: SHOW_NOTIFICATION,
-    payload: notification
-  };
-};
-var hideNotification = exports.hideNotification = function hideNotification(id) {
-  return {
-    type: HIDE_NOTIFICATION,
-    payload: id
-  };
-};
+exports.updatePost = exports.updateEndpoint = exports.showNotification = exports.setTheme = exports.setPosts = exports.setEndpoints = exports.setCurrentView = exports.removePost = exports.removeEndpoint = exports.hideNotification = exports.addPost = exports.addEndpoint = void 0;
+var types = _interopRequireWildcard(__webpack_require__(7525));
+var _utils = __webpack_require__(9510);
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != _typeof(e) && "function" != typeof e) return { "default": e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n["default"] = e, t && t.set(e, n), n; }
+var setEndpoints = exports.setEndpoints = (0, _utils.createAction)(types.SET_ENDPOINTS);
+var addEndpoint = exports.addEndpoint = (0, _utils.createAction)(types.ADD_ENDPOINT);
+var removeEndpoint = exports.removeEndpoint = (0, _utils.createAction)(types.REMOVE_ENDPOINT);
+var updateEndpoint = exports.updateEndpoint = (0, _utils.createAction)(types.UPDATE_ENDPOINT);
+var setPosts = exports.setPosts = (0, _utils.createAction)(types.SET_POSTS);
+var addPost = exports.addPost = (0, _utils.createAction)(types.ADD_POST);
+var updatePost = exports.updatePost = (0, _utils.createAction)(types.UPDATE_POST);
+var removePost = exports.removePost = (0, _utils.createAction)(types.REMOVE_POST);
+var setCurrentView = exports.setCurrentView = (0, _utils.createAction)(types.SET_CURRENT_VIEW);
+var setTheme = exports.setTheme = (0, _utils.createAction)(types.SET_THEME);
+var showNotification = exports.showNotification = (0, _utils.createAction)(types.SHOW_NOTIFICATION);
+var hideNotification = exports.hideNotification = (0, _utils.createAction)(types.HIDE_NOTIFICATION);
 
 /***/ }),
 
@@ -899,7 +921,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports.getTheme = exports.getPreviousView = exports.getPostsByType = exports.getPostsByTag = exports.getPosts = exports.getPostById = exports.getNotifications = exports.getEndpoints = exports.getEndpointByUrl = exports.getCurrentView = exports.getActiveEndpoints = exports.getActiveEndpoint = void 0;
-// Endpoint selectors
 var getEndpoints = exports.getEndpoints = function getEndpoints(state) {
   return state.endpoints;
 };
@@ -918,8 +939,6 @@ var getActiveEndpoint = exports.getActiveEndpoint = function getActiveEndpoint(s
     return e.type === type && e.status === 'active';
   });
 };
-
-// Post selectors
 var getPosts = exports.getPosts = function getPosts(state) {
   return state.posts;
 };
@@ -938,8 +957,6 @@ var getPostsByTag = exports.getPostsByTag = function getPostsByTag(state, tag) {
     return p.tags.includes(tag);
   });
 };
-
-// UI selectors
 var getCurrentView = exports.getCurrentView = function getCurrentView(state) {
   return state.ui.currentView;
 };
@@ -1546,25 +1563,17 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 var _exportNames = {
   store: true,
-  setCurrentView: true,
-  setPosts: true,
-  addPost: true,
-  setEndpoints: true
+  createStore: true
 };
-exports.store = exports.setPosts = exports.setEndpoints = exports.setCurrentView = exports.addPost = void 0;
-var _eventBus = __webpack_require__(3068);
-var _selectors = __webpack_require__(3485);
-Object.keys(_selectors).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
-  if (key in exports && exports[key] === _selectors[key]) return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function get() {
-      return _selectors[key];
-    }
-  });
-});
+Object.defineProperty(exports, "createStore", ({
+  enumerable: true,
+  get: function get() {
+    return _store.createStore;
+  }
+}));
+exports.store = void 0;
+var _store = __webpack_require__(6994);
+var _reducers = __webpack_require__(5662);
 var _actions = __webpack_require__(1272);
 Object.keys(_actions).forEach(function (key) {
   if (key === "default" || key === "__esModule") return;
@@ -1577,130 +1586,133 @@ Object.keys(_actions).forEach(function (key) {
     }
   });
 });
+var _selectors = __webpack_require__(3485);
+Object.keys(_selectors).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  if (key in exports && exports[key] === _selectors[key]) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _selectors[key];
+    }
+  });
+});
+var store = exports.store = (0, _store.createStore)(_reducers.rootReducer);
+
+/***/ }),
+
+/***/ 5662:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.endpointsReducer = endpointsReducer;
+exports.postsReducer = postsReducer;
+exports.rootReducer = void 0;
+exports.uiReducer = uiReducer;
+var _utils = __webpack_require__(9510);
+var _actionTypes = __webpack_require__(7525);
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
 function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
 function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
 function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
-function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
-function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
-function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
-function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-/**
- * Redux-like store for state management
- */
-var Store = /*#__PURE__*/function () {
-  function Store() {
-    var initialState = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    _classCallCheck(this, Store);
-    this.state = initialState;
-    this.listeners = new Set();
-  }
-
-  /**
-   * Get current state
-   * @returns {Object} Current state
-   */
-  return _createClass(Store, [{
-    key: "getState",
-    value: function getState() {
-      return this.state;
-    }
-
-    /**
-     * Update state
-     * @param {Object} update - State update
-     */
-  }, {
-    key: "setState",
-    value: function setState(update) {
-      this.state = _objectSpread(_objectSpread({}, this.state), update);
-      this.notify();
-    }
-
-    /**
-     * Subscribe to state changes
-     * @param {Function} listener - Callback function
-     * @returns {Function} Unsubscribe function
-     */
-  }, {
-    key: "subscribe",
-    value: function subscribe(listener) {
-      var _this = this;
-      this.listeners.add(listener);
-      return function () {
-        _this.listeners["delete"](listener);
-      };
-    }
-
-    /**
-     * Notify listeners of state change
-     */
-  }, {
-    key: "notify",
-    value: function notify() {
-      var _this2 = this;
-      this.listeners.forEach(function (listener) {
-        try {
-          listener(_this2.state);
-        } catch (error) {
-          console.error('Error in state listener:', error);
-        }
+function endpointsReducer() {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var action = arguments.length > 1 ? arguments[1] : undefined;
+  switch (action.type) {
+    case _actionTypes.SET_ENDPOINTS:
+      return action.payload;
+    case _actionTypes.ADD_ENDPOINT:
+      // Avoid duplicates
+      if (state.some(function (e) {
+        return e.url === action.payload.url;
+      })) {
+        return state;
+      }
+      return [].concat(_toConsumableArray(state), [action.payload]);
+    case _actionTypes.REMOVE_ENDPOINT:
+      return state.filter(function (endpoint) {
+        return endpoint.url !== action.payload;
       });
-
-      // Emit state changed event
-      _eventBus.eventBus.emit(_eventBus.EVENTS.STATE_CHANGED, this.state);
-    }
-  }]);
-}(); // Initial application state
-var initialState = {
-  currentView: null,
-  ui: {
-    currentView: null,
+    case _actionTypes.UPDATE_ENDPOINT:
+      return state.map(function (endpoint) {
+        return endpoint.url === action.payload.url ? _objectSpread(_objectSpread({}, endpoint), action.payload.updates) : endpoint;
+      });
+    default:
+      return state;
+  }
+}
+function postsReducer() {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var action = arguments.length > 1 ? arguments[1] : undefined;
+  switch (action.type) {
+    case _actionTypes.SET_POSTS:
+      return action.payload;
+    case _actionTypes.ADD_POST:
+      return [].concat(_toConsumableArray(state), [action.payload]);
+    case _actionTypes.UPDATE_POST:
+      return state.map(function (post) {
+        return post.id === action.payload.id ? _objectSpread(_objectSpread({}, post), action.payload.updates) : post;
+      });
+    case _actionTypes.REMOVE_POST:
+      return state.filter(function (post) {
+        return post.id !== action.payload;
+      });
+    default:
+      return state;
+  }
+}
+function uiReducer() {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+    currentView: 'post-view',
     previousView: null,
     theme: 'light',
     notifications: []
-  },
-  endpoints: [],
-  posts: []
-};
-
-// Create store instance
-var store = exports.store = new Store(initialState);
-
-// Helper actions
-var setCurrentView = exports.setCurrentView = function setCurrentView(viewId) {
-  store.setState({
-    ui: _objectSpread(_objectSpread({}, store.getState().ui), {}, {
-      previousView: store.getState().ui.currentView,
-      currentView: viewId
-    })
-  });
-};
-var setPosts = exports.setPosts = function setPosts(posts) {
-  store.setState({
-    posts: posts
-  });
-};
-var addPost = exports.addPost = function addPost(post) {
-  var posts = [].concat(_toConsumableArray(store.getState().posts), [post]);
-  store.setState({
-    posts: posts
-  });
-};
-var setEndpoints = exports.setEndpoints = function setEndpoints(endpoints) {
-  store.setState({
-    endpoints: endpoints
-  });
-};
-
-// Selectors (re-export)
+  };
+  var action = arguments.length > 1 ? arguments[1] : undefined;
+  switch (action.type) {
+    case _actionTypes.SET_CURRENT_VIEW:
+      return _objectSpread(_objectSpread({}, state), {}, {
+        previousView: state.currentView,
+        currentView: action.payload
+      });
+    case _actionTypes.SET_THEME:
+      return _objectSpread(_objectSpread({}, state), {}, {
+        theme: action.payload
+      });
+    case _actionTypes.SHOW_NOTIFICATION:
+      return _objectSpread(_objectSpread({}, state), {}, {
+        notifications: [].concat(_toConsumableArray(state.notifications), [_objectSpread({
+          id: Date.now()
+        }, action.payload)])
+      });
+    case _actionTypes.HIDE_NOTIFICATION:
+      return _objectSpread(_objectSpread({}, state), {}, {
+        notifications: state.notifications.filter(function (n) {
+          return n.id !== action.payload;
+        })
+      });
+    default:
+      return state;
+  }
+}
+var rootReducer = exports.rootReducer = (0, _utils.combineReducers)({
+  endpoints: endpointsReducer,
+  posts: postsReducer,
+  ui: uiReducer
+});
 
 /***/ }),
 
@@ -1734,20 +1746,17 @@ exports.VIEWS = exports.ROUTE_MAP = void 0;
 exports.initRouter = initRouter;
 var _eventBus = __webpack_require__(3068);
 var _index = __webpack_require__(3333);
-var _index2 = __webpack_require__(5531);
-var _actions = __webpack_require__(1272);
-var _selectors = __webpack_require__(3485);
+var _state = __webpack_require__(1188);
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
-function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-/**
- * View constants
- * @type {Object}
- */
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); } // src/ui/router.js
+// View Constants
 var VIEWS = exports.VIEWS = {
   POST: 'post-view',
   WIKI: 'wiki-view',
@@ -1758,10 +1767,7 @@ var VIEWS = exports.VIEWS = {
   SETTINGS: 'settings-view'
 };
 
-/**
- * Map hash routes to view IDs
- * @type {Object}
- */
+// Route mapping
 var ROUTE_MAP = exports.ROUTE_MAP = {
   'post': VIEWS.POST,
   'wiki': VIEWS.WIKI,
@@ -1772,10 +1778,7 @@ var ROUTE_MAP = exports.ROUTE_MAP = {
   'settings': VIEWS.SETTINGS
 };
 
-/**
- * Map view IDs to module imports
- * @type {Object}
- */
+// Lazy-loaded view modules
 var VIEW_MODULES = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, VIEWS.POST, function () {
   return Promise.all(/* import() */[__webpack_require__.e(687), __webpack_require__.e(539)]).then(__webpack_require__.bind(__webpack_require__, 409));
 }), VIEWS.WIKI, function () {
@@ -1792,10 +1795,7 @@ var VIEW_MODULES = _defineProperty(_defineProperty(_defineProperty(_defineProper
   return Promise.all(/* import() */[__webpack_require__.e(687), __webpack_require__.e(118)]).then(__webpack_require__.bind(__webpack_require__, 6964));
 });
 
-/**
- * Store for active view handlers
- * @type {Object}
- */
+// Active view handlers
 var activeViewHandlers = {};
 
 /**
@@ -1819,14 +1819,14 @@ function handleRouteChange() {
   try {
     var hash = window.location.hash.slice(1) || 'post';
     var viewId = ROUTE_MAP[hash] || VIEWS.POST;
-    var currentView = (0, _selectors.getCurrentView)(_index2.store.getState());
+    var currentView = _state.state.get('currentView');
 
-    // Skip if already on this view
+    // Skip if already on the same view
     if (currentView === viewId) {
       return;
     }
 
-    // Create custom event for route change
+    // Create route change event
     var event = new CustomEvent('routeChange', {
       detail: {
         from: currentView,
@@ -1835,9 +1835,9 @@ function handleRouteChange() {
       cancelable: true
     });
 
-    // Allow other components to cancel navigation
+    // Allow event to be canceled
     if (!document.dispatchEvent(event)) {
-      // Navigation was canceled, restore previous hash
+      // Revert to previous hash if canceled
       if (currentView) {
         var route = Object.keys(ROUTE_MAP).find(function (key) {
           return ROUTE_MAP[key] === currentView;
@@ -1849,13 +1849,22 @@ function handleRouteChange() {
       return;
     }
 
-    // Update store with new view
-    _index2.store.dispatch((0, _actions.setCurrentView)(viewId));
+    // Update state using state manager's update method instead of store.dispatch
+    _state.state.update('currentView', viewId);
 
-    // Show the selected view
+    // Also update UI state if that's in a different structure
+    if (_state.state.get('ui')) {
+      var _state$get;
+      _state.state.update('ui', _objectSpread(_objectSpread({}, _state.state.get('ui')), {}, {
+        previousView: (_state$get = _state.state.get('ui')) === null || _state$get === void 0 ? void 0 : _state$get.currentView,
+        currentView: viewId
+      }));
+    }
+
+    // Show the view in UI
     showView(viewId);
 
-    // Initialize the view if needed
+    // Initialize view if needed
     initializeView(viewId);
 
     // Update active navigation link
@@ -1872,7 +1881,7 @@ function handleRouteChange() {
       context: 'Route change'
     });
 
-    // Fallback to post view on error
+    // Redirect to main view if error
     if (window.location.hash !== '#post') {
       window.location.hash = 'post';
     }
@@ -1880,7 +1889,7 @@ function handleRouteChange() {
 }
 
 /**
- * Show a view and hide others
+ * Show the specified view and hide others
  * @param {string} viewId - ID of the view to show
  */
 function showView(viewId) {
@@ -1893,14 +1902,14 @@ function showView(viewId) {
 }
 
 /**
- * Initialize a view
+ * Initialize a view if it hasn't been initialized yet
  * @param {string} viewId - ID of the view to initialize
  */
 function initializeView(_x) {
   return _initializeView.apply(this, arguments);
 }
 /**
- * Update active navigation link
+ * Update the active state of navigation links
  * @param {string} viewId - ID of the active view
  */
 function _initializeView() {
@@ -1914,13 +1923,13 @@ function _initializeView() {
             _context.next = 4;
             break;
           }
-          // Update view if it has an update method
+          // Just update if already initialized
           if (typeof activeViewHandlers[viewId].update === 'function') {
             activeViewHandlers[viewId].update();
           }
           return _context.abrupt("return");
         case 4:
-          // Get module loader for this view
+          // Get module loader for the view
           moduleLoader = VIEW_MODULES[viewId];
           if (moduleLoader) {
             _context.next = 8;
@@ -1965,7 +1974,7 @@ function updateActiveNavLink(viewId) {
 }
 
 /**
- * Setup navigation links
+ * Setup navigation link event handlers
  */
 function setupNavLinks() {
   document.querySelectorAll('nav a').forEach(function (link) {
@@ -1980,7 +1989,7 @@ function setupNavLinks() {
           window.location.hash = route;
         }
 
-        // Close mobile menu if open
+        // Hide mobile menu if active
         var menu = document.querySelector('.hamburger-menu');
         if (menu && menu.classList.contains('active')) {
           menu.classList.remove('active');
@@ -1991,7 +2000,54 @@ function setupNavLinks() {
   });
 }
 
-// Export for use in other modules
+/***/ }),
+
+/***/ 6994:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.createStore = createStore;
+var _eventBus = __webpack_require__(3068);
+// Redux-like store implementation
+function createStore(reducer) {
+  var initialState = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var state = initialState;
+  var listeners = new Set();
+  var getState = function getState() {
+    return state;
+  };
+  var dispatch = function dispatch(action) {
+    state = reducer(state, action);
+    listeners.forEach(function (listener) {
+      return listener(state);
+    });
+    _eventBus.eventBus.emit(_eventBus.EVENTS.STATE_CHANGED, {
+      action: action,
+      state: state
+    });
+    return action;
+  };
+  var subscribe = function subscribe(listener) {
+    listeners.add(listener);
+    return function () {
+      listeners["delete"](listener);
+    };
+  };
+
+  // Initialize store with an action to establish initial state
+  dispatch({
+    type: '@@INIT'
+  });
+  return {
+    getState: getState,
+    dispatch: dispatch,
+    subscribe: subscribe
+  };
+}
 
 /***/ }),
 
@@ -2166,6 +2222,30 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ 7525:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.UPDATE_POST = exports.UPDATE_ENDPOINT = exports.SHOW_NOTIFICATION = exports.SET_THEME = exports.SET_POSTS = exports.SET_ENDPOINTS = exports.SET_CURRENT_VIEW = exports.REMOVE_POST = exports.REMOVE_ENDPOINT = exports.HIDE_NOTIFICATION = exports.ADD_POST = exports.ADD_ENDPOINT = void 0;
+var SET_ENDPOINTS = exports.SET_ENDPOINTS = 'endpoints/SET_ENDPOINTS';
+var ADD_ENDPOINT = exports.ADD_ENDPOINT = 'endpoints/ADD_ENDPOINT';
+var REMOVE_ENDPOINT = exports.REMOVE_ENDPOINT = 'endpoints/REMOVE_ENDPOINT';
+var UPDATE_ENDPOINT = exports.UPDATE_ENDPOINT = 'endpoints/UPDATE_ENDPOINT';
+var SET_POSTS = exports.SET_POSTS = 'posts/SET_POSTS';
+var ADD_POST = exports.ADD_POST = 'posts/ADD_POST';
+var UPDATE_POST = exports.UPDATE_POST = 'posts/UPDATE_POST';
+var REMOVE_POST = exports.REMOVE_POST = 'posts/REMOVE_POST';
+var SET_CURRENT_VIEW = exports.SET_CURRENT_VIEW = 'ui/SET_CURRENT_VIEW';
+var SET_THEME = exports.SET_THEME = 'ui/SET_THEME';
+var SHOW_NOTIFICATION = exports.SHOW_NOTIFICATION = 'ui/SHOW_NOTIFICATION';
+var HIDE_NOTIFICATION = exports.HIDE_NOTIFICATION = 'ui/HIDE_NOTIFICATION';
+
+/***/ }),
+
 /***/ 7739:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
@@ -2183,15 +2263,11 @@ var _eventBus = __webpack_require__(3068);
 var _index = __webpack_require__(5531);
 var _actions = __webpack_require__(1272);
 var _selectors = __webpack_require__(3485);
-var notificationsContainer;
+// src/ui/notifications/notifications.js
 
-/**
- * Initialize the notifications system
- */
+var notificationsContainer;
 function initNotifications() {
   console.log('Initializing notifications system');
-
-  // Create or find notifications container
   if (!notificationsContainer) {
     notificationsContainer = document.querySelector('.notifications-container');
     if (!notificationsContainer) {
@@ -2200,107 +2276,91 @@ function initNotifications() {
       document.body.appendChild(notificationsContainer);
     }
   }
-
-  // Subscribe to state changes to render notifications
   _index.store.subscribe(renderNotifications);
-
-  // Listen for notification events
   _eventBus.eventBus.on(_eventBus.EVENTS.NOTIFICATION_SHOW, handleNotificationEvent);
-
-  // Expose showNotification to window for easy access
   window.showNotification = showNotification;
 }
-
-/**
- * Handle notification event
- * @param {Object} notification - Notification details
- */
 function handleNotificationEvent(notification) {
   showNotification(notification.message, notification.type, notification.duration);
 }
-
-/**
- * Show a notification
- * @param {string} message - Notification message
- * @param {string} type - Notification type (info, success, error, warning)
- * @param {number} duration - Display duration in ms, 0 for permanent
- * @returns {number} Notification ID
- */
 function showNotification(message) {
   var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'info';
   var duration = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 5000;
   var id = Date.now();
 
-  // Dispatch notification to store
-  _index.store.dispatch((0, _actions.showNotification)({
-    id: id,
-    message: message,
-    type: type,
-    duration: duration,
-    timestamp: new Date().toISOString()
-  }));
-
-  // Auto-hide after duration if specified
-  if (duration > 0) {
-    setTimeout(function () {
-      _index.store.dispatch((0, _actions.hideNotification)(id));
-    }, duration);
+  // Check if store.dispatch is a function before calling it
+  if (typeof _index.store.dispatch === 'function') {
+    _index.store.dispatch((0, _actions.showNotification)({
+      id: id,
+      message: message,
+      type: type,
+      duration: duration,
+      timestamp: new Date().toISOString()
+    }));
+  } else {
+    console.warn('store.dispatch is not a function, falling back to direct DOM manipulation');
+    // Fallback to direct DOM manipulation
+    var element = createNotificationElement({
+      id: id,
+      message: message,
+      type: type,
+      duration: duration
+    });
+    if (duration > 0) {
+      setTimeout(function () {
+        element.classList.add('fade-out');
+        setTimeout(function () {
+          return element.remove();
+        }, 300);
+      }, duration);
+    }
   }
   return id;
 }
-
-/**
- * Hide a notification by ID
- * @param {number} id - Notification ID
- */
 function hideNotificationById(id) {
-  _index.store.dispatch((0, _actions.hideNotification)(id));
-}
-
-/**
- * Render notifications based on current state
- */
-function renderNotifications() {
-  var notifications = (0, _selectors.getNotifications)(_index.store.getState());
-
-  // Find existing notification elements
-  var existingElements = notificationsContainer.querySelectorAll('.notification');
-  var existingIds = new Set();
-  existingElements.forEach(function (element) {
-    var id = parseInt(element.dataset.id, 10);
-    existingIds.add(id);
-
-    // Remove elements that are no longer in state
-    if (!notifications.find(function (n) {
-      return n.id === id;
-    })) {
+  if (typeof _index.store.dispatch === 'function') {
+    _index.store.dispatch((0, _actions.hideNotification)(id));
+  } else {
+    var element = notificationsContainer.querySelector("[data-id=\"".concat(id, "\"]"));
+    if (element) {
       element.classList.add('fade-out');
       setTimeout(function () {
         return element.remove();
       }, 300);
     }
-  });
-
-  // Add new notifications
-  notifications.forEach(function (notification) {
-    if (!existingIds.has(notification.id)) {
-      createNotificationElement(notification);
-    }
-  });
+  }
 }
-
-/**
- * Create notification DOM element
- * @param {Object} notification - Notification details
- * @returns {HTMLElement} Notification element
- */
+function renderNotifications() {
+  try {
+    var notifications = (0, _selectors.getNotifications)(_index.store.getState());
+    var existingElements = notificationsContainer.querySelectorAll('.notification');
+    var existingIds = new Set();
+    existingElements.forEach(function (element) {
+      var id = parseInt(element.dataset.id, 10);
+      existingIds.add(id);
+      if (!notifications.find(function (n) {
+        return n.id === id;
+      })) {
+        element.classList.add('fade-out');
+        setTimeout(function () {
+          return element.remove();
+        }, 300);
+      }
+    });
+    notifications.forEach(function (notification) {
+      if (!existingIds.has(notification.id)) {
+        createNotificationElement(notification);
+      }
+    });
+  } catch (error) {
+    console.error('Error rendering notifications:', error);
+  }
+}
 function createNotificationElement(notification) {
   var element = document.createElement('div');
   element.className = "notification ".concat(notification.type);
   element.dataset.id = notification.id;
   element.textContent = notification.message;
-
-  // Add close button for persistent notifications
   if (notification.duration === 0) {
     var closeButton = document.createElement('button');
     closeButton.className = 'notification-close';
@@ -2310,13 +2370,9 @@ function createNotificationElement(notification) {
     });
     element.appendChild(closeButton);
   }
-
-  // Add to container
   notificationsContainer.appendChild(element);
   return element;
 }
-
-// Convenience methods
 var showSuccess = exports.showSuccess = function showSuccess(msg, duration) {
   return showNotification(msg, 'success', duration);
 };
@@ -2329,6 +2385,43 @@ var showInfo = exports.showInfo = function showInfo(msg, duration) {
 var showWarning = exports.showWarning = function showWarning(msg, duration) {
   return showNotification(msg, 'warning', duration);
 };
+
+/***/ }),
+
+/***/ 9510:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.combineReducers = combineReducers;
+exports.createAction = createAction;
+function combineReducers(reducers) {
+  return function () {
+    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var action = arguments.length > 1 ? arguments[1] : undefined;
+    var nextState = {};
+    var hasChanged = false;
+    for (var key in reducers) {
+      var reducer = reducers[key];
+      var previousStateForKey = state[key];
+      var nextStateForKey = reducer(previousStateForKey, action);
+      nextState[key] = nextStateForKey;
+      hasChanged = hasChanged || nextStateForKey !== previousStateForKey;
+    }
+    return hasChanged ? nextState : state;
+  };
+}
+function createAction(type) {
+  return function (payload) {
+    return {
+      type: type,
+      payload: payload
+    };
+  };
+}
 
 /***/ }),
 
