@@ -99,6 +99,25 @@ export class EndpointsService {
       // Start status checks
       this.startStatusChecks()
 
+      // Notify about unavailable endpoints
+      const unavailableEndpoints = endpoints.filter(e => e.status === 'inactive')
+      if (unavailableEndpoints.length > 0) {
+        eventBus.emit(EVENTS.NOTIFICATION_SHOW, {
+          type: 'warning',
+          message: `${unavailableEndpoints.length} endpoint(s) unavailable`,
+          duration: 3000
+        })
+      }
+
+      // Notify about successful connection
+      const activeEndpoints = endpoints.filter(e => e.status === 'active')
+      if (activeEndpoints.length > 0) {
+        eventBus.emit(EVENTS.NOTIFICATION_SHOW, {
+          type: 'success',
+          message: `Connected to ${activeEndpoints.length} endpoint(s)`
+        })
+      }
+
       return endpoints
     } catch (error) {
       console.error('Error initializing endpoints:', error)

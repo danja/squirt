@@ -5,6 +5,8 @@ import { showNotification as showNotificationAction, hideNotification } from '..
 import { getNotifications } from '../../core/state/selectors.js'
 
 let notificationsContainer
+let notificationQueue = []
+let isNotificationVisible = false
 
 /**
  * Initialize the notifications system
@@ -33,15 +35,33 @@ export function initNotifications() {
 }
 
 /**
- * Handle notification events
+ * Show the next notification in the queue
+ */
+function showNextNotification() {
+  if (isNotificationVisible || notificationQueue.length === 0) {
+    return
+  }
+
+  const { message, type, duration } = notificationQueue.shift()
+  isNotificationVisible = true
+
+  const id = showNotification(message, type, duration)
+
+  // Hide the notification after the duration and show the next one
+  setTimeout(() => {
+    hideNotificationById(id)
+    isNotificationVisible = false
+    showNextNotification()
+  }, duration)
+}
+
+/**
+ * Handle notification events with queuing
  * @param {Object} notification - Notification data
  */
 function handleNotificationEvent(notification) {
-  showNotification(
-    notification.message,
-    notification.type,
-    notification.duration
-  )
+  notificationQueue.push(notification)
+  showNextNotification()
 }
 
 /**
