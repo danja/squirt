@@ -1,9 +1,10 @@
+// src/ui/components/endpoint-indicator.js - Updated to use Redux-style store instead of deprecated StateManager
 import { eventBus, EVENTS } from '../../core/events/event-bus.js'
 import { store } from '../../core/state/index.js'
 import { getEndpoints } from '../../core/state/selectors.js'
 
 /**
- * Component for displaying endpoint status in the UI
+ * Indicator component for endpoint status
  */
 export class EndpointStatusIndicator {
   constructor() {
@@ -26,27 +27,26 @@ export class EndpointStatusIndicator {
     // Initialize with checking status
     this.updateStatus('checking', 'Checking endpoint status...')
 
-    // Subscribe to endpoint changes in the store
+    // Subscribe to store changes
     store.subscribe(this.handleEndpointChange)
 
-    // Subscribe to endpoint status events
+    // Subscribe to events
     eventBus.on(EVENTS.ENDPOINT_STATUS_CHANGED, this.handleStatusChangeEvent)
     eventBus.on(EVENTS.ENDPOINTS_STATUS_CHECKED, this.handleStatusCheckedEvent)
 
-    // Make the indicator clickable to trigger endpoint checks
+    // Add click handler
     this.indicator.addEventListener('click', this.checkEndpoints)
 
-    // Initial check
+    // Initial check after a short delay
     setTimeout(this.checkEndpoints, 1000)
   }
 
   /**
-   * Handle changes to endpoints in the store
-   * @param {Object} state - Current state
+   * Handle changes in the endpoint state
    */
-  handleEndpointChange(state) {
+  handleEndpointChange() {
     try {
-      const endpoints = getEndpoints(state)
+      const endpoints = getEndpoints(store.getState())
 
       if (!endpoints || endpoints.length === 0) {
         this.updateStatus('inactive', 'No endpoints configured')
@@ -68,7 +68,7 @@ export class EndpointStatusIndicator {
 
   /**
    * Handle endpoint status change events
-   * @param {Object} event - Event data
+   * @param {Object} data - Status change data
    */
   handleStatusChangeEvent(data) {
     try {
@@ -90,12 +90,12 @@ export class EndpointStatusIndicator {
 
   /**
    * Handle endpoint status checked events
-   * @param {Object} data - Event data
+   * @param {Object} data - Status check results
    */
   handleStatusCheckedEvent(data) {
     try {
       if (data && data.anyActive) {
-        // At least one endpoint is active
+        // Get active endpoint
         const endpoints = getEndpoints(store.getState())
         const activeEndpoint = endpoints.find(e => e.status === 'active')
 
@@ -113,13 +113,13 @@ export class EndpointStatusIndicator {
   }
 
   /**
-   * Request endpoint check
+   * Request endpoint health check
    */
   checkEndpoints() {
     try {
       this.updateStatus('checking', 'Checking endpoints...')
 
-      // Emit event to request endpoint check
+      // Emit check request event
       eventBus.emit(EVENTS.ENDPOINT_CHECK_REQUESTED)
     } catch (error) {
       console.error('Error requesting endpoint check:', error)
@@ -128,8 +128,8 @@ export class EndpointStatusIndicator {
 
   /**
    * Update the status indicator
-   * @param {string} status - Status value ('active', 'inactive', 'checking')
-   * @param {string} message - Status message or tooltip
+   * @param {string} status - Status value (active, inactive, checking)
+   * @param {string} message - Status tooltip message
    */
   updateStatus(status, message = '') {
     try {
@@ -138,10 +138,10 @@ export class EndpointStatusIndicator {
       // Remove all status classes
       this.statusLight.classList.remove('active', 'inactive', 'checking')
 
-      // Add the new status class
+      // Add current status class
       this.statusLight.classList.add(status)
 
-      // Set the tooltip
+      // Update tooltip
       this.indicator.title = message || status
     } catch (error) {
       console.error('Error updating status:', error)
@@ -150,8 +150,8 @@ export class EndpointStatusIndicator {
 }
 
 /**
- * Initialize the endpoint status indicator
- * @returns {EndpointStatusIndicator|null}
+ * Initialize the endpoint indicator
+ * @returns {EndpointStatusIndicator} The indicator instance
  */
 export function initializeEndpointIndicator() {
   try {

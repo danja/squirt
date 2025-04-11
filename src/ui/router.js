@@ -1,9 +1,11 @@
-// src/ui/router.js
+// src/ui/router.js - Updated to use Redux-style store instead of deprecated StateManager
 import { eventBus, EVENTS } from '../core/events/event-bus.js'
 import { errorHandler } from '../core/errors/index.js'
-import { state } from '../core/state.js'
+import { store } from '../core/state/index.js'
+import { setCurrentView } from '../core/state/actions.js'
+import { getCurrentView } from '../core/state/selectors.js'
 
-// View Constants
+// View IDs
 const VIEWS = {
     POST: 'post-view',
     WIKI: 'wiki-view',
@@ -14,7 +16,7 @@ const VIEWS = {
     SETTINGS: 'settings-view'
 }
 
-// Route mapping
+// Map routes to view IDs
 const ROUTE_MAP = {
     'post': VIEWS.POST,
     'wiki': VIEWS.WIKI,
@@ -25,7 +27,7 @@ const ROUTE_MAP = {
     'settings': VIEWS.SETTINGS
 }
 
-// Lazy-loaded view modules
+// Map views to module loaders
 const VIEW_MODULES = {
     [VIEWS.POST]: () => import('./views/post-view.js'),
     [VIEWS.WIKI]: () => import('./views/wiki-view.js'),
@@ -36,7 +38,7 @@ const VIEW_MODULES = {
     [VIEWS.SETTINGS]: () => import('./views/settings-view.js')
 }
 
-// Active view handlers
+// Store active view handlers
 const activeViewHandlers = {}
 
 /**
@@ -61,14 +63,14 @@ function handleRouteChange() {
         const hash = window.location.hash.slice(1) || 'post'
         const viewId = ROUTE_MAP[hash] || VIEWS.POST
 
-        const currentView = state.get('currentView')
+        const currentView = getCurrentView(store.getState())
 
-        // Skip if already on the same view
+        // Skip if view hasn't changed
         if (currentView === viewId) {
             return
         }
 
-        // Create route change event
+        // Create and dispatch route change event
         const event = new CustomEvent('routeChange', {
             detail: {
                 from: currentView,
@@ -77,9 +79,8 @@ function handleRouteChange() {
             cancelable: true
         })
 
-        // Allow event to be canceled
+        // If event is cancelled, restore previous route
         if (!document.dispatchEvent(event)) {
-            // Revert to previous hash if canceled
             if (currentView) {
                 const route = Object.keys(ROUTE_MAP).find(key => ROUTE_MAP[key] === currentView)
                 if (route) {
@@ -89,28 +90,19 @@ function handleRouteChange() {
             return
         }
 
-        // Update state using state manager's update method instead of store.dispatch
-        state.update('currentView', viewId)
+        // Update state with new view
+        store.dispatch(setCurrentView(viewId))
 
-        // Also update UI state if that's in a different structure
-        if (state.get('ui')) {
-            state.update('ui', {
-                ...state.get('ui'),
-                previousView: state.get('ui')?.currentView,
-                currentView: viewId
-            })
-        }
-
-        // Show the view in UI
+        // Show the selected view
         showView(viewId)
 
-        // Initialize view if needed
+        // Initialize the view module
         initializeView(viewId)
 
-        // Update active navigation link
+        // Update active nav link
         updateActiveNavLink(viewId)
 
-        // Emit view changed event
+        // Emit view change event
         eventBus.emit(EVENTS.VIEW_CHANGED, {
             from: currentView,
             to: viewId
@@ -121,7 +113,7 @@ function handleRouteChange() {
             context: 'Route change'
         })
 
-        // Redirect to main view if error
+        // Fallback to post view if error occurs
         if (window.location.hash !== '#post') {
             window.location.hash = 'post'
         }
@@ -129,8 +121,8 @@ function handleRouteChange() {
 }
 
 /**
- * Show the specified view and hide others
- * @param {string} viewId - ID of the view to show
+ * Show the selected view, hide others
+ * @param {string} viewId - ID of view to show
  */
 function showView(viewId) {
     Object.values(VIEWS).forEach(id => {
@@ -142,31 +134,29 @@ function showView(viewId) {
 }
 
 /**
- * Initialize a view if it hasn't been initialized yet
- * @param {string} viewId - ID of the view to initialize
+ * Initialize or update a view
+ * @param {string} viewId - ID of view to initialize
  */
 async function initializeView(viewId) {
     try {
-        // Check if view is already initialized
+        // If view is already initialized, just update it
         if (activeViewHandlers[viewId]) {
-            // Just update if already initialized
             if (typeof activeViewHandlers[viewId].update === 'function') {
                 activeViewHandlers[viewId].update()
             }
             return
         }
 
-        // Get module loader for the view
+        // Load the module for this view
         const moduleLoader = VIEW_MODULES[viewId]
         if (!moduleLoader) {
             console.warn(`No module defined for view ${viewId}`)
             return
         }
 
-        // Load the view module
+        // Load and initialize the view
         const module = await moduleLoader()
 
-        // Initialize the view
         if (typeof module.initView === 'function') {
             activeViewHandlers[viewId] = module.initView() || {}
         } else {
@@ -182,8 +172,8 @@ async function initializeView(viewId) {
 }
 
 /**
- * Update the active state of navigation links
- * @param {string} viewId - ID of the active view
+ * Update the active navigation link
+ * @param {string} viewId - ID of active view
  */
 function updateActiveNavLink(viewId) {
     document.querySelectorAll('nav a').forEach(link => {
@@ -206,7 +196,7 @@ function setupNavLinks() {
                     window.location.hash = route
                 }
 
-                // Hide mobile menu if active
+                // Close mobile menu if open
                 const menu = document.querySelector('.hamburger-menu')
                 if (menu && menu.classList.contains('active')) {
                     menu.classList.remove('active')

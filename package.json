@@ -7,7 +7,7 @@
     "dev": "webpack serve --mode development",
     "test": "jest",
     "test:jasmine": "jasmine --config=jasmine.json",
-    "rp": "tree --gitignore  -I 'knowledge|prompts|reference' > tree.xml && repomix -c repomix.config.json ."
+    "rp": "repomix -c repomix.config.json ."
   },
   "dependencies": {
     "@rdfjs/data-model": "^2.0.1",

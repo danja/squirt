@@ -1,3 +1,4 @@
+// src/app.js - Complete source with updated initialization
 import { eventBus, EVENTS } from './core/events/event-bus.js'
 import { errorHandler } from './core/errors/index.js'
 import { store } from './core/state/index.js'
@@ -7,7 +8,7 @@ import { initNotifications } from './ui/notifications/notifications.js'
 import { pluginManager } from './core/plugin-manager.js'
 import { initializeEndpointIndicator } from './ui/components/endpoint-indicator.js'
 
-// Import styles
+// Import CSS files
 import './css/styles.css'
 import './css/form-styles.css'
 import './css/yasgui-styles.css'
@@ -15,7 +16,7 @@ import './css/layout-fixes.css'
 import './css/mobile-fixes.css'
 import './css/plugin-styles.css'
 
-// Export namespaces for global usage
+// Define namespaces
 export const namespaces = {
   rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
   rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
@@ -24,14 +25,14 @@ export const namespaces = {
   squirt: 'http://purl.org/stuff/squirt/'
 }
 
-// Export services for global usage
+// Export services for global use
 export const services = {
   storage: storageService
 }
 
 /**
  * Initialize the application
- * @returns {Promise<Object>} Initialization result
+ * @returns {Promise<Object>} Result of initialization
  */
 export async function initializeApp() {
   try {
@@ -39,6 +40,21 @@ export async function initializeApp() {
 
     // Make services globally available
     window.services = services
+
+    // Initialize endpoints service
+    import('./services/sparql/sparql.js').then(({ testEndpoint }) => {
+      import('./services/endpoints/endpoints-service.js').then(({ createEndpointsService }) => {
+        const endpointsService = createEndpointsService(services.storage, testEndpoint)
+        services.endpoints = endpointsService
+
+        // Initialize endpoints
+        endpointsService.initialize().then(() => {
+          console.log('Endpoints service initialized')
+        }).catch(err => {
+          console.error('Failed to initialize endpoints service:', err)
+        })
+      })
+    })
 
     // Initialize UI components
     initNotifications()
@@ -50,13 +66,13 @@ export async function initializeApp() {
     // Setup notifications
     setupNotifications()
 
-    // Initialize endpoint status indicator
+    // Initialize endpoint indicator
     initializeEndpointIndicator()
 
-    // Setup mobile menu
+    // Setup hamburger menu
     setupHamburgerMenu()
 
-    // Register service worker for PWA functionality
+    // Register service worker
     registerServiceWorker()
 
     console.log('Application initialized successfully')
@@ -70,7 +86,7 @@ export async function initializeApp() {
 }
 
 /**
- * Setup global notification handling
+ * Setup notification system
  */
 function setupNotifications() {
   // Find or create notifications container
@@ -81,7 +97,7 @@ function setupNotifications() {
     document.body.appendChild(container)
   }
 
-  // Create global showNotification function
+  // Define global notification function
   window.showNotification = (message, type = 'info', duration = 5000) => {
     const notification = document.createElement('div')
     notification.className = `notification ${type}`
@@ -124,7 +140,7 @@ function setupHamburgerMenu() {
 }
 
 /**
- * Register service worker for PWA functionality
+ * Register service worker for offline functionality
  */
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -137,10 +153,19 @@ function registerServiceWorker() {
           if ('SyncManager' in window) {
             registration.sync.register('sync-posts')
               .then(() => console.log('Background sync registered'))
-              .catch(error => console.error('Background sync registration failed:', error))
+              .catch(error => {
+                // Check for permission errors specifically
+                if (error.name === 'NotAllowedError') {
+                  console.warn('Background sync requires HTTPS in production. This error is expected during development.', error)
+                } else {
+                  console.error('Background sync registration failed:', error)
+                }
+              })
+          } else {
+            console.log('Background sync not supported in this browser')
           }
 
-          // Register push notifications if available
+          // Setup push notifications if available
           if ('PushManager' in window) {
             askNotificationPermission()
           }
@@ -153,35 +178,34 @@ function registerServiceWorker() {
 }
 
 /**
- * Request notification permission for push notifications
+ * Request notification permission
  */
 function askNotificationPermission() {
-  // Check if permission already granted
+  // Skip if already granted
   if (Notification.permission === 'granted') {
     console.log('Notification permission already granted')
     return
   }
 
-  // Don't ask again if denied
+  // Warn if previously denied
   if (Notification.permission === 'denied') {
     console.warn('Notification permission was previously denied')
     return
   }
 
-  // Ask permission after user interaction (required by browsers)
+  // Ask on user interaction
   document.addEventListener('click', function askPermission() {
     Notification.requestPermission()
       .then(permission => {
         if (permission === 'granted') {
           console.log('Notification permission granted')
-          // Remove listener after permission granted
           document.removeEventListener('click', askPermission)
         }
       })
   }, { once: false })
 }
 
-// Initialize application when DOM is loaded
+// Initialize the application when the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   initializeApp()
 })

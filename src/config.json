@@ -2,7 +2,7 @@
     {
         "name": "local query",
         "type": "query",
-        "url": "http://localhost:4030/semem/query",
+        "url": "http://hyperdata.it:3331/squirt/",
         "credentials": {
             "user": "admin",
             "password": "admin123"
@@ -11,7 +11,7 @@
     {
         "name": "local update",
         "type": "update",
-        "url": "http://localhost:4030/semem/update",
+        "url": "http://hyperdata.it:3331/squirt/",
         "credentials": {
             "user": "admin",
             "password": "admin123"

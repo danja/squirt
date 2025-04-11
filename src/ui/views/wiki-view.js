@@ -1,3 +1,4 @@
+// src/ui/views/wiki-view.js - Updated to use Redux-style store instead of deprecated StateManager
 import { eventBus, EVENTS } from '../../core/events/event-bus.js'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
@@ -10,8 +11,8 @@ let preview = null
 let currentEntryId = null
 
 /**
- * Initialize the Wiki view
- * @returns {Object} View handler with update and cleanup methods
+ * Initialize Wiki view
+ * @returns {Object} View interface with update and cleanup methods
  */
 export function initView() {
   try {
@@ -22,7 +23,7 @@ export function initView() {
       throw new Error('Wiki view element not found')
     }
 
-    // Load dependencies and initialize editor
+    // Load CodeMirror and other dependencies
     loadDependencies().then(() => {
       initializeWikiEditor()
       loadWikiEntries()
@@ -41,7 +42,6 @@ export function initView() {
 
       cleanup() {
         console.log('Cleaning up Wiki view')
-        // Clean up any resources if needed
       }
     }
   } catch (error) {
@@ -56,28 +56,28 @@ export function initView() {
 
 /**
  * Load required dependencies
- * @returns {Promise} Promise resolved when dependencies are loaded
+ * @returns {Promise} Promise resolving when dependencies are loaded
  */
 async function loadDependencies() {
   try {
-    // Load CodeMirror if not already loaded
+    // Load CodeMirror
     if (!window.CodeMirror) {
       const cm = await import('codemirror')
       window.CodeMirror = cm.default
 
-      // Load CodeMirror addons
+      // Load CodeMirror plugins
       await import('codemirror/mode/markdown/markdown')
       await import('codemirror/addon/edit/continuelist')
       await import('codemirror/addon/display/placeholder')
     }
 
-    // Load Marked for markdown rendering if not already loaded
+    // Load Marked for Markdown rendering
     if (!window.marked) {
       const markedModule = await import('marked')
       window.marked = markedModule.marked || markedModule.default
     }
 
-    // Load required stylesheets if not already loaded
+    // Load CodeMirror CSS
     if (!document.querySelector('link[href*="codemirror.css"]')) {
       const cmCss = document.createElement('link')
       cmCss.rel = 'stylesheet'
@@ -85,6 +85,7 @@ async function loadDependencies() {
       document.head.appendChild(cmCss)
     }
 
+    // Load CodeMirror theme
     if (!document.querySelector('link[href*="monokai.css"]')) {
       const themeCss = document.createElement('link')
       themeCss.rel = 'stylesheet'
@@ -92,7 +93,7 @@ async function loadDependencies() {
       document.head.appendChild(themeCss)
     }
 
-    // Load material icons for toolbar
+    // Load Material Icons
     if (!document.querySelector('link[href*="material-icons"]')) {
       const iconsCss = document.createElement('link')
       iconsCss.rel = 'stylesheet'
@@ -118,7 +119,7 @@ function initializeWikiEditor() {
     return
   }
 
-  // Create preview container if it doesn't exist
+  // Create preview container if not present
   if (!previewContainer) {
     preview = document.createElement('div')
     preview.className = 'wiki-preview'
@@ -132,7 +133,7 @@ function initializeWikiEditor() {
     preview = previewContainer
   }
 
-  // Initialize CodeMirror
+  // Initialize CodeMirror editor
   editor = window.CodeMirror.fromTextArea(wikiContent, {
     mode: 'markdown',
     theme: 'monokai',
@@ -148,7 +149,7 @@ function initializeWikiEditor() {
   // Update preview on content change
   editor.on('change', updatePreview)
 
-  // Set up save button
+  // Setup save button
   if (saveButton) {
     saveButton.addEventListener('click', saveWikiEntry)
   }
@@ -161,14 +162,14 @@ function initializeWikiEditor() {
 }
 
 /**
- * Update the markdown preview
+ * Update the preview with rendered markdown
  */
 function updatePreview() {
   const content = editor.getValue()
   const previewContent = preview.querySelector('.preview-content')
 
   if (previewContent) {
-    // Convert markdown to HTML
+    // Render markdown to HTML
     previewContent.innerHTML = marked(content)
 
     // Highlight code blocks if highlight.js is available
@@ -181,7 +182,7 @@ function updatePreview() {
 }
 
 /**
- * Add editor toolbar
+ * Add markdown editor toolbar
  */
 function addToolbar() {
   const toolbar = document.createElement('div')
@@ -258,8 +259,8 @@ function addToolbar() {
 
 /**
  * Wrap selected text with prefix and suffix
- * @param {string} prefix - Text prefix
- * @param {string} suffix - Text suffix
+ * @param {string} prefix - Text to add before selection
+ * @param {string} suffix - Text to add after selection
  */
 function wrapText(prefix, suffix) {
   const selection = editor.getSelection()
@@ -277,7 +278,7 @@ function wrapText(prefix, suffix) {
 }
 
 /**
- * Prepend text to line or selected lines
+ * Prepend text to the current line or selected lines
  * @param {string} text - Text to prepend
  */
 function prependLine(text) {
@@ -297,7 +298,7 @@ function prependLine(text) {
 }
 
 /**
- * Insert a link
+ * Insert a link at the cursor or around selected text
  */
 function insertLink() {
   const selection = editor.getSelection()
@@ -317,7 +318,7 @@ function insertLink() {
 }
 
 /**
- * Insert an image
+ * Insert an image at the cursor
  */
 function insertImage() {
   const url = prompt('Enter image URL:', 'https://')
@@ -332,7 +333,7 @@ function insertImage() {
 }
 
 /**
- * Save a wiki entry
+ * Save current wiki entry
  */
 function saveWikiEntry() {
   const titleInput = document.getElementById('wiki-title')
@@ -367,15 +368,15 @@ function saveWikiEntry() {
       tags: tags
     }
 
-    // Use existing ID if editing
+    // Preserve ID if editing
     if (currentEntryId) {
       postData.customId = currentEntryId
     }
 
-    // Create the entry
+    // Create the post
     const postId = rdfModel.createPost(postData)
 
-    // Try to sync with endpoint
+    // Sync with endpoint
     rdfModel.syncWithEndpoint()
       .catch(error => {
         console.warn('Wiki entry saved locally but failed to sync with endpoint', error)
@@ -384,24 +385,24 @@ function saveWikiEntry() {
     // Reset form
     resetForm()
 
+    // Show success notification
     showNotification(currentEntryId ? 'Wiki entry updated successfully' : 'Wiki entry saved successfully', 'success')
 
-    // Reset current entry ID
+    // Clear current entry ID
     currentEntryId = null
 
-    // Reset save button text
+    // Reset UI state
     const saveButton = document.getElementById('save-wiki')
     if (saveButton) {
       saveButton.textContent = 'Save'
     }
 
-    // Hide cancel button
     const cancelButton = document.getElementById('cancel-edit')
     if (cancelButton) {
       cancelButton.style.display = 'none'
     }
 
-    // Reload entries list
+    // Reload entries
     loadWikiEntries()
   } catch (error) {
     errorHandler.handle(error, {
@@ -412,7 +413,7 @@ function saveWikiEntry() {
 }
 
 /**
- * Reset the entry form
+ * Reset the form
  */
 function resetForm() {
   const titleInput = document.getElementById('wiki-title')
@@ -438,7 +439,7 @@ function loadWikiEntries() {
   const entriesContainer = document.querySelector('.wiki-entries')
   if (!entriesContainer) return
 
-  // Clear existing entries
+  // Reset container
   entriesContainer.innerHTML = '<h3>Recent Entries</h3>'
 
   try {
@@ -494,16 +495,16 @@ function loadWikiEntries() {
 }
 
 /**
- * View a wiki entry
- * @param {string} id - Entry ID
+ * View wiki entry
+ * @param {string} id - Entry ID to view
  */
 function viewEntry(id) {
   try {
-    // Get entry container
+    // Get container
     const entriesContainer = document.querySelector('.wiki-entries')
     if (!entriesContainer) return
 
-    // Get entry from RDF model
+    // Find post by ID
     const posts = rdfModel.getPosts()
     const post = posts.find(p => p.id === id)
 
@@ -529,7 +530,7 @@ function viewEntry(id) {
             <div class="entry-content">${marked(post.content)}</div>
         `
 
-    // Replace entries list with entry view
+    // Replace entries with entry detail
     entriesContainer.innerHTML = ''
     entriesContainer.appendChild(entryView)
 
@@ -539,7 +540,7 @@ function viewEntry(id) {
     // Add edit button handler
     entryView.querySelector('.edit-entry').addEventListener('click', () => editEntry(post.id))
 
-    // Highlight code blocks if highlight.js is available
+    // Highlight code blocks
     entryView.querySelectorAll('pre code').forEach(block => {
       if (window.hljs) {
         window.hljs.highlightBlock(block)
@@ -554,12 +555,12 @@ function viewEntry(id) {
 }
 
 /**
- * Edit a wiki entry
- * @param {string} id - Entry ID
+ * Edit wiki entry
+ * @param {string} id - Entry ID to edit
  */
 function editEntry(id) {
   try {
-    // Get entry from RDF model
+    // Find post by ID
     const posts = rdfModel.getPosts()
     const post = posts.find(p => p.id === id)
 
@@ -571,7 +572,7 @@ function editEntry(id) {
     // Set current entry ID
     currentEntryId = id
 
-    // Fill form fields
+    // Update form fields
     const titleInput = document.getElementById('wiki-title')
     const tagsInput = document.getElementById('wiki-tags')
 
@@ -618,8 +619,8 @@ function editEntry(id) {
 }
 
 /**
- * Delete a wiki entry
- * @param {string} id - Entry ID
+ * Delete wiki entry
+ * @param {string} id - Entry ID to delete
  */
 function deleteEntry(id) {
   if (!confirm('Are you sure you want to delete this entry? This cannot be undone.')) {
@@ -627,27 +628,26 @@ function deleteEntry(id) {
   }
 
   try {
-    // Delete from RDF model
+    // Delete the post
     const success = rdfModel.deletePost(id)
 
     if (success) {
       showNotification('Entry deleted successfully', 'success')
 
-      // Reload entries list
+      // Reload entries
       loadWikiEntries()
 
-      // Reset form if deleting current entry
+      // Reset form if currently editing this entry
       if (currentEntryId === id) {
         resetForm()
         currentEntryId = null
 
-        // Reset save button text
+        // Reset UI state
         const saveButton = document.getElementById('save-wiki')
         if (saveButton) {
           saveButton.textContent = 'Save'
         }
 
-        // Hide cancel button
         const cancelButton = document.getElementById('cancel-edit')
         if (cancelButton) {
           cancelButton.style.display = 'none'
@@ -664,7 +664,7 @@ function deleteEntry(id) {
   }
 }
 
-// Listen for route changes to initialize the editor when the view becomes active
+// Listen for route changes
 document.addEventListener('routeChange', (e) => {
   if (e.detail.to === 'wiki-view') {
     setTimeout(() => {
