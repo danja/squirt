@@ -9,6 +9,15 @@ export const EVENTS = {
     // State events
     STATE_CHANGED: 'state:changed',
 
+    // Dataset events
+    GRAPH_CREATED: 'dataset:graph:created',
+    GRAPH_UPDATED: 'dataset:graph:updated',
+    GRAPH_DELETED: 'dataset:graph:deleted',
+    QUAD_CREATED: 'dataset:quad:created',
+    QUAD_UPDATED: 'dataset:quad:updated',
+    QUAD_DELETED: 'dataset:quad:deleted',
+    DATASET_SYNCED: 'dataset:dataset:synced',
+
     // RDF model events
     POST_CREATED: 'rdf:post:created',
     POST_UPDATED: 'rdf:post:updated',

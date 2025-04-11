@@ -1,0 +1,69 @@
+flowchart TB
+    subgraph Core["Core Layer"]
+        EventBus["Event Bus\nsrc/core/events/event-bus.js"]
+        State["State Management\nsrc/core/state/*.js"]
+        ErrorHandler["Error Handler\nsrc/core/errors/*.js"]
+        PluginManager["Plugin Manager\nsrc/core/plugin-manager.js"]
+    end
+
+    subgraph Domain["Domain Layer"]
+        RDFModel["RDF Model\nsrc/domain/rdf/model.js"]
+    end
+
+    subgraph Services["Services Layer"]
+        EndpointsService["Endpoints Service\nsrc/services/endpoints/endpoints-service.js"]
+        RDFService["RDF Service\nsrc/services/rdf/rdf-model.js"]
+        SPARQLService["SPARQL Service\nsrc/services/sparql/*.js"]
+        StorageService["Storage Service\nsrc/services/storage/storage-service.js"]
+    end
+
+    subgraph UI["UI Layer"]
+        Router["Router\nsrc/ui/router.js"]
+        Views["Views\nsrc/ui/views/*.js"]
+        Components["Components\nsrc/ui/components/*.js"]
+        Notifications["Notifications\nsrc/ui/notifications/notifications.js"]
+    end
+
+    subgraph Plugins["Plugins"]
+        WikiPlugin["Wiki Plugin\nsrc/plugins/wiki-plugin.js"]
+        YasguiPlugin["YASGUI Plugin\nsrc/plugins/yasgui-plugin.js"]
+    end
+
+    App["Application\nsrc/app.js"]
+
+    %% Core connections
+    EventBus <--> State
+    EventBus <--> ErrorHandler
+    EventBus <--> PluginManager
+    State <--> ErrorHandler
+
+    %% App connections
+    App --> EventBus
+    App --> State
+    App --> ErrorHandler
+    App --> PluginManager
+    App --> Router
+
+    %% Domain connections
+    RDFModel <--> Services
+    
+    %% Services connections
+    Services <--> Core
+    EndpointsService <--> SPARQLService
+    RDFService <--> StorageService
+    SPARQLService <--> EndpointsService
+
+    %% UI connections
+    Router <--> Views
+    Views <--> Components
+    Views <--> Notifications
+    Views <--> State
+    Views <--> EventBus
+    
+    %% Plugin connections
+    PluginManager <--> Plugins
+    WikiPlugin --> RDFService
+    YasguiPlugin --> SPARQLService
+    
+    %% User interaction
+    UI <--> Services
