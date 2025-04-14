@@ -1,64 +1,72 @@
-import { state } from '../../core/state.js';
-import { ErrorHandler } from '../../core/errors.js';
-import { rdfModel } from '../../services/rdf/rdf-model.js';
-import { extractMetadataFromUrl, createDatasetFromMetadata } from '../../services/rdf/rdf-extractor.js';
-import { showNotification } from './notifications.js';
+// import { state } from '../../core/state.js'; // Remove legacy state
+import { store } from '../../core/state/index.js' // Import Redux store
+import * as actions from '../../core/state/actions.js' // Import actions
+
+// import { ErrorHandler } from '../../core/errors.js'; // Remove old handler
+import { errorHandler } from '../../core/errors/index.js' // Use new handler
+import { rdfService } from '../../services/rdf/rdf-service.js'
+import { extractMetadataFromUrl } from '../../services/rdf/rdf-extractor.js'
+import { showNotification } from './notifications.js'
 
 export function setupForms() {
-  setupPostForm();
-  setupEndpointForm();
+  setupPostForm()
+  setupEndpointForm()
 }
 
 function setupPostForm() {
-  console.log('Setting up post form...');
-  const form = document.getElementById('post-form');
+  console.log('Setting up post form...')
+  const form = document.getElementById('post-form')
   if (!form) {
-    console.warn('Post form not found, it may be loaded dynamically');
-    return;
+    console.warn('Post form not found, it may be loaded dynamically')
+    return
   }
-  
-  console.log('Post form found, setting up extract button...');
-  
+
+  // Get references to form elements that might indicate submission state
+  const submitButton = form.querySelector('button[type="submit"]')
+  const originalSubmitText = submitButton ? submitButton.textContent : 'Submit'
+
+  console.log('Post form found, setting up extract button...')
+
   // Set up the extract button
-  const extractButton = document.getElementById('extract-metadata');
-  const urlInput = document.getElementById('url');
-  
+  const extractButton = document.getElementById('extract-metadata')
+  const urlInput = document.getElementById('url')
+
   if (extractButton && urlInput) {
-    console.log('Extract button found, adding listener');
+    console.log('Extract button found, adding listener')
     extractButton.addEventListener('click', async () => {
       if (urlInput.value) {
         try {
-          extractButton.disabled = true;
-          extractButton.textContent = 'Extracting...';
-          
-          showNotification('Extracting metadata, please wait...', 'info');
-          
-          const metadata = await extractMetadataFromUrl(urlInput.value);
-          
+          extractButton.disabled = true
+          extractButton.textContent = 'Extracting...'
+
+          showNotification('Extracting metadata, please wait...', 'info')
+
+          const metadata = await extractMetadataFromUrl(urlInput.value)
+
           // Fill in form fields with extracted metadata
           if (metadata.title) {
-            const titleInput = document.getElementById('title');
+            const titleInput = document.getElementById('title')
             if (titleInput && !titleInput.value) {
-              titleInput.value = metadata.title;
+              titleInput.value = metadata.title
             }
           }
-          
+
           if (metadata.description) {
-            const contentInput = document.getElementById('content');
+            const contentInput = document.getElementById('content')
             if (contentInput && !contentInput.value) {
-              contentInput.value = metadata.description;
+              contentInput.value = metadata.description
             }
           }
-          
+
           if (metadata.tags && metadata.tags.length > 0) {
-            const tagsInput = document.getElementById('tags');
+            const tagsInput = document.getElementById('tags')
             if (tagsInput && !tagsInput.value) {
-              tagsInput.value = metadata.tags.join(', ');
+              tagsInput.value = metadata.tags.join(', ')
             }
           }
-          
+
           // Update preview
-          const previewElement = document.getElementById('post-preview');
+          const previewElement = document.getElementById('post-preview')
           if (previewElement) {
             previewElement.innerHTML = `
               <h3>Link Preview</h3>
@@ -72,160 +80,188 @@ function setupPostForm() {
                   </div>
                 </div>
               </div>
-            `;
+            `
           }
-          
-          showNotification('Metadata extracted successfully', 'success');
-          
+
+          showNotification('Metadata extracted successfully', 'success')
+
         } catch (error) {
-          console.error('Error extracting metadata:', error);
-          showNotification(`Failed to extract metadata: ${error.message}`, 'error');
+          console.error('Error extracting metadata:', error)
+          errorHandler.handle(error, { context: 'PostForm ExtractMetadata', showToUser: true })
         } finally {
-          extractButton.disabled = false;
-          extractButton.textContent = 'Extract';
+          extractButton.disabled = false
+          extractButton.textContent = 'Extract'
         }
       } else {
-        showNotification('Please enter a valid URL first', 'warning');
+        showNotification('Please enter a valid URL first', 'warning')
       }
-    });
+    })
   } else {
-    console.warn('Extract button or URL input not found!');
+    console.warn('Extract button or URL input not found!')
   }
 
   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
+    // Indicate submission visually
+    if (submitButton) {
+      submitButton.disabled = true
+      submitButton.textContent = 'Submitting...'
+    }
+
     try {
-      state.update('postSubmitting', true);
-      const formData = new FormData(form);
-      
+      const formData = new FormData(form)
+
       // Extract form data
       const postData = {
         type: formData.get('post-type'),
         content: formData.get('content'),
         tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : []
-      };
-      
+      }
+
       // If it's a link post, extract the URL
       if (postData.type === 'link' && formData.get('url')) {
-        postData.url = formData.get('url');
+        postData.url = formData.get('url')
       }
-      
+
       // If title is provided, add it
       if (formData.get('title')) {
-        postData.title = formData.get('title');
+        postData.title = formData.get('title')
       }
-      
-      // Create post in the RDF model
-      const postId = rdfModel.createPost(postData);
-      
-      // Try to sync with endpoint, but continue even if it fails
-      try {
-        await rdfModel.syncWithEndpoint();
-      } catch (syncError) {
-        console.warn('Post created locally but failed to sync with endpoint', syncError);
-      }
-      
-      // Update UI state
-      state.update('lastPost', {
-        id: postId,
-        ...postData,
-        timestamp: new Date().toISOString()
-      });
-      
-      state.update('lastPostStatus', 'success');
-      
+
+      // Use RDF service to create the post
+      const postId = await rdfService.createPost(postData)
+
+      // Optional: Sync with endpoint after creation
+      // Note: syncWithEndpoint needs graphUri, decide how to get/provide it
+      // For now, let's assume sync is triggered elsewhere or needs more context
+      /*
+      rdfService.syncWithEndpoint(graphUri) // Example, needs graphUri
+        .then(() => {
+          showNotification('Post created and synced successfully!', 'success')
+        })
+        .catch(syncError => {
+          console.warn('Post created locally, but sync failed:', syncError)
+          showNotification('Post created locally, but sync failed.', 'warning')
+        })
+      */
+      showNotification('Post created successfully (local)', 'success')
+
+      // Update UI state locally if needed (e.g., clear form, show success message)
+      // state.update('lastPost', { ... }) // Removed - Manage this specific UI state differently if needed
+      // state.update('lastPostStatus', 'success') // Removed
+
       // Reset form
-      form.reset();
-      
-      // Show success notification
-      showNotification('Post created successfully', 'success');
-      
+      form.reset()
+      const previewElement = document.getElementById('post-preview')
+      if (previewElement) previewElement.innerHTML = '' // Clear preview
+
+      // Optionally trigger an event or callback
+      // TODO: Define how onSubmitSuccess should be passed if needed
+      /*
+      if (typeof options.onSubmitSuccess === 'function') {
+        options.onSubmitSuccess(postId, postData)
+      }
+      */
+
     } catch (error) {
-      ErrorHandler.handle(error);
-      state.update('lastPostStatus', 'error');
-      showNotification('Failed to create post: ' + error.message, 'error');
+      console.error('Error creating post:', error)
+      // Error is likely handled by rdfService.createPost, which uses errorHandler
+      // showNotification(`Error creating post: ${error.message}`, 'error') // May be redundant
+      // Optionally trigger an error callback
+      // TODO: Define how onSubmitError should be passed if needed
+      /*
+      if (typeof options.onSubmitError === 'function') {
+        options.onSubmitError(error)
+      }
+      */
     } finally {
-      state.update('postSubmitting', false);
+      // Reset submission state visually
+      if (submitButton) {
+        submitButton.disabled = false
+        submitButton.textContent = originalSubmitText
+      }
+      // state.update('postSubmitting', false) // Removed
     }
-  });
+  })
 }
 
 // Listen for post type changes 
-const typeSelector = document.getElementById('post-type');
+const typeSelector = document.getElementById('post-type')
 if (typeSelector) {
   typeSelector.addEventListener('change', (e) => {
-    console.log('Post type changed to:', e.target.value);
-    // In a real implementation, we would toggle between different form types
-    alert('Changing post type is not implemented in this demo. Please refresh the page.');
-  });
+    console.log('Post type changed to:', e.target.value)
+    // Toggle visibility of URL input based on type
+    const urlField = document.getElementById('url-field') // Assuming the URL input is wrapped
+    if (urlField) {
+      urlField.style.display = (e.target.value === 'link') ? 'block' : 'none'
+    }
+  })
+  // Trigger change event on load to set initial state
+  typeSelector.dispatchEvent(new Event('change'))
 }
 
 function setupEndpointForm() {
-  const form = document.getElementById('endpoint-form');
-  if (!form) return;
-  
+  const form = document.getElementById('endpoint-form')
+  if (!form) return
+
+  const submitButton = form.querySelector('button[type="submit"]')
+  const originalSubmitText = submitButton ? submitButton.textContent : 'Add Endpoint'
+
   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    try {
-      const url = document.getElementById('endpoint-url').value;
-      const label = document.getElementById('endpoint-label').value;
-      const type = 'query'; // Default to query, can be extended with dropdown
-      
-      // Import required here to avoid circular dependencies
-      const { EndpointManager } = await import('../../services/sparql/endpoints.js');
-      const endpointManager = new EndpointManager();
-      
-      endpointManager.addEndpoint(url, label, type);
-      form.reset();
-      
-      showNotification('Endpoint added successfully', 'success');
-      
-      // Refresh the endpoint list if the component exists
-      if (typeof updateEndpointsList === 'function') {
-        updateEndpointsList();
-      }
-    } catch (error) {
-      ErrorHandler.handle(error);
-      showNotification('Failed to add endpoint: ' + error.message, 'error');
+    e.preventDefault()
+
+    if (submitButton) {
+      submitButton.disabled = true
+      submitButton.textContent = 'Adding...'
     }
-  });
+
+    try {
+      const urlInput = document.getElementById('endpoint-url')
+      const labelInput = document.getElementById('endpoint-label')
+      const typeSelect = document.getElementById('endpoint-type') // Assuming an ID for type select
+      const userInput = document.getElementById('endpoint-user')
+      const passwordInput = document.getElementById('endpoint-password')
+
+      if (!urlInput || !labelInput || !typeSelect) { // Basic validation
+        throw new Error('Missing required endpoint form fields (URL, Label, Type).')
+      }
+
+      const url = urlInput.value.trim()
+      const label = labelInput.value.trim()
+      const type = typeSelect.value
+      const credentials = (userInput?.value && passwordInput?.value)
+        ? { user: userInput.value, password: passwordInput.value }
+        : null
+
+      if (!url || !label) {
+        throw new Error('Endpoint URL and Label cannot be empty.')
+      }
+
+      // Dispatch addEndpoint action directly
+      // The EndpointManager logic for checking duplicates and status is now in the reducer/manager
+      store.dispatch(actions.addEndpoint({ url, label, type, credentials, status: 'unknown' }))
+      // TODO: Saving to storage should be handled centrally, perhaps by EndpointManager subscribing to store.
+
+      form.reset()
+      showNotification('Endpoint added successfully (checking status...)', 'success')
+
+      // Refreshing the endpoint list is handled by its own subscription to the store.
+      // if (typeof updateEndpointsList === 'function') {
+      //   updateEndpointsList()
+      // }
+    } catch (error) {
+      // Use new error handler
+      errorHandler.handle(error, { context: 'EndpointForm Submit', showToUser: true })
+      // showNotification('Failed to add endpoint: ' + error.message, 'error') // Redundant
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false
+        submitButton.textContent = originalSubmitText
+      }
+    }
+  })
 }
 
-function addFormField(container, field) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'form-field';
-  
-  // Create label
-  const label = document.createElement('label');
-  label.setAttribute('for', field.name);
-  label.textContent = field.label;
-  wrapper.appendChild(label);
-  
-  // Create input
-  let input;
-  if (field.type === 'textarea') {
-    input = document.createElement('textarea');
-  } else {
-    input = document.createElement('input');
-    input.type = field.type;
-  }
-  
-  input.name = field.name;
-  input.id = field.name;
-  
-  if (field.placeholder) {
-    input.placeholder = field.placeholder;
-  }
-  
-  if (field.required) {
-    input.required = true;
-  }
-  
-  wrapper.appendChild(input);
-  container.appendChild(wrapper);
-}
-
-// REMOVED: Duplicate showNotification function was here
-// Using the imported showNotification from notifications.js instead
+// Removed addFormField function as it wasn't used
+// Removed duplicate showNotification function

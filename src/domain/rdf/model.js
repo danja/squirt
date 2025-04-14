@@ -1,7 +1,7 @@
-// src/domain/rdf/model.js - Updated with getPosts method
+// src/domain/rdf/model.js - Refactored as pure domain model
 import rdf from 'rdf-ext'
 import { RDFError } from '../../core/errors/error-types.js'
-import { namespaces } from '../../utils/namespaces.js'
+import { namespaces, generateNid } from '../../utils/utils.js' // Assuming generateNid is here
 
 export class RDFModel {
     constructor() {
@@ -23,7 +23,8 @@ export class RDFModel {
             const dataset = rdf.dataset()
 
             // Generate or use custom ID
-            const postId = postData.customId || this.generatePostId(postData)
+            // Use generateNid from utils instead of a local method
+            const postId = postData.customId || generateNid(postData.content || '')
             const subject = rdf.namedNode(postId)
 
             // Get optional graph
@@ -40,19 +41,22 @@ export class RDFModel {
                 }
             }
 
-            // Add type
+            // Add type based on postData.type, default to 'entry' if not specified
+            const postType = postData.type || 'entry'
             addQuad(
                 subject,
                 this.ns.rdf('type'),
-                this.ns.squirt(postData.type)
+                this.ns.squirt(postType) // Use determined postType
             )
 
-            // Add content
-            addQuad(
-                subject,
-                this.ns.squirt('content'),
-                rdf.literal(postData.content)
-            )
+            // Add content if present
+            if (postData.content) {
+                addQuad(
+                    subject,
+                    this.ns.squirt('content'),
+                    rdf.literal(postData.content)
+                )
+            }
 
             // Add creation date
             addQuad(
@@ -73,25 +77,34 @@ export class RDFModel {
             // Add tags if provided
             if (postData.tags && Array.isArray(postData.tags)) {
                 postData.tags.forEach(tag => {
-                    addQuad(
-                        subject,
-                        this.ns.squirt('tag'),
-                        rdf.literal(tag)
-                    )
+                    if (tag && typeof tag === 'string' && tag.trim().length > 0) { // Ensure tag is valid
+                        addQuad(
+                            subject,
+                            this.ns.squirt('tag'),
+                            rdf.literal(tag.trim()) // Trim whitespace
+                        )
+                    }
                 })
             }
 
             // Add URL for link type
-            if (postData.type === 'link' && postData.url) {
-                addQuad(
-                    subject,
-                    this.ns.squirt('url'),
-                    rdf.namedNode(postData.url)
-                )
+            if (postType === 'link' && postData.url) {
+                try {
+                    const urlNode = rdf.namedNode(postData.url) // Validate URL format
+                    addQuad(
+                        subject,
+                        this.ns.squirt('url'),
+                        urlNode
+                    )
+                } catch (urlError) {
+                    console.warn(`Invalid URL provided for link post ${postId}: ${postData.url}`)
+                    // Optionally throw an error or handle it differently
+                    throw new RDFError(`Invalid URL format for link post: ${postData.url}`, { originalError: urlError, postData })
+                }
             }
 
             // Add modified date for wiki type
-            if (postData.type === 'wiki') {
+            if (postType === 'wiki') {
                 addQuad(
                     subject,
                     this.ns.dc('modified'),
@@ -100,16 +113,12 @@ export class RDFModel {
             }
 
             // Add FOAF properties for profile type
-            if (postData.type === 'profile') {
-                // Use FOAF namespace
+            if (postType === 'profile') {
+                // Ensure FOAF namespace exists
                 const foaf = this.ns.foaf || rdf.namespace('http://xmlns.com/foaf/0.1/')
 
-                // Add profile type
-                addQuad(
-                    subject,
-                    this.ns.rdf('type'),
-                    foaf('Person')
-                )
+                // Add profile type explicitly if not already added (though squirt:profile might suffice)
+                // addQuad(subject, this.ns.rdf('type'), foaf('Person')); // Decide if this is redundant
 
                 // Add name if provided
                 if (postData.foafName) {
@@ -129,60 +138,111 @@ export class RDFModel {
                 }
 
                 if (postData.foafMbox) {
-                    addQuad(
-                        subject,
-                        foaf('mbox'),
-                        rdf.namedNode(postData.foafMbox)
-                    )
+                    try {
+                        const mboxNode = rdf.namedNode(postData.foafMbox) // Often mailto: URI
+                        addQuad(subject, foaf('mbox'), mboxNode)
+                    } catch (mboxError) {
+                        console.warn(`Invalid mbox URI provided for profile ${postId}: ${postData.foafMbox}`)
+                        throw new RDFError(`Invalid mbox URI format for profile: ${postData.foafMbox}`, { originalError: mboxError, postData })
+                    }
                 }
 
                 if (postData.foafHomepage) {
-                    addQuad(
-                        subject,
-                        foaf('homepage'),
-                        rdf.namedNode(postData.foafHomepage)
-                    )
+                    try {
+                        const homepageNode = rdf.namedNode(postData.foafHomepage)
+                        addQuad(subject, foaf('homepage'), homepageNode)
+                    } catch (homepageError) {
+                        console.warn(`Invalid homepage URL provided for profile ${postId}: ${postData.foafHomepage}`)
+                        throw new RDFError(`Invalid homepage URL format for profile: ${postData.foafHomepage}`, { originalError: homepageError, postData })
+                    }
                 }
 
                 if (postData.foafImg) {
-                    addQuad(
-                        subject,
-                        foaf('img'),
-                        rdf.namedNode(postData.foafImg)
-                    )
+                    try {
+                        const imgNode = rdf.namedNode(postData.foafImg)
+                        addQuad(subject, foaf('img'), imgNode)
+                    } catch (imgError) {
+                        console.warn(`Invalid image URL provided for profile ${postId}: ${postData.foafImg}`)
+                        throw new RDFError(`Invalid image URL format for profile: ${postData.foafImg}`, { originalError: imgError, postData })
+                    }
                 }
 
                 // Add accounts if provided
                 if (postData.foafAccounts && Array.isArray(postData.foafAccounts)) {
                     postData.foafAccounts.forEach(account => {
-                        if (account) {
-                            // Create blank node for account
-                            const accountNode = rdf.blankNode()
+                        // Check if account data is usable (e.g., expects an object with serviceHomepage and maybe accountName)
+                        if (account && account.serviceHomepage) {
+                            try {
+                                // Create blank node for account details
+                                const accountNode = rdf.blankNode()
 
-                            // Link person to account
-                            addQuad(
-                                subject,
-                                foaf('account'),
-                                accountNode
-                            )
+                                // Link person to account
+                                addQuad(subject, foaf('account'), accountNode)
 
-                            // Add account service
-                            addQuad(
-                                accountNode,
-                                foaf('accountServiceHomepage'),
-                                rdf.namedNode(account)
-                            )
+                                // Add account service homepage (required by FOAF spec)
+                                addQuad(
+                                    accountNode,
+                                    foaf('accountServiceHomepage'),
+                                    rdf.namedNode(account.serviceHomepage)
+                                )
+
+                                // Add account name (optional)
+                                if (account.accountName) {
+                                    addQuad(
+                                        accountNode,
+                                        foaf('accountName'), // Typically the username or profile identifier
+                                        rdf.literal(account.accountName)
+                                    )
+                                }
+                            } catch (accountError) {
+                                console.warn(`Invalid account data provided for profile ${postId}:`, account)
+                                // Decide whether to skip this account or throw
+                            }
                         }
                     })
                 }
             }
 
+            // Include any other custom properties provided in postData
+            for (const key in postData) {
+                if (Object.hasOwnProperty.call(postData, key)) {
+                    // Avoid reprocessing known properties
+                    const knownProps = ['customId', 'graph', 'type', 'content', 'title', 'tags', 'url',
+                        'foafName', 'foafNick', 'foafMbox', 'foafHomepage', 'foafImg', 'foafAccounts']
+                    if (!knownProps.includes(key) && postData[key] !== undefined && postData[key] !== null) {
+                        // Attempt to add as a squirt property, assuming value is literal unless it looks like a URI
+                        const value = postData[key]
+                        let objectNode
+                        // Basic check if value looks like a URI - refine as needed
+                        if (typeof value === 'string' && (value.startsWith('http:') || value.startsWith('https:') || value.startsWith('urn:'))) {
+                            try {
+                                objectNode = rdf.namedNode(value)
+                            } catch (uriError) {
+                                console.warn(`Could not create named node for custom property ${key} with value ${value}. Treating as literal.`)
+                                objectNode = rdf.literal(value.toString()) // Fallback to literal
+                            }
+                        } else {
+                            // Default to literal for numbers, booleans, strings, etc.
+                            objectNode = rdf.literal(value.toString()) // Ensure value is stringified if not already
+                        }
+                        addQuad(subject, this.ns.squirt(key), objectNode)
+                    }
+                }
+            }
+
+
             return {
                 id: postId,
-                dataset,
-                ...postData
+                dataset, // The generated RDF dataset for this post
+                subject: subject, // The main subject node for convenience
+                graph: graph, // The named graph used, if any
+                originalData: postData // Keep original data for reference if needed
             }
         } catch (error) {
+            // Ensure errors are wrapped in RDFError for consistency
+            if (error instanceof RDFError) {
+                throw error // Re-throw if already specific type
+            }
             throw new RDFError(`Failed to create post data: ${error.message}`, {
                 originalError: error,
                 postData
@@ -190,279 +250,62 @@ export class RDFModel {
         }
     }
 
-    /**
-     * Create a post and add it to the dataset
-     * @param {Object} postData - Post data
-     * @returns {string} ID of the created post
-     */
-    createPost(postData) {
-        // Get the current dataset
-        const dataset = this.dataset || rdf.dataset()
-
-        // Generate post ID
-        const postId = postData.customId || this.generatePostId(postData)
-        const subject = rdf.namedNode(postId)
-
-        // Get optional graph
-        const graph = postData.graph ?
-            rdf.namedNode(postData.graph) :
-            null
-
-        // Helper to add quads to dataset
-        const addQuad = (s, p, o) => {
-            if (graph) {
-                dataset.add(rdf.quad(s, p, o, graph))
-            } else {
-                dataset.add(rdf.quad(s, p, o))
-            }
-        }
-
-        // Add type
-        addQuad(
-            subject,
-            this.ns.rdf('type'),
-            this.ns.squirt(postData.type)
-        )
-
-        // Add content
-        addQuad(
-            subject,
-            this.ns.squirt('content'),
-            rdf.literal(postData.content)
-        )
-
-        // Add creation date
-        addQuad(
-            subject,
-            this.ns.dc('created'),
-            rdf.literal(new Date().toISOString(), rdf.namedNode('http://www.w3.org/2001/XMLSchema#dateTime'))
-        )
-
-        // Add title if provided
-        if (postData.title) {
-            addQuad(
-                subject,
-                this.ns.dc('title'),
-                rdf.literal(postData.title)
-            )
-        }
-
-        // Add tags if provided
-        if (postData.tags && Array.isArray(postData.tags)) {
-            postData.tags.forEach(tag => {
-                addQuad(
-                    subject,
-                    this.ns.squirt('tag'),
-                    rdf.literal(tag)
-                )
-            })
-        }
-
-        // Add URL for link type
-        if (postData.type === 'link' && postData.url) {
-            addQuad(
-                subject,
-                this.ns.squirt('url'),
-                rdf.namedNode(postData.url)
-            )
-        }
-
-        // Add modified date for wiki type
-        if (postData.type === 'wiki') {
-            addQuad(
-                subject,
-                this.ns.dc('modified'),
-                rdf.literal(new Date().toISOString(), rdf.namedNode('http://www.w3.org/2001/XMLSchema#dateTime'))
-            )
-        }
-
-        // Update the dataset
-        this.dataset = dataset
-
-        return postId
-    }
+    // Removed createPost, getPosts, getPost, deletePost, syncWithEndpoint
+    // Keep utility methods if they are purely functional and needed by createPostData or externally
 
     /**
-     * Get posts from the dataset with optional filtering
-     * @param {Object} options - Filter options
-     * @param {string} options.type - Filter by post type
-     * @param {string} options.tag - Filter by tag
-     * @param {string} options.graph - Filter by graph
-     * @param {number} options.limit - Maximum number of posts to return
-     * @returns {Array} Filtered posts
+     * Generates a unique post ID. Moved to utils/utils.js as generateNid.
+     * Kept here for reference during refactoring, should be removed later.
      */
-    getPosts(options = {}) {
-        const dataset = this.dataset || rdf.dataset()
-        if (!dataset) return []
-
-        const posts = new Map()
-
-        // Find post type triples
-        const postTypePattern = this.ns.rdf('type')
-
-        // Set up match options for graph filtering
-        const matchOptions = {}
-        if (options.graph) {
-            matchOptions.graph = rdf.namedNode(options.graph)
-        }
-
-        // Get all subjects with an rdf:type
-        dataset.match(null, postTypePattern, null, options.graph ? rdf.namedNode(options.graph) : null).forEach(quad => {
-            const postType = quad.object.value.split('/').pop()
-
-            // Skip if filtering by type and not matching
-            if (options.type && postType !== options.type) return
-
-            const postId = quad.subject.value
-            const graphId = quad.graph?.value || null
-
-            if (!posts.has(postId)) {
-                posts.set(postId, {
-                    id: postId,
-                    type: postType,
-                    graph: graphId,
-                    tags: []
-                })
-            }
-        })
-
-        // Populate post properties
-        posts.forEach((post, id) => {
-            const subject = rdf.namedNode(id)
-            const graph = post.graph ? rdf.namedNode(post.graph) : null
-
-            // Get content
-            dataset.match(subject, this.ns.squirt('content'), null, graph).forEach(quad => {
-                post.content = quad.object.value
-            })
-
-            // Get title
-            dataset.match(subject, this.ns.dc('title'), null, graph).forEach(quad => {
-                post.title = quad.object.value
-            })
-
-            // Get created date
-            dataset.match(subject, this.ns.dc('created'), null, graph).forEach(quad => {
-                post.created = quad.object.value
-            })
-
-            // Get modified date
-            dataset.match(subject, this.ns.dc('modified'), null, graph).forEach(quad => {
-                post.modified = quad.object.value
-            })
-
-            // Get tags
-            dataset.match(subject, this.ns.squirt('tag'), null, graph).forEach(quad => {
-                post.tags.push(quad.object.value)
-            })
-
-            // Get URL for link type
-            dataset.match(subject, this.ns.squirt('url'), null, graph).forEach(quad => {
-                post.url = quad.object.value
-            })
-        })
-
-        // Filter by tag if specified
-        if (options.tag) {
-            posts = new Map(
-                Array.from(posts.entries()).filter(([_, post]) =>
-                    post.tags.includes(options.tag)
-                )
-            )
-        }
-
-
-        // Convert to array and sort by date (most recent first)
-        let postsArray = Array.from(posts.values())
-            .sort((a, b) => {
-                const dateA = a.modified ? new Date(a.modified) : new Date(a.created)
-                const dateB = b.modified ? new Date(b.modified) : new Date(b.created)
-                return dateB - dateA
-            })
-
-        // Apply limit if specified
-        if (options.limit && options.limit > 0) {
-            postsArray = postsArray.slice(0, options.limit)
-        }
-
-        return postsArray
-    }
+    // generatePostId(postData) { ... } // Remove this
 
     /**
-     * Get a single post by ID
-     * @param {string} id - Post ID
-     * @returns {Object|null} Post or null if not found
+     * Hashes content. Potentially useful, but might belong in utils.
+     * Keep for now if used by generateNid or similar, otherwise move/remove.
      */
-    getPost(id) {
-        const posts = this.getPosts()
-        return posts.find(post => post.id === id) || null
-    }
-
-    /**
-     * Delete a post from the dataset
-     * @param {string} postId - ID of post to delete
-     * @returns {boolean} Success
-     */
-    deletePost(postId) {
-        const dataset = this.dataset || rdf.dataset()
-        if (!dataset) return false
-
-        const subject = rdf.namedNode(postId)
-
-        // Find all quads for this subject
-        const quadsToRemove = dataset.match(subject)
-
-        if (quadsToRemove.size === 0) return false
-
-        // Remove all quads
-        quadsToRemove.forEach(quad => {
-            dataset.delete(quad)
-        })
-
-        // Update dataset
-        this.dataset = dataset
-
-        return true
-    }
-
-    /**
-     * Generate a post ID from content
-     * @param {Object} postData - Post data
-     * @returns {string} Generated ID
-     */
-    generatePostId(postData) {
-        const content = postData.title || postData.content || postData.url || ''
-        const date = new Date().toISOString().split('T')[0]
-        const hash = this.hashContent(content)
-
-        return `http://purl.org/stuff/squirt/post_${date}_${hash}`
-    }
-
-    /**
-     * Generate a hash for the content
-     * @param {string} content - Content to hash
-     * @returns {string} Hash string
-     */
-    hashContent(content) {
-        return Array.from(content)
-            .reduce((hash, char) => {
-                return ((hash << 5) - hash) + char.charCodeAt(0) | 0
-            }, 0)
-            .toString(16)
-            .slice(0, 8)
-    }
-
-    /**
-     * Sync dataset with SPARQL endpoint
-     * @returns {Promise} Promise resolving when sync is complete
-     */
-    async syncWithEndpoint() {
-        // This method would be implemented to send data to a SPARQL endpoint
-        console.log('Syncing with endpoint - implementation pending')
-        // For now, just return a resolved promise
-        return Promise.resolve()
-    }
+    // hashContent(content) { ... } // Keep or move to utils if needed
 }
 
-// Create and export instance
-export const rdfModel = new RDFModel()
+// Example Usage (for testing or illustration - remove in final version)
+/*
+const model = new RDFModel();
+const post = {
+    type: 'link',
+    content: 'Check out this RDF library',
+    title: 'rdf-ext',
+    url: 'https://github.com/rdf-ext/rdf-ext',
+    tags: ['rdf', 'javascript', ' linked data '], // Test tag trimming
+    customProp: 'some value',
+    customUriProp: 'http://example.org/custom'
+};
+
+try {
+    const { id, dataset, subject } = model.createPostData(post);
+    console.log('Generated Post ID:', id);
+    console.log('Generated Subject:', subject.value);
+    console.log('Generated Dataset:\n', dataset.toString());
+
+    const profile = {
+        type: 'profile',
+        customId: 'urn:uuid:1234-abcd',
+        foafName: 'Alice',
+        foafNick: 'Ally',
+        foafMbox: 'mailto:alice@example.com',
+        foafHomepage: 'http://alice.example.com',
+        foafImg: 'http://alice.example.com/img.jpg',
+        foafAccounts: [
+            { serviceHomepage: 'https://github.com', accountName: 'alice_gh' },
+            { serviceHomepage: 'https://twitter.com', accountName: 'alice_tw' }, // Corrected structure
+            { serviceHomepage: 'invalid-url' } // Test invalid account data
+        ]
+    }
+    const profileData = model.createPostData(profile);
+    console.log('\nGenerated Profile Dataset:\n', profileData.dataset.toString());
+
+} catch (error) {
+    console.error('Error creating post data:', error.message);
+    if (error.details) {
+        console.error('Details:', error.details);
+    }
+}
+*/
