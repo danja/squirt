@@ -9,6 +9,7 @@ import { rdfModel } from '../../domain/rdf/model.js'
  * @returns {Object} View controller with update and cleanup methods
  */
 export function initView() {
+    let unsubscribeShareReceived = null // Keep track of the unsubscribe function
     try {
         console.log('Initializing Post view')
 
@@ -23,6 +24,37 @@ export function initView() {
         // Load existing posts if needed
         loadPosts()
 
+        // Listen for shared content
+        unsubscribeShareReceived = eventBus.on(EVENTS.SHARE_RECEIVED, (data) => {
+            console.log('Share received in Post View:', data)
+            const urlInput = document.getElementById('url')
+            const titleInput = document.getElementById('title')
+            const contentInput = document.getElementById('content')
+            const postTypeSelect = document.getElementById('post-type')
+
+            if (data.url && urlInput) {
+                urlInput.value = data.url
+                // Switch to link type if not already selected
+                if (postTypeSelect && postTypeSelect.value !== 'link') {
+                    postTypeSelect.value = 'link'
+                    // Manually trigger change event if needed for other logic
+                    postTypeSelect.dispatchEvent(new Event('change'))
+                }
+            }
+            if (data.title && titleInput) {
+                titleInput.value = data.title
+            }
+            // Use text as content if available and no URL was provided
+            if (data.text && contentInput && !data.url) {
+                contentInput.value = data.text
+                // Switch to entry type if a URL wasn't the primary share item
+                if (postTypeSelect && postTypeSelect.value !== 'entry') {
+                    postTypeSelect.value = 'entry'
+                    postTypeSelect.dispatchEvent(new Event('change'))
+                }
+            }
+        })
+
         return {
             update() {
                 console.log('Updating Post view')
@@ -31,7 +63,10 @@ export function initView() {
 
             cleanup() {
                 console.log('Cleaning up Post view')
-                // Remove event listeners if needed
+                // Unsubscribe from the share event when view is cleaned up
+                if (unsubscribeShareReceived) {
+                    unsubscribeShareReceived()
+                }
             }
         }
     } catch (error) {
@@ -40,6 +75,10 @@ export function initView() {
             context: 'Initializing Post view'
         })
 
+        // Ensure cleanup if initialization fails partially
+        if (unsubscribeShareReceived) {
+            unsubscribeShareReceived()
+        }
         return {}
     }
 }

@@ -5,6 +5,7 @@
 export const EVENTS = {
     // Application lifecycle events
     APP_INITIALIZED: 'app:initialized',
+    SHARE_RECEIVED: 'app:share:received',
 
     // State events
     STATE_CHANGED: 'state:changed',

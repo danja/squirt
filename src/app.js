@@ -207,5 +207,27 @@ function askNotificationPermission() {
 
 // Initialize the application when the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Check for share target request before initializing the app
+  if (window.location.pathname === '/share-target') {
+    const params = new URLSearchParams(window.location.search)
+    const sharedUrl = params.get('url')
+    const sharedTitle = params.get('title')
+    const sharedText = params.get('text')
+
+    if (sharedUrl || sharedTitle || sharedText) {
+      // Emit an event with the shared data
+      eventBus.emit(EVENTS.SHARE_RECEIVED, {
+        url: sharedUrl,
+        title: sharedTitle,
+        text: sharedText
+      })
+
+      // Redirect to the main app view (hash router will take over)
+      window.location.replace('/')
+      return // Don't initialize the app on the share-target page itself
+    }
+  }
+
+  // Initialize the app normally
   initializeApp()
 })
