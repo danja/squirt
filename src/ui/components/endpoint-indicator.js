@@ -120,7 +120,7 @@ export class EndpointStatusIndicator {
       this.updateStatus('checking', 'Checking endpoints...')
 
       // Emit check request event
-      eventBus.emit(EVENTS.ENDPOINT_CHECK_REQUESTED)
+      eventBus.emit(EVENTS.ENDPOINT_CHECK_REQUESTED, { message: 'Requesting endpoint check' })
     } catch (error) {
       console.error('Error requesting endpoint check:', error)
     }

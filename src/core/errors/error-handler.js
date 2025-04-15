@@ -1,15 +1,15 @@
 // src/core/errors/error-handler.js
-import { eventBus, EVENTS } from '../events/event-bus.js';
-import * as ErrorTypes from './error-types.js';
+import { eventBus, EVENTS } from '../events/event-bus.js'
+import * as ErrorTypes from './error-types.js'
 
 /**
  * Centralized error handler for the application
  */
 export class ErrorHandler {
   constructor(eventBus) {
-    this.eventBus = eventBus;
-    this.errorLog = [];
-    this.maxLogSize = 50; // Limit error log size
+    this.eventBus = eventBus
+    this.errorLog = []
+    this.maxLogSize = 50 // Limit error log size
   }
 
   /**
@@ -22,32 +22,32 @@ export class ErrorHandler {
    * @returns {Error} The handled error
    */
   handle(error, options = {}) {
-    const { 
-      showToUser = true, 
-      rethrow = false, 
+    const {
+      showToUser = true,
+      rethrow = false,
       context = null
-    } = options;
-    
+    } = options
+
     // Ensure it's an AppError
-    const appError = this.normalizeError(error, context);
-    
+    const appError = this.normalizeError(error, context)
+
     // Log the error
-    this.logError(appError);
-    
+    this.logError(appError)
+
     // Emit error event
-    this.eventBus.emit(EVENTS.ERROR_OCCURRED, appError);
-    
+    this.eventBus.emit(EVENTS.ERROR_OCCURRED, appError)
+
     // Show to user if required
     if (showToUser) {
-      this.showToUser(appError);
+      this.showToUser(appError)
     }
-    
+
     // Rethrow if required
     if (rethrow) {
-      throw appError;
+      throw appError
     }
-    
-    return appError;
+
+    return appError
   }
 
   /**
@@ -60,11 +60,11 @@ export class ErrorHandler {
     // Already an AppError, just add context if needed
     if (error instanceof ErrorTypes.AppError) {
       if (context && !error.details.context) {
-        error.details.context = context;
+        error.details.context = context
       }
-      return error;
+      return error
     }
-    
+
     // Create appropriate AppError type based on error properties
     if (error.name === 'NetworkError' || error.message.includes('network') || error.message.includes('fetch')) {
       return new ErrorTypes.NetworkError(
@@ -73,9 +73,9 @@ export class ErrorHandler {
           originalError: error,
           context
         }
-      );
+      )
     }
-    
+
     if (error.name === 'SyntaxError' || error.message.includes('syntax')) {
       return new ErrorTypes.ValidationError(
         error.message,
@@ -83,9 +83,9 @@ export class ErrorHandler {
           originalError: error,
           context
         }
-      );
+      )
     }
-    
+
     if (error.message.includes('SPARQL') || error.message.includes('endpoint')) {
       return new ErrorTypes.SparqlError(
         error.message,
@@ -93,9 +93,9 @@ export class ErrorHandler {
           originalError: error,
           context
         }
-      );
+      )
     }
-    
+
     if (error.message.includes('localStorage') || error.message.includes('storage')) {
       return new ErrorTypes.StorageError(
         error.message,
@@ -103,9 +103,9 @@ export class ErrorHandler {
           originalError: error,
           context
         }
-      );
+      )
     }
-    
+
     // Generic AppError for unknown error types
     return new ErrorTypes.AppError(
       error.message,
@@ -115,7 +115,7 @@ export class ErrorHandler {
         stack: error.stack,
         context
       }
-    );
+    )
   }
 
   /**
@@ -124,21 +124,21 @@ export class ErrorHandler {
    */
   logError(error) {
     // Log to console
-    console.error('Error:', error);
-    
+    console.error('Error:', error)
+
     // Add to internal log with timestamp
     this.errorLog.unshift({
       error,
       timestamp: new Date()
-    });
-    
+    })
+
     // Trim log if it gets too large
     if (this.errorLog.length > this.maxLogSize) {
-      this.errorLog = this.errorLog.slice(0, this.maxLogSize);
+      this.errorLog = this.errorLog.slice(0, this.maxLogSize)
     }
-    
+
     // Optionally send to analytics or monitoring service
-    this.reportToAnalytics(error);
+    this.reportToAnalytics(error)
   }
 
   /**
@@ -146,15 +146,14 @@ export class ErrorHandler {
    * @param {AppError} error - The error to show
    */
   showToUser(error) {
-    const message = error.getUserMessage();
-    
+    const message = error.getUserMessage()
+
     // Emit notification event
     this.eventBus.emit(EVENTS.NOTIFICATION_SHOW, {
       type: 'error',
       message,
-      duration: 5000,
-      error
-    });
+      duration: 5000
+    })
   }
 
   /**
@@ -170,7 +169,7 @@ export class ErrorHandler {
         code: error.code,
         message: error.message,
         timestamp: new Date().toISOString()
-      });
+      })
     }
   }
 
@@ -179,35 +178,35 @@ export class ErrorHandler {
    * @returns {Array} Error log
    */
   getErrorLog() {
-    return [...this.errorLog];
+    return [...this.errorLog]
   }
 
   /**
    * Clear the error log
    */
   clearErrorLog() {
-    this.errorLog = [];
+    this.errorLog = []
   }
 }
 
 // Create and export singleton instance
-export const errorHandler = new ErrorHandler(eventBus);
+export const errorHandler = new ErrorHandler(eventBus)
 
 // Helper function to create and handle an error in one step
 export function createAndHandleError(message, userMessage, code = 'APP_ERROR', options = {}) {
-  const error = new ErrorTypes.AppError(message, code);
-  
+  const error = new ErrorTypes.AppError(message, code)
+
   if (userMessage) {
-    error.setUserMessage(userMessage);
+    error.setUserMessage(userMessage)
   }
-  
-  return errorHandler.handle(error, options);
+
+  return errorHandler.handle(error, options)
 }
 
 // src/core/errors/index.js
-export * from './error-types.js';
-export { 
-  ErrorHandler, 
+export * from './error-types.js'
+export {
+  ErrorHandler,
   errorHandler,
   createAndHandleError
-} from './error-handler.js';
+} from './error-handler.js'

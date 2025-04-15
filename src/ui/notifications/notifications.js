@@ -42,7 +42,13 @@ function showNextNotification() {
     return
   }
 
-  const { message, type, duration } = notificationQueue.shift()
+  const nextNotification = notificationQueue.shift()
+  if (!nextNotification || typeof nextNotification.message !== 'string') {
+    console.error('Invalid notification data:', nextNotification)
+    return
+  }
+
+  const { message, type, duration } = nextNotification
   isNotificationVisible = true
 
   const id = showNotification(message, type, duration)
@@ -60,6 +66,11 @@ function showNextNotification() {
  * @param {Object} notification - Notification data
  */
 function handleNotificationEvent(notification) {
+  if (!notification || typeof notification.message !== 'string' || notification.message.trim() === '') {
+    console.error('Invalid notification data received in handleNotificationEvent:', notification)
+    return
+  }
+
   notificationQueue.push(notification)
   showNextNotification()
 }
@@ -159,10 +170,19 @@ function renderNotifications() {
  * @returns {HTMLElement} The notification element
  */
 function createNotificationElement(notification) {
+  console.debug('Creating notification element with data:', notification)
+
   const element = document.createElement('div')
   element.className = `notification ${notification.type}`
   element.dataset.id = notification.id
-  element.textContent = notification.message
+
+  // Ensure the message is valid
+  if (typeof notification.message === 'string' && notification.message.trim() !== '') {
+    element.textContent = notification.message
+  } else {
+    console.warn('Notification message is missing or invalid:', notification)
+    element.textContent = 'Notification' // Fallback text
+  }
 
   // Add close button for persistent notifications
   if (notification.duration === 0) {
@@ -175,7 +195,13 @@ function createNotificationElement(notification) {
     element.appendChild(closeButton)
   }
 
-  notificationsContainer.appendChild(element)
+  // Append the notification to the container
+  const container = document.getElementById('notification-container')
+  if (!container) {
+    console.error('Notification container not found in the DOM.')
+    return element
+  }
+  container.appendChild(element)
 
   return element
 }

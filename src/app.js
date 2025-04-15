@@ -117,7 +117,21 @@ function setupNotifications() {
 
   // Subscribe to notification events
   eventBus.on(EVENTS.NOTIFICATION_SHOW, (data) => {
-    window.showNotification(data.message, data.type, data.duration)
+    if (!data || typeof data.message !== 'string' || data.message.trim() === '') {
+      console.warn('Invalid notification data:', data)
+      return
+    }
+
+    const { message, type = 'info', duration = 5000 } = data
+    window.showNotification(message, type, duration)
+
+    // Log unexpected properties
+    const unexpectedProps = Object.keys(data).filter(
+      key => !['message', 'type', 'duration'].includes(key)
+    )
+    if (unexpectedProps.length > 0) {
+      console.warn('Unexpected properties in notification data:', unexpectedProps)
+    }
   })
 }
 

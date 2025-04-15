@@ -705,46 +705,10 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.EVENTS = void 0;
 /**
- * Application event constants
+ * Generic event constants
  * @type {Object}
  */
 var EVENTS = exports.EVENTS = {
-  // Application lifecycle events
-  APP_INITIALIZED: 'app:initialized',
-  SHARE_RECEIVED: 'app:share:received',
-  // State events
-  STATE_CHANGED: 'state:changed',
-  // Dataset events
-  GRAPH_CREATED: 'dataset:graph:created',
-  GRAPH_UPDATED: 'dataset:graph:updated',
-  GRAPH_DELETED: 'dataset:graph:deleted',
-  QUAD_CREATED: 'dataset:quad:created',
-  QUAD_UPDATED: 'dataset:quad:updated',
-  QUAD_DELETED: 'dataset:quad:deleted',
-  DATASET_SYNCED: 'dataset:dataset:synced',
-  // RDF model events
-  POST_CREATED: 'rdf:post:created',
-  POST_UPDATED: 'rdf:post:updated',
-  POST_DELETED: 'rdf:post:deleted',
-  MODEL_SYNCED: 'rdf:model:synced',
-  // Endpoint events
-  ENDPOINT_ADDED: 'endpoint:added',
-  ENDPOINT_REMOVED: 'endpoint:removed',
-  ENDPOINT_UPDATED: 'endpoint:updated',
-  ENDPOINT_STATUS_CHANGED: 'endpoint:status:changed',
-  ENDPOINTS_STATUS_CHECKED: 'endpoints:status:checked',
-  ENDPOINT_CHECK_REQUESTED: 'endpoint:check:requested',
-  // SPARQL events
-  SPARQL_QUERY_STARTED: 'sparql:query:started',
-  SPARQL_QUERY_COMPLETED: 'sparql:query:completed',
-  SPARQL_QUERY_FAILED: 'sparql:query:failed',
-  SPARQL_UPDATE_STARTED: 'sparql:update:started',
-  SPARQL_UPDATE_COMPLETED: 'sparql:update:completed',
-  SPARQL_UPDATE_FAILED: 'sparql:update:failed',
-  // UI events
-  VIEW_CHANGED: 'ui:view:changed',
-  NOTIFICATION_SHOW: 'ui:notification:show',
-  FORM_SUBMITTED: 'ui:form:submitted',
   // Error events
   ERROR_OCCURRED: 'error:occurred'
 };
@@ -761,7 +725,7 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.getTheme = exports.getPreviousView = exports.getPostsByType = exports.getPostsByTag = exports.getPosts = exports.getPostById = exports.getNotifications = exports.getEndpoints = exports.getEndpointByUrl = exports.getCurrentView = exports.getActiveEndpoints = exports.getActiveEndpoint = void 0;
 var getEndpoints = exports.getEndpoints = function getEndpoints(state) {
-  return state.endpoints;
+  return Array.isArray(state.endpoints) ? state.endpoints : [];
 };
 var getActiveEndpoints = exports.getActiveEndpoints = function getActiveEndpoints(state) {
   return state.endpoints.filter(function (e) {
@@ -774,7 +738,8 @@ var getEndpointByUrl = exports.getEndpointByUrl = function getEndpointByUrl(stat
   });
 };
 var getActiveEndpoint = exports.getActiveEndpoint = function getActiveEndpoint(state, type) {
-  return state.endpoints.find(function (e) {
+  var endpoints = Array.isArray(state.endpoints) ? state.endpoints : [];
+  return endpoints.find(function (e) {
     return e.type === type && e.status === 'active';
   });
 };
@@ -1891,19 +1856,31 @@ __webpack_require__.r(__webpack_exports__);
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.UPDATE_POST = exports.UPDATE_ENDPOINT = exports.SHOW_NOTIFICATION = exports.SET_THEME = exports.SET_POSTS = exports.SET_ENDPOINTS = exports.SET_CURRENT_VIEW = exports.REMOVE_POST = exports.REMOVE_ENDPOINT = exports.HIDE_NOTIFICATION = exports.ADD_POST = exports.ADD_ENDPOINT = void 0;
-var SET_ENDPOINTS = exports.SET_ENDPOINTS = 'endpoints/SET_ENDPOINTS';
-var ADD_ENDPOINT = exports.ADD_ENDPOINT = 'endpoints/ADD_ENDPOINT';
-var REMOVE_ENDPOINT = exports.REMOVE_ENDPOINT = 'endpoints/REMOVE_ENDPOINT';
-var UPDATE_ENDPOINT = exports.UPDATE_ENDPOINT = 'endpoints/UPDATE_ENDPOINT';
-var SET_POSTS = exports.SET_POSTS = 'posts/SET_POSTS';
-var ADD_POST = exports.ADD_POST = 'posts/ADD_POST';
-var UPDATE_POST = exports.UPDATE_POST = 'posts/UPDATE_POST';
-var REMOVE_POST = exports.REMOVE_POST = 'posts/REMOVE_POST';
-var SET_CURRENT_VIEW = exports.SET_CURRENT_VIEW = 'ui/SET_CURRENT_VIEW';
-var SET_THEME = exports.SET_THEME = 'ui/SET_THEME';
-var SHOW_NOTIFICATION = exports.SHOW_NOTIFICATION = 'ui/SHOW_NOTIFICATION';
-var HIDE_NOTIFICATION = exports.HIDE_NOTIFICATION = 'ui/HIDE_NOTIFICATION';
+exports.createActionType = exports.UI = exports.POSTS = exports.ENDPOINTS = void 0;
+// Utility function to create action types dynamically
+var createActionType = exports.createActionType = function createActionType(namespace, action) {
+  return "".concat(namespace, "/").concat(action);
+};
+
+// Example usage for app-specific action types
+var ENDPOINTS = exports.ENDPOINTS = {
+  SET: createActionType('endpoints', 'SET'),
+  ADD: createActionType('endpoints', 'ADD'),
+  REMOVE: createActionType('endpoints', 'REMOVE'),
+  UPDATE: createActionType('endpoints', 'UPDATE')
+};
+var POSTS = exports.POSTS = {
+  SET: createActionType('posts', 'SET'),
+  ADD: createActionType('posts', 'ADD'),
+  UPDATE: createActionType('posts', 'UPDATE'),
+  REMOVE: createActionType('posts', 'REMOVE')
+};
+var UI = exports.UI = {
+  SET_CURRENT_VIEW: createActionType('ui', 'SET_CURRENT_VIEW'),
+  SET_THEME: createActionType('ui', 'SET_THEME'),
+  SHOW_NOTIFICATION: createActionType('ui', 'SHOW_NOTIFICATION'),
+  HIDE_NOTIFICATION: createActionType('ui', 'HIDE_NOTIFICATION')
+};
 
 /***/ }),
 

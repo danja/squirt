@@ -39,6 +39,7 @@ class EventBus {
    * @param {*} data - Event data
    */
   emit(event, data) {
+    console.debug(`Event emitted: ${event}`, data)
     const callbacks = this.listeners.get(event)
     if (callbacks) {
       callbacks.forEach(callback => {
