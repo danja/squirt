@@ -1,7 +1,7 @@
 // webpack.config.js
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = {
     entry: {
@@ -39,10 +39,10 @@ module.exports = {
                 }
             },
             {
-                test: /\.(png|jpg|jpeg|gif|svg)$/i,
+                test: /\.(png|svg)$/i,
                 type: 'asset/resource',
                 generator: {
-                    filename: 'images/[name].[hash:8][ext]'
+                    filename: 'icons/[name].[hash:8][ext]'
                 }
             }
         ]
