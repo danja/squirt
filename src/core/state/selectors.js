@@ -1,7 +1,10 @@
-export const getEndpoints = state => state.endpoints
+export const getEndpoints = state => Array.isArray(state.endpoints) ? state.endpoints : []
 export const getActiveEndpoints = state => state.endpoints.filter(e => e.status === 'active')
 export const getEndpointByUrl = (state, url) => state.endpoints.find(e => e.url === url)
-export const getActiveEndpoint = (state, type) => state.endpoints.find(e => e.type === type && e.status === 'active')
+export const getActiveEndpoint = (state, type) => {
+    const endpoints = Array.isArray(state.endpoints) ? state.endpoints : []
+    return endpoints.find(e => e.type === type && e.status === 'active')
+}
 
 export const getPosts = state => state.posts
 export const getPostById = (state, id) => state.posts.find(p => p.id === id)
