@@ -44,13 +44,20 @@ module.exports = {
                 generator: {
                     filename: 'icons/[name].[hash:8][ext]'
                 }
+            },
+            {
+                test: /favicon\.ico$/i,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'favicon.ico'
+                }
             }
         ]
     },
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/html/index.html',
-            favicon: './public/favicon.ico',
+            favicon: './src/media/favicon.ico',
             minify: false
         }),
         new MiniCssExtractPlugin({
