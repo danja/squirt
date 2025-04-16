@@ -1,86 +1,48 @@
-// webpack.config.js
-const path = require('path')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
-module.exports = {
-    entry: {
-        main: './src/app.js'  // Updated path to new entry point
-    },
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+export default {
+    entry: './src/app.js',
     output: {
-        path: path.resolve('public'),
-        filename: '[name].bundle.js',
+        path: path.resolve(__dirname, 'public'),
+        filename: 'bundle.js',
         clean: true
     },
     module: {
         rules: [
             {
-                test: /\.js$/,
-                exclude: /node_modules\/(?!@triply).*/, // Allow @triply modules to be processed
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-env']
-                    }
-                }
-            },
-            {
                 test: /\.css$/,
-                use: [
-                    MiniCssExtractPlugin.loader,
-                    'css-loader'
-                ]
+                use: [MiniCssExtractPlugin.loader, 'css-loader']
             },
             {
-                test: /\.(woff|woff2|eot|ttf|otf)$/i,
-                type: 'asset/resource',
-                generator: {
-                    filename: 'fonts/[name].[hash:8][ext]'
-                }
-            },
-            {
-                test: /\.(png|svg)$/i,
-                type: 'asset/resource',
-                generator: {
-                    filename: 'icons/[name].[hash:8][ext]'
-                }
-            },
-            {
-                test: /favicon\.ico$/i,
-                type: 'asset/resource',
-                generator: {
-                    filename: 'favicon.ico'
-                }
+                test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                type: 'asset/resource'
             }
         ]
     },
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/html/index.html',
-            favicon: './src/media/favicon.ico',
-            minify: false
+            favicon: './src/media/favicon.ico'
         }),
         new MiniCssExtractPlugin({
-            filename: '[name].[contenthash:8].css'
+            filename: '[name].css'
         })
     ],
-    resolve: {
-        extensions: ['.js', '.json'],
-        alias: {
-            // Add alias for direct imports
-            '@triply/yasgui$': path.resolve(__dirname, 'node_modules/@triply/yasgui/build/yasgui.min.js'),
-            '@': path.resolve(__dirname, 'src')  // Add shortcut for imports
-        }
-    },
     devServer: {
         static: {
-            directory: path.join(process.cwd(), 'public')
+            directory: path.join(__dirname, 'public')
         },
         compress: true,
-        hot: true,
-        port: 9002
+        port: 9000
     },
-    optimization: {
-        minimize: false // Disable minimization for development
+    resolve: {
+        extensions: ['.js']
     }
 }

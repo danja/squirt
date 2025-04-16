@@ -11,6 +11,7 @@ import { eventBus, EVENTS } from '../../core/events/event-bus.js' // Import even
 
 // Keep error type imports if needed for specific error handling inside the class
 import { RDFError } from '../../core/errors/error-types.js'
+import config from '../../config.json'
 
 export class EndpointManager {
   /**
@@ -96,17 +97,11 @@ export class EndpointManager {
   // Uses this.errorHandler
   loadFromConfig() {
     try {
-      let config = []
-      try {
-        console.warn('Dynamic require("../../config.json") used in loadFromConfig.')
-        // config = require('../../config.json'); // Still potentially problematic
-      } catch (importError) {
-        console.log('No config.json found or failed to load.')
-      }
-      // ... (rest of config processing) ...
-      if (Array.isArray(config) && config.length > 0) {
-        console.log('Found endpoints in config.json:', config)
-        return config.map(endpoint => ({
+      let configData = config || []
+      // ...existing code...
+      if (Array.isArray(configData) && configData.length > 0) {
+        console.log('Found endpoints in config.json:', configData)
+        return configData.map(endpoint => ({
           url: endpoint.url, label: endpoint.name || endpoint.label, type: endpoint.type,
           credentials: endpoint.credentials, status: 'unknown'
         }))
@@ -115,7 +110,6 @@ export class EndpointManager {
       }
     } catch (error) {
       console.error('Error processing endpoint config:', error)
-      // Use injected error handler
       this.errorHandler.handle(error, { context: 'EndpointManager LoadConfig', showToUser: false })
       return []
     }
