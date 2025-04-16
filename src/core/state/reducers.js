@@ -1,35 +1,22 @@
 import { combineReducers } from './utils.js'
-import {
-    SET_ENDPOINTS,
-    ADD_ENDPOINT,
-    REMOVE_ENDPOINT,
-    UPDATE_ENDPOINT,
-    SET_POSTS,
-    ADD_POST,
-    UPDATE_POST,
-    REMOVE_POST,
-    SET_CURRENT_VIEW,
-    SET_THEME,
-    SHOW_NOTIFICATION,
-    HIDE_NOTIFICATION
-} from './action-types.js'
+import * as types from './action-types.js'
 
 export function endpointsReducer(state = [], action) {
     switch (action.type) {
-        case SET_ENDPOINTS:
+        case types.ENDPOINTS.SET:
             return action.payload
 
-        case ADD_ENDPOINT:
+        case types.ENDPOINTS.ADD:
             // Avoid duplicates
             if (state.some(e => e.url === action.payload.url)) {
                 return state
             }
             return [...state, action.payload]
 
-        case REMOVE_ENDPOINT:
+        case types.ENDPOINTS.REMOVE:
             return state.filter(endpoint => endpoint.url !== action.payload)
 
-        case UPDATE_ENDPOINT:
+        case types.ENDPOINTS.UPDATE:
             return state.map(endpoint =>
                 endpoint.url === action.payload.url
                     ? { ...endpoint, ...action.payload.updates }
@@ -43,20 +30,20 @@ export function endpointsReducer(state = [], action) {
 
 export function postsReducer(state = [], action) {
     switch (action.type) {
-        case SET_POSTS:
+        case types.POSTS.SET:
             return action.payload
 
-        case ADD_POST:
+        case types.POSTS.ADD:
             return [...state, action.payload]
 
-        case UPDATE_POST:
+        case types.POSTS.UPDATE:
             return state.map(post =>
                 post.id === action.payload.id
                     ? { ...post, ...action.payload.updates }
                     : post
             )
 
-        case REMOVE_POST:
+        case types.POSTS.REMOVE:
             return state.filter(post => post.id !== action.payload)
 
         default:
@@ -71,20 +58,20 @@ export function uiReducer(state = {
     notifications: []
 }, action) {
     switch (action.type) {
-        case SET_CURRENT_VIEW:
+        case types.UI.SET_CURRENT_VIEW:
             return {
                 ...state,
                 previousView: state.currentView,
                 currentView: action.payload
             }
 
-        case SET_THEME:
+        case types.UI.SET_THEME:
             return {
                 ...state,
                 theme: action.payload
             }
 
-        case SHOW_NOTIFICATION:
+        case types.UI.SHOW_NOTIFICATION:
             return {
                 ...state,
                 notifications: [
@@ -96,7 +83,7 @@ export function uiReducer(state = {
                 ]
             }
 
-        case HIDE_NOTIFICATION:
+        case types.UI.HIDE_NOTIFICATION:
             return {
                 ...state,
                 notifications: state.notifications.filter(n => n.id !== action.payload)

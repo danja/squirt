@@ -4,7 +4,7 @@ import { eventBus, EVENTS } from '../../core/events/event-bus.js'
 import { store } from '../../core/state/index.js'
 import { setEndpoints, addEndpoint, removeEndpoint, updateEndpoint as updateEndpointAction } from '../../core/state/actions.js'
 import { getEndpoints } from '../../core/state/selectors.js'
-import config from '../../config.json' // Direct import of the config file
+import config from '../../config.json' with { type: 'json' } // Direct import of the config file with type attribute
 
 /**
  * Service for managing SPARQL endpoints

@@ -1,9 +1,10 @@
 // webpack.config.js
-const path = require('path')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
-module.exports = {
+import path from 'path'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+
+export default {
     entry: {
         main: './src/app.js'  // Updated path to new entry point
     },
@@ -68,8 +69,8 @@ module.exports = {
         extensions: ['.js', '.json'],
         alias: {
             // Add alias for direct imports
-            '@triply/yasgui$': path.resolve(__dirname, 'node_modules/@triply/yasgui/build/yasgui.min.js'),
-            '@': path.resolve(__dirname, 'src')  // Add shortcut for imports
+            '@triply/yasgui$': path.resolve(process.cwd(), 'node_modules/@triply/yasgui/build/yasgui.min.js'),
+            '@': path.resolve(process.cwd(), 'src')  // Add shortcut for imports
         }
     },
     devServer: {

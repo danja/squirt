@@ -8,6 +8,10 @@ import { initNotifications } from './ui/notifications/notifications.js'
 import { pluginManager } from './core/plugin-manager.js'
 import { initializeEndpointIndicator } from './ui/components/endpoint-indicator.js'
 
+// Import services statically
+import { testEndpoint } from './services/sparql/sparql-service.js'
+import { createEndpointsService } from './services/endpoints/endpoints-service.js'
+
 // Import CSS files
 import './css/styles.css'
 import './css/form-styles.css'
@@ -41,20 +45,17 @@ export async function initializeApp() {
     // Make services globally available
     window.services = services
 
-    // Initialize endpoints service
-    import('./services/sparql/sparql.js').then(({ testEndpoint }) => {
-      import('./services/endpoints/endpoints-service.js').then(({ createEndpointsService }) => {
-        const endpointsService = createEndpointsService(services.storage, testEndpoint)
-        services.endpoints = endpointsService
-
-        // Initialize endpoints
-        endpointsService.initialize().then(() => {
-          console.log('Endpoints service initialized')
-        }).catch(err => {
-          console.error('Failed to initialize endpoints service:', err)
-        })
-      })
-    })
+    // Initialize endpoints service (now using static imports)
+    try {
+      const endpointsService = createEndpointsService(services.storage, testEndpoint)
+      services.endpoints = endpointsService
+      await endpointsService.initialize() // Make initialization awaitable
+      console.log('Endpoints service initialized')
+    } catch (err) {
+      console.error('Failed to initialize endpoints service:', err)
+      // Handle error appropriately, maybe show notification or use fallback
+      errorHandler.handle(err, { context: 'Endpoint Initialization', showToUser: true })
+    }
 
     // Initialize UI components
     initNotifications()

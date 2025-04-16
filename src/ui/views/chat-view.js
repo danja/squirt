@@ -1,6 +1,8 @@
 import { eventBus, EVENTS } from '../../core/events/event-bus.js'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
+import { addPost } from '../../core/state/actions.js'
+import { getPostsByType } from '../../core/state/selectors.js'
 import { showNotification } from '../notifications/notifications.js'
 import { rdfModel } from '../../domain/rdf/model.js'
 
@@ -174,12 +176,15 @@ function setupEventListeners() {
         })
     }
 
-    // Listen for new posts from other components
-    eventBus.on(EVENTS.POST_CREATED, (post) => {
-        if (post.type === 'chat') {
-            addMessageToUI(post, false)
-        }
-    })
+    // Listen for state changes to re-render messages if posts update
+    store.subscribe(loadMessages)
+
+    // Listen for new posts created via RDF model (if applicable, e.g., from sync)
+    // eventBus.on(EVENTS.POST_CREATED, (post) => { // Keep original event listener? Or rely on store? 
+    //     if (post.type === 'chat') {
+    //         addMessageToUI(post, false) // Assuming event means incoming
+    //     }
+    // });
 }
 
 /**
@@ -194,32 +199,36 @@ function sendMessage(content) {
     try {
         const chatInput = document.getElementById('chat-input')
 
-        // Create post data for the message
+        // 1. Prepare post data (as before)
         const postData = {
             type: 'chat',
             content: content.trim(),
             tags: ['chat'],
             created: new Date().toISOString()
+            // Add user identifier if needed for outgoing vs incoming differentiation
         }
 
-        // Create the post in the RDF model
-        const postId = rdfModel.createPost(postData)
+        // 2. Create RDF data (optional, depending on whether action needs full dataset)
+        // const { id: postId, dataset } = rdfModel.createPostData(postData);
+        // If using createPostData, generate ID first or get it from result
+        const tempId = 'temp-' + Date.now() // Use a temporary ID for UI update
 
-        // Clear the input field
+        // 3. Dispatch action to add post to store
+        // Pass the simple postData, reducer will handle state update
+        store.dispatch(addPost({
+            id: tempId, // Or generate ID here / let reducer handle it
+            ...postData
+        }))
+
+        // 4. Update UI immediately (optimistic update)
+        addMessageToUI({ id: tempId, ...postData }, true)
+
+        // 5. Clear input
         if (chatInput) {
             chatInput.value = ''
         }
 
-        // Add message to UI
-        addMessageToUI({
-            id: postId,
-            ...postData
-        }, true)
-
-        // Try to sync with endpoint
-        rdfModel.syncWithEndpoint().catch(error => {
-            console.warn('Message saved locally but failed to sync with endpoint', error)
-        })
+        // 6. Remove rdfModel.syncWithEndpoint() - Synchronization handled elsewhere (e.g., middleware)
 
     } catch (error) {
         errorHandler.handle(error, {
@@ -267,23 +276,22 @@ function loadMessages() {
         const chatMessages = document.getElementById('chat-messages')
         if (!chatMessages) return
 
-        // Clear existing messages
-        chatMessages.innerHTML = ''
+        // Clear existing messages visually (optional, state change should handle re-render)
+        // chatMessages.innerHTML = ''; 
 
-        // Get chat posts from RDF store
-        const messages = rdfModel.getPosts({
-            type: 'chat',
-            limit: 50
-        })
+        // Get chat posts from store state using selector
+        const messages = getPostsByType(store.getState(), 'chat')
 
-        // Sort messages by creation time
+        // Sort messages (selector could also handle this)
         messages.sort((a, b) => new Date(a.created) - new Date(b.created))
 
-        // Add messages to UI
+        // Render messages based on current state
+        // Clear existing first before re-rendering the list
+        chatMessages.innerHTML = ''
         messages.forEach(message => {
-            // For demo purposes, alternate between incoming and outgoing messages
-            // In a real app, you would check the message sender
-            const isOutgoing = message.created % 2 === 0
+            // Determine if outgoing based on message properties (e.g., author ID)
+            // Placeholder logic:
+            const isOutgoing = message.author === 'currentUser' // Example: Replace with actual check
             addMessageToUI(message, isOutgoing)
         })
 

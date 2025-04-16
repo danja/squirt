@@ -309,3 +309,6 @@ try {
     }
 }
 */
+
+// Instantiate and export a singleton instance
+export const rdfModel = new RDFModel()

@@ -3,7 +3,9 @@
     "spec_files": [
         "**/*[sS]pec.js"
     ],
-    "helpers": [],
+    "helpers": [
+        "helpers/jsdom-setup.js"
+    ],
     "stopSpecOnExpectationFailure": true,
     "random": false
 }

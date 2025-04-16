@@ -1,165 +1,112 @@
 // test/spec/rdf-model.spec.js
-import { RDFModel } from '../../src/js/services/rdf/rdf-model.js';
-import rdf from 'rdf-ext';
+import { rdfModel } from '../../src/domain/rdf/model.js'
+import rdf from 'rdf-ext'
+import { RDFError } from '../../src/core/errors/error-types.js'
 
-// Mock localStorage
-global.localStorage = {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn()
-};
-
-// Mock state
-jest.mock('../../src/js/core/state.js', () => ({
-    state: {
-        update: jest.fn(),
-        get: jest.fn()
-    }
-}));
-
-// Mock SPARQL services
-jest.mock('../../src/js/services/sparql/sparql.js', () => ({
-    querySparql: jest.fn().mockResolvedValue({}),
-    postToSparql: jest.fn().mockResolvedValue(true)
-}));
+// No need for localStorage, state, or sparql mocks for testing createPostData
 
 describe('RDFModel', () => {
-    let rdfModel;
+    // No beforeEach needed if we're testing the singleton instance directly
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        rdfModel = new RDFModel();
-    });
-
-    it('should create a post and add it to the dataset', () => {
-        // Setup
-        const mockDataset = rdf.dataset();
-        const mockUpdate = jest.fn();
-        rdfModel.saveToCache = jest.fn();
-
-        // Mock state to return empty dataset
-        require('../../src/js/core/state.js').state.get.mockReturnValue(mockDataset);
-        require('../../src/js/core/state.js').state.update = mockUpdate;
-
-        // Create test post data
-        const postData = {
-            type: 'link',
-            title: 'Test Title',
-            content: 'Test Content',
-            url: 'https://example.com',
-            tags: ['test', 'example']
-        };
-
-        // Act
-        const postId = rdfModel.createPost(postData);
-
-        // Assert
-        expect(postId).toBeDefined();
-        expect(mockUpdate).toHaveBeenCalled();
-        expect(rdfModel.saveToCache).toHaveBeenCalled();
-
-        // Verify the post was added to the dataset
-        const updatedDataset = mockUpdate.mock.calls[0][1];
-        expect(updatedDataset.size).toBeGreaterThan(0);
-
-        // Verify post properties were added correctly
-        let titleFound = false;
-        let typeFound = false;
-
-        updatedDataset.forEach(quad => {
-            if (quad.predicate.value.includes('title')) {
-                expect(quad.object.value).toBe('Test Title');
-                titleFound = true;
+    describe('createPostData', () => {
+        it('should create RDF dataset for a basic post', () => {
+            const postData = {
+                type: 'entry',
+                content: 'Test content'
             }
-            if (quad.predicate.value.includes('type')) {
-                expect(quad.object.value.includes('link')).toBe(true);
-                typeFound = true;
+            const result = rdfModel.createPostData(postData)
+
+            expect(result.id).toEqual(jasmine.any(String))
+            expect(result.subject).toBeDefined()
+            expect(result.dataset).toBeDefined()
+            expect(result.dataset.size).toBeGreaterThan(1)
+
+            // Check quad sizes
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('content')).size).toBe(1, 'Content quad size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.rdf('type')).size).toBe(1, 'Type quad size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.dc('created')).size).toBe(1, 'Created quad size')
+
+            // Check one specific value using iteration (more robust than .toArray)
+            let foundContent = null
+            for (const quad of result.dataset.match(result.subject, rdfModel.ns.squirt('content'))) {
+                foundContent = quad.object.value
+                break
             }
-        });
+            expect(foundContent).toBe('Test content')
+        })
 
-        expect(titleFound).toBe(true);
-        expect(typeFound).toBe(true);
-    });
+        it('should create RDF dataset for a link post', () => {
+            const postData = {
+                type: 'link',
+                content: 'Check this out',
+                title: 'Example Link',
+                url: 'https://example.com',
+                tags: ['link', 'test']
+            }
+            const result = rdfModel.createPostData(postData)
 
-    it('should get posts filtered by type', () => {
-        // Setup
-        const mockDataset = rdf.dataset();
-        const ns = {
-            rdf: rdf.namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
-            squirt: rdf.namespace('http://purl.org/stuff/squirt/'),
-            dc: rdf.namespace('http://purl.org/dc/terms/')
-        };
+            expect(result.dataset.size).toBeGreaterThan(4)
 
-        // Create a test post in the dataset
-        const postId = 'http://example.org/post1';
-        mockDataset.add(rdf.quad(
-            rdf.namedNode(postId),
-            ns.rdf('type'),
-            ns.squirt('link')
-        ));
-        mockDataset.add(rdf.quad(
-            rdf.namedNode(postId),
-            ns.dc('title'),
-            rdf.literal('Test Post')
-        ));
-        mockDataset.add(rdf.quad(
-            rdf.namedNode(postId),
-            ns.squirt('content'),
-            rdf.literal('Test Content')
-        ));
-        mockDataset.add(rdf.quad(
-            rdf.namedNode(postId),
-            ns.squirt('tag'),
-            rdf.literal('test')
-        ));
+            // Check quad sizes
+            expect(result.dataset.match(result.subject, rdfModel.ns.dc('title')).size).toBe(1, 'Title quad size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('url')).size).toBe(1, 'URL quad size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('tag')).size).toBe(2, 'Tag quad size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.rdf('type')).size).toBe(1, 'Type quad size')
+        })
 
-        // Mock state to return our dataset
-        require('../../src/js/core/state.js').state.get.mockReturnValue(mockDataset);
+        it('should create RDF dataset for a profile post with FOAF data', () => {
+            const postData = {
+                type: 'profile',
+                customId: 'urn:test:profile',
+                foafName: 'Test User',
+                foafNick: 'tester',
+                foafMbox: 'mailto:test@example.com',
+                foafHomepage: 'https://tester.example.com',
+                foafImg: 'https://tester.example.com/img.png',
+                foafAccounts: [
+                    { serviceHomepage: 'https://github.com', accountName: 'tester-gh' },
+                    { serviceHomepage: 'https://mastodon.social', accountName: '@tester_mastodon' }
+                ]
+            }
+            const result = rdfModel.createPostData(postData)
 
-        // Act
-        const posts = rdfModel.getPosts({ type: 'link' });
+            expect(result.id).toBe('urn:test:profile')
+            expect(result.dataset.size).toBeGreaterThan(7)
 
-        // Assert
-        expect(posts.length).toBe(1);
-        expect(posts[0].id).toBe(postId);
-        expect(posts[0].title).toBe('Test Post');
-        expect(posts[0].content).toBe('Test Content');
-        expect(posts[0].tags).toContain('test');
-        expect(posts[0].type).toBe('link');
-    });
+            // Check quad sizes
+            expect(result.dataset.match(result.subject, rdfModel.ns.foaf('name')).size).toBe(1, 'FOAF name size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.foaf('account')).size).toBe(2, 'FOAF account size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.rdf('type')).size).toBe(1, 'Type quad size')
+        })
 
-    it('should delete a post from the dataset', () => {
-        // Setup
-        const mockDataset = rdf.dataset();
-        const postId = 'http://example.org/post1';
-        const ns = {
-            rdf: rdf.namespace('http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
-            squirt: rdf.namespace('http://purl.org/stuff/squirt/'),
-        };
+        it('should handle custom properties', () => {
+            const postData = {
+                type: 'entry',
+                content: 'Test',
+                customString: 'hello',
+                customNumber: 123,
+                customBoolean: true,
+                customUri: 'http://example.org/custom'
+            }
+            const result = rdfModel.createPostData(postData)
 
-        mockDataset.add(rdf.quad(
-            rdf.namedNode(postId),
-            ns.rdf('type'),
-            ns.squirt('link')
-        ));
+            // Check quad sizes
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('customString')).size).toBe(1, 'Custom string size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('customNumber')).size).toBe(1, 'Custom number size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('customBoolean')).size).toBe(1, 'Custom boolean size')
+            expect(result.dataset.match(result.subject, rdfModel.ns.squirt('customUri')).size).toBe(1, 'Custom URI size')
+        })
 
-        // Mock state and update
-        const mockUpdate = jest.fn();
-        require('../../src/js/core/state.js').state.get.mockReturnValue(mockDataset);
-        require('../../src/js/core/state.js').state.update = mockUpdate;
-        rdfModel.saveToCache = jest.fn();
+        it('should throw RDFError for invalid URL in link post', () => {
+            const postData = {
+                type: 'link',
+                url: 'invalid-url'
+            }
+            // Use synchronous expect().toThrowError()
+            expect(() => rdfModel.createPostData(postData))
+                .toThrowError(RDFError, /Invalid URL format for link post: invalid-url/)
+        })
 
-        // Act
-        const result = rdfModel.deletePost(postId);
-
-        // Assert
-        expect(result).toBe(true);
-        expect(mockUpdate).toHaveBeenCalled();
-        expect(rdfModel.saveToCache).toHaveBeenCalled();
-
-        // Verify post was removed
-        const updatedDataset = mockUpdate.mock.calls[0][1];
-        expect(updatedDataset.size).toBe(0);
-    });
-});
+        // Add more tests for edge cases: missing optional fields, different post types (wiki), etc.
+    })
+})
