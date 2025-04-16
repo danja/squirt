@@ -1,3 +1,4 @@
+/// NOT CURRENTLY USED - LEAVE IN PLACE FOR FUTURE
 // src/js/plugins/yasgui-plugin.js
 // YASGUI SPARQL query editor plugin
 

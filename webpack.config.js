@@ -16,16 +16,6 @@ export default {
     module: {
         rules: [
             {
-                test: /\.js$/,
-                exclude: /node_modules\/(?!@triply).*/, // Allow @triply modules to be processed
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-env']
-                    }
-                }
-            },
-            {
                 test: /\.css$/,
                 use: [
                     MiniCssExtractPlugin.loader,
@@ -68,9 +58,8 @@ export default {
     resolve: {
         extensions: ['.js', '.json'],
         alias: {
-            // Add alias for direct imports
-            '@triply/yasgui$': path.resolve(process.cwd(), 'node_modules/@triply/yasgui/build/yasgui.min.js'),
-            '@': path.resolve(process.cwd(), 'src')  // Add shortcut for imports
+            // Add shortcut for imports
+            '@': path.resolve(process.cwd(), 'src')
         }
     },
     devServer: {

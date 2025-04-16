@@ -1,3 +1,5 @@
+/// NOT CURRENTLY USED - LEAVE IN PLACE FOR FUTURE
+
 import { eventBus, EVENTS } from '../../core/events/event-bus.js'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
