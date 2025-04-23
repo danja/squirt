@@ -1,4 +1,4 @@
-import { eventBus, EVENTS } from '../events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import * as ErrorTypes from './error-types.js'
 
 // Add ValidationError if not present in error-types.js

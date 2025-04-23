@@ -6,8 +6,8 @@ import { PluginBase } from '../core/plugin-base.js'
 import { store } from '../core/state/index.js' // Import Redux store
 import { getEndpoints, getActiveEndpoint } from '../core/state/selectors.js' // Import selectors
 import { errorHandler, SparqlError } from '../core/errors/index.js'
-import { showNotification } from '../ui/components/notifications.js'
-import { EVENTS, eventBus } from '../core/events/event-bus.js'
+import { showNotification } from '../ui/notifications/notifications.js'
+import { EVENTS, eventBus } from 'evb'
 
 /**
  * Plugin that provides YASGUI SPARQL query editor functionality

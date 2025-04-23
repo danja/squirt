@@ -1,5 +1,5 @@
 // src/app.js - Complete source with updated initialization
-import { eventBus, EVENTS } from './core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from './core/errors/index.js'
 import { store } from './core/state/index.js'
 import { storageService } from './services/storage/storage-service.js'
@@ -88,9 +88,6 @@ export async function initializeApp() {
     // Initialize plugins
     await pluginManager.initializeAll()
 
-    // Setup notifications
-    setupNotifications()
-
     // Initialize endpoint indicator
     initializeEndpointIndicator()
 
@@ -108,56 +105,6 @@ export async function initializeApp() {
     errorHandler.handle(error)
     return { success: false, error }
   }
-}
-
-/**
- * Setup notification system
- */
-function setupNotifications() {
-  // Find or create notifications container
-  let container = document.querySelector('.notifications-container')
-  if (!container) {
-    container = document.createElement('div')
-    container.className = 'notifications-container'
-    document.body.appendChild(container)
-  }
-
-  // Define global notification function
-  window.showNotification = (message, type = 'info', duration = 5000) => {
-    const notification = document.createElement('div')
-    notification.className = `notification ${type}`
-    notification.textContent = message
-
-    container.appendChild(notification)
-
-    if (duration > 0) {
-      setTimeout(() => {
-        notification.classList.add('fade-out')
-        setTimeout(() => notification.remove(), 300)
-      }, duration)
-    }
-
-    return notification
-  }
-
-  // Subscribe to notification events
-  eventBus.on(EVENTS.NOTIFICATION_SHOW, (data) => {
-    if (!data || typeof data.message !== 'string' || data.message.trim() === '') {
-      console.warn('Invalid notification data:', data)
-      return
-    }
-
-    const { message, type = 'info', duration = 5000 } = data
-    window.showNotification(message, type, duration)
-
-    // Log unexpected properties
-    const unexpectedProps = Object.keys(data).filter(
-      key => !['message', 'type', 'duration'].includes(key)
-    )
-    if (unexpectedProps.length > 0) {
-      console.warn('Unexpected properties in notification data:', unexpectedProps)
-    }
-  })
 }
 
 /**

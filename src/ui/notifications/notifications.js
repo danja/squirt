@@ -1,5 +1,5 @@
 // src/ui/notifications/notifications.js - Updated to use Redux-style store instead of deprecated StateManager
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { store } from '../../core/state/index.js'
 import { showNotification as showNotificationAction, hideNotification } from '../../core/state/actions.js'
 import { getNotifications } from '../../core/state/selectors.js'
@@ -66,6 +66,17 @@ function showNextNotification() {
  * @param {Object} notification - Notification data
  */
 function handleNotificationEvent(notification) {
+  // Defensive: ignore Redux state change payloads
+  if (
+    notification &&
+    typeof notification === 'object' &&
+    'action' in notification &&
+    'state' in notification &&
+    !('message' in notification)
+  ) {
+    console.warn('[notifications] Ignoring event bus payload that looks like a Redux state change:', notification)
+    return
+  }
   if (!notification || typeof notification.message !== 'string' || notification.message.trim() === '') {
     console.error('Invalid notification data received in handleNotificationEvent:', notification)
     return

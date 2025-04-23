@@ -1,4 +1,4 @@
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { getActiveEndpoint } from '../../core/state/selectors.js'

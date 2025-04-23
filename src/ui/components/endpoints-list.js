@@ -2,7 +2,7 @@
 import { store } from '../../core/state/index.js' // Import Redux store
 import { getEndpoints } from '../../core/state/selectors.js' // Import selectors
 import * as actions from '../../core/state/actions.js' // Import actions
-import { eventBus, EVENTS } from '../../core/events/event-bus.js' // Import event bus
+import { eventBus, EVENTS } from 'evb' // Import event bus
 
 // import { ErrorHandler } from '../../core/errors.js'; // Remove old error handler
 import { errorHandler } from '../../core/errors/index.js' // Use new handler if needed

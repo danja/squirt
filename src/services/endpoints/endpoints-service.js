@@ -1,6 +1,6 @@
 // src/services/endpoints/endpoints-service.js - Updated loading sequence
 import { ConfigError } from '../../core/errors/error-types.js'
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { store } from '../../core/state/index.js'
 import { setEndpoints, addEndpoint, removeEndpoint, updateEndpoint as updateEndpointAction } from '../../core/state/actions.js'
 import { getEndpoints } from '../../core/state/selectors.js'

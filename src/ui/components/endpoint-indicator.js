@@ -1,5 +1,5 @@
 // src/ui/components/endpoint-indicator.js - Updated to use Redux-style store instead of deprecated StateManager
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { store } from '../../core/state/index.js'
 import { getEndpoints } from '../../core/state/selectors.js'
 

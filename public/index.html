@@ -35,10 +35,7 @@
         media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)">
     <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png"
         media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="icon" href="favicon.ico">
-    <script defer src="main.bundle.js"></script>
-    <link href="main.b1b16b63.css" rel="stylesheet">
-</head>
+<link rel="icon" href="favicon.ico"><script defer src="main.bundle.js"></script><link href="main.ea54928b.css" rel="stylesheet"></head>
 
 <body>
     <header>
@@ -57,13 +54,7 @@
             <span class="status-tooltip-icon">?</span>
         </div>
         <nav>
-            <a href="#" data-view="post-view">Post</a>
-            <a href="#" data-view="wiki-view">Wiki</a>
-            <a href="#" data-view="chat-view">Chat</a>
-            <a href="#" data-view="yasgui-view">SPARQL</a>
-            <a href="#" data-view="developer-view">Developer</a>
-            <a href="#" data-view="profile-view">Profile</a>
-            <a href="#" data-view="settings-view">Settings</a>
+            <!-- Navigation tabs will be rendered dynamically by JS -->
         </nav>
 
     </header>
@@ -140,6 +131,12 @@
             <div id="yasgui-container" class="yasgui-container"></div>
         </div>
 
+        <!-- Atuin View -->
+        <div id="atuin-view" class="view hidden">
+            <h2>Atuin RDF Editor</h2>
+            <div class="plugins-section"></div>
+        </div>
+
         <div id="chat-view" class="view hidden">
             <h2>Chat</h2>
             <div class="chat-container">
@@ -213,15 +210,6 @@
                     </form>
                 </div>
 
-                <!-- Plugins Section -->
-                <div class="settings-section">
-                    <h3>Plugins</h3>
-                    <form id="plugins-form" class="form-group">
-                        <div id="plugins-list"></div>
-                        <button type="submit" class="button-primary">Save Plugins</button>
-                    </form>
-                </div>
-
                 <!-- Storage Section -->
                 <div class="settings-section storage-section">
                     <h3>Storage</h3>
@@ -231,6 +219,15 @@
                         <button id="import-data" class="button-primary">Import Data</button>
                         <button id="clear-data" class="button-primary danger">Clear All Data</button>
                     </div>
+                </div>
+
+                <!-- Plugins Section -->
+                <div class="settings-section">
+                    <h3>Plugins</h3>
+                    <form id="plugins-form">
+                        <div id="plugins-list"></div>
+                        <button type="submit" class="button-primary">Save Plugins</button>
+                    </form>
                 </div>
             </div>
         </div>

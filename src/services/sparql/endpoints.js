@@ -7,7 +7,7 @@ import { getEndpoints, getActiveEndpoint as getActiveEndpointSelector } from '..
 import { testEndpoint } from './sparql-service.js' // Import testEndpoint from its new location
 // import { ErrorHandler } from '../../core/errors.js'; // Remove old error handler
 import { errorHandler } from '../../core/errors/index.js' // Import new error handler
-import { eventBus, EVENTS } from '../../core/events/event-bus.js' // Import event bus
+import { eventBus, EVENTS } from 'evb' // Import event bus
 
 // Keep error type imports if needed for specific error handling inside the class
 import { RDFError } from '../../core/errors/error-types.js'

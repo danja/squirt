@@ -1,4 +1,4 @@
-import { eventBus, EVENTS } from '../events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 
 // Redux-like store implementation
 export function createStore(reducer, initialState = {}) {

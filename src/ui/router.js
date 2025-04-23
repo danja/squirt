@@ -1,9 +1,11 @@
 // src/ui/router.js - Updated to use Redux-style store instead of deprecated StateManager
-import { eventBus, EVENTS } from '../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../core/errors/index.js'
 import { store } from '../core/state/index.js'
 import { setCurrentView } from '../core/state/actions.js'
 import { getCurrentView } from '../core/state/selectors.js'
+import { viewPluginMap } from './views/settings-view.js'
+import pluginConfig from '../plugins.config.json' with { type: 'json' }
 
 // View IDs
 const VIEWS = {
@@ -13,7 +15,8 @@ const VIEWS = {
     YASGUI: 'yasgui-view',
     DEVELOPER: 'developer-view',
     PROFILE: 'profile-view',
-    SETTINGS: 'settings-view'
+    SETTINGS: 'settings-view',
+    ATUIN: 'atuin-view'
 }
 
 // Map routes to view IDs
@@ -24,7 +27,8 @@ const ROUTE_MAP = {
     'sparql': VIEWS.YASGUI,
     'dev': VIEWS.DEVELOPER,
     'profile': VIEWS.PROFILE,
-    'settings': VIEWS.SETTINGS
+    'settings': VIEWS.SETTINGS,
+    'atuin': VIEWS.ATUIN
 }
 
 // Map views to module loaders
@@ -35,7 +39,8 @@ const VIEW_MODULES = {
     [VIEWS.YASGUI]: () => import('./views/yasgui-view.js'),
     [VIEWS.DEVELOPER]: () => import('./views/developer-view.js'),
     [VIEWS.PROFILE]: () => import('./views/profile-view.js'),
-    [VIEWS.SETTINGS]: () => import('./views/settings-view.js')
+    [VIEWS.SETTINGS]: () => import('./views/settings-view.js'),
+    [VIEWS.ATUIN]: () => import('./views/atuin-view.js')
 }
 
 // Store active view handlers
@@ -207,4 +212,52 @@ function setupNavLinks() {
     })
 }
 
-export { VIEWS, ROUTE_MAP }
+function getEnabledPlugins() {
+    let plugins = []
+    try {
+        const stored = localStorage.getItem('squirt.plugins')
+        if (stored) {
+            plugins = JSON.parse(stored)
+        } else {
+            plugins = pluginConfig.plugins || []
+        }
+    } catch (e) {
+        plugins = pluginConfig.plugins || []
+    }
+    return plugins.filter(p => p.enabled)
+}
+
+function renderNavTabs() {
+    console.log('viewPluginMap:', viewPluginMap)
+    const nav = document.querySelector('nav')
+    if (!nav) return
+    nav.innerHTML = ''
+    // Core views (always shown)
+    const coreTabs = [
+        { viewId: 'post-view', label: 'Post' },
+        { viewId: 'chat-view', label: 'Chat' },
+        { viewId: 'developer-view', label: 'Developer' },
+        { viewId: 'profile-view', label: 'Profile' },
+        { viewId: 'settings-view', label: 'Settings' }
+    ]
+    // Plugin views (show all available, not just enabled)
+    const pluginTabs = viewPluginMap
+        .map(({ viewId, label }) => ({ viewId, label }))
+        .filter(tab => !coreTabs.some(core => core.viewId === tab.viewId)) // avoid duplicates
+    // Combine and render
+    const allTabs = [...coreTabs, ...pluginTabs]
+    allTabs.forEach(({ viewId, label }) => {
+        const a = document.createElement('a')
+        a.href = '#'
+        a.setAttribute('data-view', viewId)
+        a.textContent = label
+        nav.appendChild(a)
+    })
+}
+
+// Call renderNavTabs after DOMContentLoaded
+if (typeof window !== 'undefined' && window.document) {
+    document.addEventListener('DOMContentLoaded', renderNavTabs)
+}
+
+export { VIEWS, ROUTE_MAP, renderNavTabs }

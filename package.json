@@ -11,15 +11,19 @@
     "coverage": "c8 --reporter=lcov --reporter=text jasmine --config=jasmine.json"
   },
   "dependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.5",
     "@rdfjs/data-model": "^2.0.1",
     "@rdfjs/namespace": "^2.0.0",
     "@rdfjs/parser-n3": "^2.0.1",
     "@triply/yasgui": "^4.2.28",
     "codemirror": "^5.65.12",
     "cors": "^2.8.5",
-    "evb": "file:../evb",
+    "evb": "^0.6.0",
     "marked": "^4.3.0",
-    "rdf-ext": "^2.5.0"
+    "rdf-ext": "^2.5.0",
+    "vis-data": "^7.1.9",
+    "vis-network": "^9.1.9"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

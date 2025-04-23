@@ -1,4 +1,4 @@
-import { eventBus, EVENTS } from '../../core/events/event-bus.js'
+import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { setEndpoints, addEndpoint, removeEndpoint, updateEndpoint } from '../../core/state/actions.js'
@@ -6,6 +6,7 @@ import { getEndpoints } from '../../core/state/selectors.js'
 import { showNotification } from '../notifications/notifications.js'
 import { rdfModel } from '../../domain/rdf/model.js'
 import pluginConfig from '../../plugins.config.json' with { type: 'json' }
+import { renderNavTabs } from '../router.js'
 
 /**
  * Initialize the Settings view
@@ -259,6 +260,14 @@ function saveEndpointChanges(item) {
     showNotification('Endpoint updated successfully', 'success')
 }
 
+// Map views to plugins
+const viewPluginMap = [
+    { viewId: 'wiki-view', label: 'Wiki', pluginId: 'wiki-plugin' },
+    { viewId: 'yasgui-view', label: 'SPARQL', pluginId: 'yasgui-plugin' },
+    { viewId: 'atuin-view', label: 'Atuin', pluginId: 'atuin-plugin' }
+    // Add more mappings as you add plugins/views
+]
+
 /**
  * Set up the plugins list
  */
@@ -279,10 +288,12 @@ function setupPluginsList() {
         plugins = pluginConfig.plugins || []
     }
 
-    // Render plugin checkboxes
-    container.innerHTML = plugins.map(
-        p => `<label><input type="checkbox" class="plugin-toggle" data-plugin-id="${p.id}" ${p.enabled ? 'checked' : ''}> ${p.id}</label><br>`
-    ).join('')
+    // Render plugin checkboxes per view/tab
+    container.innerHTML = viewPluginMap.map(({ viewId, label, pluginId }) => {
+        const plugin = plugins.find(p => p.id === pluginId)
+        const checked = plugin && plugin.enabled ? 'checked' : ''
+        return `<label><input type="checkbox" class="plugin-toggle" data-plugin-id="${pluginId}" ${checked}> ${label} (${pluginId})</label><br>`
+    }).join('')
 
     // Handle form submit
     const form = document.getElementById('plugins-form')
@@ -297,6 +308,7 @@ function setupPluginsList() {
             })
             // Save to localStorage
             localStorage.setItem('squirt.plugins', JSON.stringify(updated))
+            renderNavTabs() // Update navigation tabs
             showNotification('Plugin settings saved. Please reload the app to apply changes.', 'success')
         })
     }
@@ -548,3 +560,5 @@ function updateStorageUsage() {
     // Update the display
     usageElement.textContent = `Storage used: ${size}`
 }
+
+export { viewPluginMap }

@@ -7,6 +7,10 @@
     {
       "id": "example-plugin",
       "enabled": false
+    },
+    {
+      "id": "atuin-plugin",
+      "enabled": true
     }
   ]
 } 

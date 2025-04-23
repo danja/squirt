@@ -40,6 +40,26 @@ class EventBus {
    */
   emit(event, data) {
     console.debug(`Event emitted: ${event}`, data)
+    // Hard guard for notification event misuse
+    if (
+      event === EVENTS.NOTIFICATION_SHOW &&
+      data &&
+      typeof data === 'object' &&
+      'action' in data &&
+      'state' in data
+    ) {
+      console.error('[eventBus] FATAL: Someone is emitting a Redux state change as a notification event:', data)
+      console.trace('Stack trace for FATAL notification event misuse')
+      throw new Error('FATAL: Redux state change emitted as notification event. See stack trace above.')
+    }
+    // Guard for malformed notification events
+    if (
+      event === EVENTS.NOTIFICATION_SHOW &&
+      (!data || typeof data.message !== 'string' || data.message.trim() === '')
+    ) {
+      console.error('[eventBus] Malformed notification event emitted:', data)
+      console.trace('Stack trace for malformed notification event')
+    }
     const callbacks = this.listeners.get(event)
     if (callbacks) {
       callbacks.forEach(callback => {
