@@ -5,9 +5,10 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack serve --mode development",
-    "test": "jest",
+    "test": "jasmine --config=jasmine.json",
     "test:jasmine": "jasmine --config=jasmine.json",
-    "rp": "repomix -c repomix.config.json ."
+    "rp": "repomix -c repomix.config.json .",
+    "coverage": "c8 --reporter=lcov --reporter=text jasmine --config=jasmine.json"
   },
   "dependencies": {
     "@rdfjs/data-model": "^2.0.1",
