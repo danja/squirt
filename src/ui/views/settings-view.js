@@ -5,6 +5,7 @@ import { setEndpoints, addEndpoint, removeEndpoint, updateEndpoint } from '../..
 import { getEndpoints } from '../../core/state/selectors.js'
 import { showNotification } from '../notifications/notifications.js'
 import { rdfModel } from '../../domain/rdf/model.js'
+import pluginConfig from '../../plugins.config.json' with { type: 'json' }
 
 /**
  * Initialize the Settings view
@@ -21,6 +22,9 @@ export function initView() {
 
         // Setup endpoints list
         setupEndpointsList()
+
+        // Setup plugins list
+        setupPluginsList()
 
         // Setup theme selector
         setupThemeSelector()
@@ -253,6 +257,49 @@ function saveEndpointChanges(item) {
     toggleEditMode(item)
 
     showNotification('Endpoint updated successfully', 'success')
+}
+
+/**
+ * Set up the plugins list
+ */
+function setupPluginsList() {
+    const container = document.getElementById('plugins-list')
+    if (!container) return
+
+    // Load plugin config from localStorage if available, else from config file
+    let plugins = []
+    try {
+        const stored = localStorage.getItem('squirt.plugins')
+        if (stored) {
+            plugins = JSON.parse(stored)
+        } else {
+            plugins = pluginConfig.plugins || []
+        }
+    } catch (e) {
+        plugins = pluginConfig.plugins || []
+    }
+
+    // Render plugin checkboxes
+    container.innerHTML = plugins.map(
+        p => `<label><input type="checkbox" class="plugin-toggle" data-plugin-id="${p.id}" ${p.enabled ? 'checked' : ''}> ${p.id}</label><br>`
+    ).join('')
+
+    // Handle form submit
+    const form = document.getElementById('plugins-form')
+    if (form) {
+        form.addEventListener('submit', e => {
+            e.preventDefault()
+            // Read checked state
+            const toggles = container.querySelectorAll('.plugin-toggle')
+            const updated = plugins.map(p => {
+                const toggle = Array.from(toggles).find(t => t.dataset.pluginId === p.id)
+                return { ...p, enabled: toggle ? toggle.checked : p.enabled }
+            })
+            // Save to localStorage
+            localStorage.setItem('squirt.plugins', JSON.stringify(updated))
+            showNotification('Plugin settings saved. Please reload the app to apply changes.', 'success')
+        })
+    }
 }
 
 /**

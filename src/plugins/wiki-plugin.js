@@ -6,7 +6,7 @@ import { PluginBase } from '../core/plugin-base.js'
 import { rdfService } from '../services/rdf/rdf-service.js' // Corrected import
 // import { ErrorHandler } from '../core/errors.js'
 import { errorHandler } from '../core/errors/index.js' // Import new handler singleton
-import { showNotification } from '../ui/components/notifications.js'
+import { showNotification } from '../../ui/notifications/notifications.js'
 
 /**
  * Plugin that provides wiki editing functionality with markdown support

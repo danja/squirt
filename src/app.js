@@ -7,6 +7,8 @@ import { initRouter } from './ui/router.js'
 import { initNotifications } from './ui/notifications/notifications.js'
 import { pluginManager } from './core/plugin-manager.js'
 import { initializeEndpointIndicator } from './ui/components/endpoint-indicator.js'
+import pluginConfig from './plugins.config.json' with { type: 'json' }
+import * as availablePlugins from './plugins/index.js'
 
 // Import CSS files
 import './css/styles.css'
@@ -28,6 +30,26 @@ export const namespaces = {
 // Export services for global use
 export const services = {
   storage: storageService
+}
+
+/**
+ * Register enabled plugins from config
+ */
+function registerEnabledPlugins() {
+  if (!pluginConfig.plugins || !Array.isArray(pluginConfig.plugins)) return
+  pluginConfig.plugins.forEach(({ id, enabled }) => {
+    if (!enabled) return
+    // Find plugin class by id (assume class name is PascalCase, e.g. YasguiPlugin)
+    const pluginClass = Object.values(availablePlugins).find(
+      Plugin => Plugin && new Plugin().id === id
+    )
+    if (pluginClass) {
+      // Register plugin for a view (use id as viewId for now, or map as needed)
+      pluginManager.register(id, new pluginClass(), {})
+    } else {
+      console.warn(`Plugin with id '${id}' not found in available plugins.`)
+    }
+  })
 }
 
 /**
@@ -59,6 +81,9 @@ export async function initializeApp() {
     // Initialize UI components
     initNotifications()
     initRouter()
+
+    // Register enabled plugins before initializing
+    registerEnabledPlugins()
 
     // Initialize plugins
     await pluginManager.initializeAll()

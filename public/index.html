@@ -13,22 +13,32 @@
     <!-- PWA support -->
     <link rel="manifest" href="/manifest.json">
     <meta name="description" content="Post information to the web easily with Squirt">
-    
+
     <!-- iOS PWA support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Squirt">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    
+
     <!-- iOS splash screens -->
-    <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png" media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png" media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png" media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
-<link rel="icon" href="favicon.ico"><script defer src="main.bundle.js"></script><link href="main.b1b16b63.css" rel="stylesheet"></head>
+    <link rel="apple-touch-startup-image" href="/icons/splash-640x1136.png"
+        media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-750x1334.png"
+        media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1242x2208.png"
+        media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1125x2436.png"
+        media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1536x2048.png"
+        media="(min-device-width: 768px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-1668x2224.png"
+        media="(min-device-width: 834px) and (max-device-width: 834px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="/icons/splash-2048x2732.png"
+        media="(min-device-width: 1024px) and (max-device-width: 1024px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="icon" href="favicon.ico">
+    <script defer src="main.bundle.js"></script>
+    <link href="main.b1b16b63.css" rel="stylesheet">
+</head>
 
 <body>
     <header>
@@ -40,24 +50,24 @@
                     <span></span>
                     <span></span>
                 </button>
-            </div> 
+            </div>
         </div>
-<div id="endpoint-status-indicator" class="endpoint-status-indicator" title="Checking endpoint status...">
-    <div class="status-light checking"></div>
-    <span class="status-tooltip-icon">?</span>
-</div>
-<nav>
-    <a href="#" data-view="post-view">Post</a>
-    <a href="#" data-view="wiki-view">Wiki</a>
-    <a href="#" data-view="chat-view">Chat</a>
-    <a href="#" data-view="yasgui-view">SPARQL</a>
-    <a href="#" data-view="developer-view">Developer</a>
-    <a href="#" data-view="profile-view">Profile</a>
-    <a href="#" data-view="settings-view">Settings</a>
-</nav>
-        
+        <div id="endpoint-status-indicator" class="endpoint-status-indicator" title="Checking endpoint status...">
+            <div class="status-light checking"></div>
+            <span class="status-tooltip-icon">?</span>
+        </div>
+        <nav>
+            <a href="#" data-view="post-view">Post</a>
+            <a href="#" data-view="wiki-view">Wiki</a>
+            <a href="#" data-view="chat-view">Chat</a>
+            <a href="#" data-view="yasgui-view">SPARQL</a>
+            <a href="#" data-view="developer-view">Developer</a>
+            <a href="#" data-view="profile-view">Profile</a>
+            <a href="#" data-view="settings-view">Settings</a>
+        </nav>
+
     </header>
-    
+
     <main>
         <!-- Post View -->
         <div id="post-view" class="view">
@@ -70,7 +80,7 @@
                         <option value="link" selected>Link</option>
                     </select>
                 </div>
-                
+
                 <!-- Static form fields for Link type -->
                 <div class="form-fields">
                     <div class="form-field">
@@ -80,26 +90,27 @@
                             <button type="button" id="extract-metadata" class="extract-button">Extract</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-field">
                         <label for="title">Title</label>
                         <input type="text" id="title" name="title" placeholder="Enter a title">
                     </div>
-                    
+
                     <div class="form-field">
                         <label for="content">Content</label>
-                        <textarea id="content" name="content" rows="5" placeholder="Enter your content here..."></textarea>
+                        <textarea id="content" name="content" rows="5"
+                            placeholder="Enter your content here..."></textarea>
                     </div>
-                    
+
                     <div class="form-field">
                         <label for="tags">Tags (comma separated)</label>
                         <input type="text" id="tags" name="tags" placeholder="tag1, tag2, tag3">
                     </div>
                 </div>
-                
+
                 <button type="submit" class="button-primary">Post</button>
             </form>
-            
+
             <div id="post-preview"></div>
         </div>
 
@@ -128,7 +139,7 @@
             <h2>SPARQL Query Editor</h2>
             <div id="yasgui-container" class="yasgui-container"></div>
         </div>
-       
+
         <div id="chat-view" class="view hidden">
             <h2>Chat</h2>
             <div class="chat-container">
@@ -176,7 +187,7 @@
         <!-- Settings View -->
         <div id="settings-view" class="view hidden">
             <h2>Settings</h2>
-            
+
             <div class="dashboard-grid">
                 <!-- Appearance Section -->
                 <div class="settings-section">
@@ -190,7 +201,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <!-- Endpoints Section -->
                 <div class="settings-section">
                     <h3>SPARQL Endpoints</h3>
@@ -201,7 +212,16 @@
                         <button type="submit" class="button-primary">Add</button>
                     </form>
                 </div>
-                
+
+                <!-- Plugins Section -->
+                <div class="settings-section">
+                    <h3>Plugins</h3>
+                    <form id="plugins-form" class="form-group">
+                        <div id="plugins-list"></div>
+                        <button type="submit" class="button-primary">Save Plugins</button>
+                    </form>
+                </div>
+
                 <!-- Storage Section -->
                 <div class="settings-section storage-section">
                     <h3>Storage</h3>
