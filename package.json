@@ -17,6 +17,7 @@
     "@triply/yasgui": "^4.2.28",
     "codemirror": "^5.65.12",
     "cors": "^2.8.5",
+    "evb": "file:../evb",
     "marked": "^4.3.0",
     "rdf-ext": "^2.5.0"
   },
