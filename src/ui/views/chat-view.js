@@ -2,7 +2,7 @@ import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { showNotification } from '../notifications/notifications.js'
-import { rdfModel } from '../../domain/rdf/model.js'
+import { RDFModel } from '../../domain/rdf/model.js'
 
 /**
  * Initialize the Chat view
@@ -203,7 +203,7 @@ function sendMessage(content) {
         }
 
         // Create the post in the RDF model
-        const postId = rdfModel.createPost(postData)
+        const postId = RDFModel.createPost(postData)
 
         // Clear the input field
         if (chatInput) {
@@ -217,7 +217,7 @@ function sendMessage(content) {
         }, true)
 
         // Try to sync with endpoint
-        rdfModel.syncWithEndpoint().catch(error => {
+        RDFModel.syncWithEndpoint().catch(error => {
             console.warn('Message saved locally but failed to sync with endpoint', error)
         })
 
@@ -271,7 +271,7 @@ function loadMessages() {
         chatMessages.innerHTML = ''
 
         // Get chat posts from RDF store
-        const messages = rdfModel.getPosts({
+        const messages = RDFModel.getPosts({
             type: 'chat',
             limit: 50
         })

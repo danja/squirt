@@ -2,7 +2,7 @@ import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { showNotification } from '../notifications/notifications.js'
-import { rdfModel } from '../../domain/rdf/model.js'
+import { RDFModel } from '../../domain/rdf/model.js'
 import { namespaces } from '../../utils/namespaces.js'
 
 /**

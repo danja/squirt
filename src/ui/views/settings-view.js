@@ -4,7 +4,7 @@ import { store } from '../../core/state/index.js'
 import { setEndpoints, addEndpoint, removeEndpoint, updateEndpoint } from '../../core/state/actions.js'
 import { getEndpoints } from '../../core/state/selectors.js'
 import { showNotification } from '../notifications/notifications.js'
-import { rdfModel } from '../../domain/rdf/model.js'
+import { RDFModel } from '../../domain/rdf/model.js'
 import pluginConfig from '../../plugins.config.json' with { type: 'json' }
 import { renderNavTabs } from '../router.js'
 
@@ -397,7 +397,7 @@ function setupStorageManagement() {
 async function exportData() {
     try {
         // Get RDF dataset
-        const dataset = rdfModel.dataset
+        const dataset = RDFModel.dataset
 
         if (!dataset || dataset.size === 0) {
             showNotification('No data to export', 'warning')
@@ -453,13 +453,13 @@ async function importData(file) {
                     const dataset = await parser.parse(content)
 
                     // Merge with existing dataset
-                    const currentDataset = rdfModel.dataset || rdf.dataset()
+                    const currentDataset = RDFModel.dataset || rdf.dataset()
                     dataset.forEach(quad => {
                         currentDataset.add(quad)
                     })
 
                     // Update model
-                    rdfModel.dataset = currentDataset
+                    RDFModel.dataset = currentDataset
 
                     showNotification('Data imported successfully', 'success')
 
@@ -496,7 +496,7 @@ async function importData(file) {
 function clearAllData() {
     try {
         // Clear RDF dataset
-        rdfModel.dataset = rdf.dataset()
+        RDFModel.dataset = rdf.dataset()
 
         // Preserve theme and endpoint settings
         const themeSettings = localStorage.getItem('squirt_theme')

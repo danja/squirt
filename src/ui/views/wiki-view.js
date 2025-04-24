@@ -3,7 +3,7 @@ import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { showNotification } from '../notifications/notifications.js'
-import { rdfModel } from '../../domain/rdf/model.js'
+import { RDFModel } from '../../domain/rdf/model.js'
 import { marked } from 'marked'
 
 let editor = null
@@ -66,9 +66,9 @@ async function loadDependencies() {
       window.CodeMirror = cm.default
 
       // Load CodeMirror plugins
-      await import('codemirror/mode/markdown/markdown')
-      await import('codemirror/addon/edit/continuelist')
-      await import('codemirror/addon/display/placeholder')
+      await import('codemirror/mode/markdown/markdown.js')
+      await import('codemirror/addon/edit/continuelist.js')
+      await import('codemirror/addon/display/placeholder.js')
     }
 
     // Load Marked for Markdown rendering
@@ -357,7 +357,7 @@ function saveWikiEntry() {
   try {
     // Delete existing entry if editing
     if (currentEntryId) {
-      rdfModel.deletePost(currentEntryId)
+      RDFModel.deletePost(currentEntryId)
     }
 
     // Create post data
@@ -374,10 +374,10 @@ function saveWikiEntry() {
     }
 
     // Create the post
-    const postId = rdfModel.createPost(postData)
+    const postId = RDFModel.createPost(postData)
 
     // Sync with endpoint
-    rdfModel.syncWithEndpoint()
+    RDFModel.syncWithEndpoint()
       .catch(error => {
         console.warn('Wiki entry saved locally but failed to sync with endpoint', error)
       })
@@ -444,7 +444,7 @@ function loadWikiEntries() {
 
   try {
     // Get wiki posts from RDF model
-    const entries = rdfModel.getPosts({
+    const entries = RDFModel.getPosts({
       type: 'wiki',
       limit: 10
     })
@@ -505,7 +505,7 @@ function viewEntry(id) {
     if (!entriesContainer) return
 
     // Find post by ID
-    const posts = rdfModel.getPosts()
+    const posts = RDFModel.getPosts()
     const post = posts.find(p => p.id === id)
 
     if (!post) {
@@ -561,7 +561,7 @@ function viewEntry(id) {
 function editEntry(id) {
   try {
     // Find post by ID
-    const posts = rdfModel.getPosts()
+    const posts = RDFModel.getPosts()
     const post = posts.find(p => p.id === id)
 
     if (!post) {
@@ -629,7 +629,7 @@ function deleteEntry(id) {
 
   try {
     // Delete the post
-    const success = rdfModel.deletePost(id)
+    const success = RDFModel.deletePost(id)
 
     if (success) {
       showNotification('Entry deleted successfully', 'success')

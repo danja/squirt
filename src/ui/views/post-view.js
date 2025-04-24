@@ -2,7 +2,7 @@ import { eventBus, EVENTS } from 'evb'
 import { errorHandler } from '../../core/errors/index.js'
 import { store } from '../../core/state/index.js'
 import { showNotification } from '../notifications/notifications.js'
-import { rdfModel } from '../../domain/rdf/model.js'
+import { RDFModel } from '../../domain/rdf/model.js'
 
 /**
  * Initialize the post view
@@ -114,11 +114,11 @@ function setupPostForm() {
             }
 
             // Create post in RDF model
-            const postId = rdfModel.createPost(postData)
+            const postId = RDFModel.createPost(postData)
 
             // Try to sync with endpoint
             try {
-                await rdfModel.syncWithEndpoint()
+                await RDFModel.syncWithEndpoint()
             } catch (syncError) {
                 console.warn('Post created locally but failed to sync with endpoint', syncError)
             }

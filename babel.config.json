@@ -10,7 +10,7 @@
             "last 2 safari versions"
           ]
         },
-        "modules": false,
+        "modules": true,
         "useBuiltIns": "usage",
         "corejs": 3
       }

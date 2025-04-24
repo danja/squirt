@@ -205,9 +205,9 @@ export class EndpointsService {
    */
   getDefaultEndpoints() {
     console.warn('Using default endpoints as fallback')
-    const fallbackQueryURL = 'http://hyperdata.it:3331/squirt/'
+    const fallbackQueryURL = 'http://localhost:3030/squirt/'
     const fallbackQueryLabel = `Query endpoint : ${fallbackQueryURL}`
-    const fallbackUpdateURL = 'http://hyperdata.it:3331/squirt/'
+    const fallbackUpdateURL = 'http://localhost:3030/squirt/'
     const fallbackUpdateLabel = `Update endpoint : ${fallbackUpdateURL}`
     return [
       {

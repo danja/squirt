@@ -60,9 +60,9 @@ export class WikiPlugin extends PluginBase {
         this.CodeMirror = cm.default
 
         // Import mode and addons
-        await import('codemirror/mode/markdown/markdown')
-        await import('codemirror/addon/edit/continuelist')
-        await import('codemirror/addon/display/placeholder')
+        await import('codemirror/mode/markdown/markdown.js')
+        await import('codemirror/addon/edit/continuelist.js')
+        await import('codemirror/addon/display/placeholder.js')
       }
 
       // Check if marked is already loaded
