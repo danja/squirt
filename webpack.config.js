@@ -13,7 +13,7 @@ export default {
         main: './src/app.js'  // Updated path to new entry point
     },
     output: {
-        path: path.resolve('public'),
+        path: path.resolve('dist'),
         filename: '[name].bundle.js',
         clean: true
     },
@@ -79,7 +79,7 @@ export default {
     },
     devServer: {
         static: {
-            directory: path.join(process.cwd(), 'public')
+            directory: path.join(process.cwd(), 'dist')
         },
         compress: true,
         hot: true,
