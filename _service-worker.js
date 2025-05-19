@@ -1,3 +1,4 @@
+// UNUSED - DELETE 
 // src/service-worker.js
 const CACHE_NAME = 'squirt-cache-v1';
 const OFFLINE_URL = '/index.html';
@@ -16,7 +17,7 @@ const PRECACHE_URLS = [
 // Install event - precache essential assets
 self.addEventListener('install', event => {
   console.log('[Service Worker] Installing...');
-  
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -33,13 +34,13 @@ self.addEventListener('install', event => {
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
   console.log('[Service Worker] Activating...');
-  
+
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.filter(cacheName => {
-          return cacheName.startsWith('squirt-cache-') && 
-                 cacheName !== CACHE_NAME;
+          return cacheName.startsWith('squirt-cache-') &&
+            cacheName !== CACHE_NAME;
         }).map(cacheName => {
           console.log('[Service Worker] Deleting old cache:', cacheName);
           return caches.delete(cacheName);
@@ -58,14 +59,14 @@ self.addEventListener('fetch', event => {
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
-  
+
   // Skip SPARQL API requests - they should always go to network
-  if (event.request.url.includes('/sparql') || 
-      event.request.url.includes('/query') || 
-      event.request.url.includes('/update')) {
+  if (event.request.url.includes('/sparql') ||
+    event.request.url.includes('/query') ||
+    event.request.url.includes('/update')) {
     return;
   }
-  
+
   // For navigation requests (HTML documents), use a network-first strategy
   if (event.request.mode === 'navigate') {
     event.respondWith(
@@ -76,7 +77,7 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
-  
+
   // For all other requests, use a cache-first strategy
   event.respondWith(
     caches.match(event.request)
@@ -84,22 +85,22 @@ self.addEventListener('fetch', event => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        
+
         return fetch(event.request)
           .then(response => {
             // Don't cache responses that aren't successful
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-            
+
             // Clone the response as it can only be consumed once
             const responseToCache = response.clone();
-            
+
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
               });
-              
+
             return response;
           })
           .catch(error => {
@@ -108,7 +109,7 @@ self.addEventListener('fetch', event => {
             if (event.request.destination === 'image') {
               return caches.match('/icons/icon-192x192.png');
             }
-            
+
             // For other assets, just propagate the error
             throw error;
           });
@@ -126,7 +127,7 @@ self.addEventListener('sync', event => {
 // Handle push notifications
 self.addEventListener('push', event => {
   if (!event.data) return;
-  
+
   const data = event.data.json();
   const options = {
     body: data.body,
@@ -136,7 +137,7 @@ self.addEventListener('push', event => {
       url: data.url || '/'
     }
   };
-  
+
   event.waitUntil(
     self.registration.showNotification(data.title, options)
   );
@@ -145,9 +146,9 @@ self.addEventListener('push', event => {
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  
+
   event.waitUntil(
-    clients.matchAll({type: 'window'})
+    clients.matchAll({ type: 'window' })
       .then(clientList => {
         // If a window client is already open, focus it
         for (const client of clientList) {
@@ -169,10 +170,10 @@ async function syncPosts() {
     // Open IDB database
     const db = await new Promise((resolve, reject) => {
       const request = indexedDB.open('squirt-offline-db', 1);
-      
+
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
-      
+
       request.onupgradeneeded = event => {
         const db = event.target.result;
         if (!db.objectStoreNames.contains('offline-posts')) {
@@ -180,22 +181,22 @@ async function syncPosts() {
         }
       };
     });
-    
+
     // Get all offline posts
     const offlinePosts = await new Promise((resolve, reject) => {
       const transaction = db.transaction('offline-posts', 'readonly');
       const store = transaction.objectStore('offline-posts');
       const request = store.getAll();
-      
+
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     });
-    
+
     // If there are no offline posts, exit
     if (!offlinePosts.length) {
       return;
     }
-    
+
     // Send each post to the server
     for (const post of offlinePosts) {
       try {
@@ -206,7 +207,7 @@ async function syncPosts() {
           },
           body: JSON.stringify(post.data)
         });
-        
+
         if (response.ok) {
           // Remove from IDB if successful
           const transaction = db.transaction('offline-posts', 'readwrite');
