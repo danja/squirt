@@ -1,7 +1,9 @@
 // test/spec/pwa.spec.js
 import { registerServiceWorker, askNotificationPermission } from '../../src/app.js';
+import fs from 'fs';
+import path from 'path';
 
-describe('PWA Functionality', () => {
+describe('PWA Runtime Functionality', () => {
   let originalServiceWorker;
   let mockRegistration;
   let mockSync;
@@ -153,5 +155,70 @@ describe('PWA Functionality', () => {
     
     // Verify console warning
     expect(console.warn).toHaveBeenCalledWith('Notification permission was previously denied');
+  });
+});
+
+// New describe block for PWA build artifacts
+describe('PWA Build Artifacts', () => {
+  const distDir = './dist';
+  let manifestContent;
+  let htmlContent;
+
+  beforeAll(() => {
+    const manifestPath = path.join(distDir, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) {
+      throw new Error(`manifest.json not found at ${manifestPath}. Run build first.`);
+    }
+    manifestContent = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+
+    const htmlPath = path.join(distDir, 'index.html');
+    if (!fs.existsSync(htmlPath)) {
+      throw new Error(`index.html not found at ${htmlPath}. Run build first.`);
+    }
+    htmlContent = fs.readFileSync(htmlPath, 'utf-8');
+  });
+
+  it('should have a valid manifest.json with expected properties', () => {
+    expect(manifestContent.name).toBe('Squirt');
+    expect(manifestContent.short_name).toBe('Squirt');
+    expect(manifestContent.start_url).toBe('/index.html');
+    expect(manifestContent.display).toBe('standalone');
+    expect(manifestContent.background_color).toBeDefined();
+    expect(manifestContent.theme_color).toBeDefined();
+    expect(manifestContent.description).toBeDefined();
+  });
+
+  it('should have a non-empty icons array in manifest.json', () => {
+    expect(manifestContent.icons).toBeInstanceOf(Array);
+    expect(manifestContent.icons.length).toBeGreaterThan(0);
+  });
+
+  it('should have all icons specified in manifest.json present in dist directory', () => {
+    manifestContent.icons.forEach(icon => {
+      expect(icon.src).toBeDefined('Icon src path is not defined');
+      expect(icon.sizes).toBeDefined(`Icon sizes not defined for ${icon.src}`);
+      expect(icon.type).toBeDefined(`Icon type not defined for ${icon.src}`);
+      
+      // icon.src is like '/icons/icon-192x192.png'.
+      // path.join will correctly handle the leading '/' if distDir is relative like './dist'
+      // resulting in './dist/icons/icon-192x192.png'
+      const iconPath = path.join(distDir, icon.src);
+      expect(fs.existsSync(iconPath)).toBe(true, `Icon file not found: ${iconPath}`);
+    });
+  });
+
+  it('should link manifest.json in index.html', () => {
+    // The problem description specified href="/manifest.json"
+    // Webpack's HtmlWebpackPlugin might generate just "manifest.json" if index.html is also in dist root.
+    // Let's check for either, or a more robust check if the path is absolute.
+    // Given manifest.json is at dist/manifest.json and index.html is at dist/index.html,
+    // a relative path "manifest.json" or absolute "/manifest.json" are common.
+    // The previous verification step confirmed "/manifest.json".
+    expect(htmlContent).toContain('<link rel="manifest" href="/manifest.json">');
+  });
+
+  it('should have a service-worker.js file in dist directory', () => {
+    const swPath = path.join(distDir, 'service-worker.js');
+    expect(fs.existsSync(swPath)).toBe(true, `service-worker.js not found at ${swPath}`);
   });
 });
