@@ -1,14 +1,14 @@
 // AtuinPlugin for Squirt - integrates Atuin RDF editor as a plugin
 import { PluginBase } from '../core/plugin-base.js'
 // Import Atuin modules (adjust paths as needed)
-import { TurtleEditor } from '../../../atuin/src/js/core/TurtleEditor.js'
-import { GraphVisualizer } from '../../../atuin/src/js/core/GraphVisualizer.js'
-import { LoggerService } from '../../../atuin/src/js/services/LoggerService.js'
-import { UIManager } from '../../../atuin/src/js/ui/UIManager.js'
-import { SplitPaneManager } from '../../../atuin/src/js/ui/SplitPaneManager.js'
-import '../../../atuin/src/css/main.css'
-import '../../../atuin/src/css/editor.css'
-import '../../../atuin/src/css/graph.css'
+// import { TurtleEditor } from '../../../atuin/src/js/core/TurtleEditor.js'
+// import { GraphVisualizer } from '../../../atuin/src/js/core/GraphVisualizer.js'
+// import { LoggerService } from '../../../atuin/src/js/services/LoggerService.js'
+// import { UIManager } from '../../../atuin/src/js/ui/UIManager.js'
+// import { SplitPaneManager } from '../../../atuin/src/js/ui/SplitPaneManager.js'
+// import '../../../atuin/src/css/main.css'
+// import '../../../atuin/src/css/editor.css'
+// import '../../../atuin/src/css/graph.css'
 
 // Sample Turtle content for initial editor loading
 const sampleContent = `@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -86,60 +86,60 @@ export class AtuinPlugin extends PluginBase {
     `
     console.log('[AtuinPlugin] DOM updated, looking for editor and graph containers')
     // Initialize logger
-    this.logger = new LoggerService('atuin-message-queue')
+    // this.logger = new LoggerService('atuin-message-queue')
     // Correctly select the textarea and graph container
     const textarea = container.querySelector('#atuin-input-contents')
     const graphContainer = container.querySelector('#atuin-graph-container')
     console.log('[AtuinPlugin] textarea:', textarea, 'graphContainer:', graphContainer)
     // Initialize editor and visualizer
-    try {
-      this.editor = new TurtleEditor(textarea, this.logger)
-      this.editor.initialize()
-      console.log('[AtuinPlugin] TurtleEditor initialized')
-    } catch (e) {
-      console.error('[AtuinPlugin] Error initializing TurtleEditor', e)
-    }
-    try {
-      this.visualizer = new GraphVisualizer(graphContainer, this.logger)
-      this.visualizer.initialize()
-      console.log('[AtuinPlugin] GraphVisualizer initialized')
-    } catch (e) {
-      console.error('[AtuinPlugin] Error initializing GraphVisualizer', e)
-    }
+    // try {
+    //   this.editor = new TurtleEditor(textarea, this.logger)
+    //   this.editor.initialize()
+    //   console.log('[AtuinPlugin] TurtleEditor initialized')
+    // } catch (e) {
+    //   console.error('[AtuinPlugin] Error initializing TurtleEditor', e)
+    // }
+    // try {
+    //   this.visualizer = new GraphVisualizer(graphContainer, this.logger)
+    //   this.visualizer.initialize()
+    //   console.log('[AtuinPlugin] GraphVisualizer initialized')
+    // } catch (e) {
+    //   console.error('[AtuinPlugin] Error initializing GraphVisualizer', e)
+    // }
     // Connect editor and visualizer
-    if (this.editor && this.visualizer) {
-      this.editor.onChange(content => this.visualizer.updateGraph(content))
-      this.visualizer.onNodeSelect(nodeId => this.editor.highlightNode(nodeId))
-    }
+    // if (this.editor && this.visualizer) {
+    //   this.editor.onChange(content => this.visualizer.updateGraph(content))
+    //   this.visualizer.onNodeSelect(nodeId => this.editor.highlightNode(nodeId))
+    // }
     // Only initialize UIManager if main controls exist (plugin mode skips extra controls)
-    const splitButton = container.querySelector('#split-button')
-    if (splitButton) {
-      this.uiManager = new UIManager({
-        editor: this.editor,
-        visualizer: this.visualizer,
-        logger: this.logger
-      })
-    }
+    // const splitButton = container.querySelector('#split-button')
+    // if (splitButton) {
+    //   this.uiManager = new UIManager({
+    //     editor: this.editor,
+    //     visualizer: this.visualizer,
+    //     logger: this.logger
+    //   })
+    // }
     // Split pane
-    try {
-      this.splitPane = new SplitPaneManager({
-        container: container.querySelector('.split-container'),
-        leftPane: container.querySelector('#atuin-editor-container'),
-        rightPane: graphContainer,
-        divider: container.querySelector('#atuin-divider')
-      })
-      console.log('[AtuinPlugin] SplitPaneManager initialized')
-    } catch (e) {
-      console.error('[AtuinPlugin] Error initializing SplitPaneManager', e)
-    }
+    // try {
+    //   this.splitPane = new SplitPaneManager({
+    //     container: container.querySelector('.split-container'),
+    //     leftPane: container.querySelector('#atuin-editor-container'),
+    //     rightPane: graphContainer,
+    //     divider: container.querySelector('#atuin-divider')
+    //   })
+    //   console.log('[AtuinPlugin] SplitPaneManager initialized')
+    // } catch (e) {
+    //   console.error('[AtuinPlugin] Error initializing SplitPaneManager', e)
+    // }
     // Set sample content and update graph
-    if (this.editor && this.visualizer) {
-      // Use sampleContent if no sampleContent provided in options
-      const content = this.options.sampleContent || sampleContent
-      this.editor.setValue(content)
-      this.visualizer.updateGraph(content)
-      console.log('[AtuinPlugin] Sample content set and graph updated')
-    }
+    // if (this.editor && this.visualizer) {
+    //   // Use sampleContent if no sampleContent provided in options
+    //   const content = this.options.sampleContent || sampleContent
+    //   this.editor.setValue(content)
+    //   this.visualizer.updateGraph(content)
+    //   console.log('[AtuinPlugin] Sample content set and graph updated')
+    // }
     // Inject debug CSS to ensure visibility
     const style = document.createElement('style')
     style.textContent = `

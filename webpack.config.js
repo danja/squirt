@@ -3,6 +3,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
 
 // Polyfill __dirname for ESM
 const __filename = fileURLToPath(import.meta.url)
@@ -47,7 +48,7 @@ export default {
                 test: /\.(png|svg)$/i,
                 type: 'asset/resource',
                 generator: {
-                    filename: 'icons/[name].[hash:8][ext]'
+                    filename: 'icons/[name][ext]' // Removed hash for simplicity
                 }
             },
             {
@@ -67,6 +68,16 @@ export default {
         }),
         new MiniCssExtractPlugin({
             filename: '[name].[contenthash:8].css'
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: 'src/manifest.json', to: 'manifest.json' },
+                { from: 'service-worker.js', to: 'service-worker.js' },
+                { from: 'src/media/icon-192x192.png', to: 'icons/icon-192x192.png' },
+                { from: 'src/media/icon-256x256.png', to: 'icons/icon-256x256.png' },
+                { from: 'src/media/icon-background-512x512.png', to: 'icons/icon-background-512x512.png' },
+                { from: 'src/media/icon-foreground-512x512.png', to: 'icons/icon-foreground-512x512.png' }
+            ]
         })
     ],
     resolve: {
