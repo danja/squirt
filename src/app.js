@@ -94,9 +94,6 @@ export async function initializeApp() {
     // Setup hamburger menu
     setupHamburgerMenu()
 
-    // Register service worker
-    registerServiceWorker()
-
     console.log('Application initialized successfully')
     eventBus.emit(EVENTS.APP_INITIALIZED)
 
@@ -125,43 +122,7 @@ function setupHamburgerMenu() {
   }
 }
 
-/**
- * Register service worker for offline functionality
- */
-function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('Service Worker registered with scope:', registration.scope)
-
-          // Register background sync if available
-          if ('SyncManager' in window) {
-            registration.sync.register('sync-posts')
-              .then(() => console.log('Background sync registered'))
-              .catch(error => {
-                // Check for permission errors specifically
-                if (error.name === 'NotAllowedError') {
-                  console.warn('Background sync requires HTTPS in production. This error is expected during development.', error)
-                } else {
-                  console.error('Background sync registration failed:', error)
-                }
-              })
-          } else {
-            console.log('Background sync not supported in this browser')
-          }
-
-          // Setup push notifications if available
-          if ('PushManager' in window) {
-            askNotificationPermission()
-          }
-        })
-        .catch(error => {
-          console.error('Service Worker registration failed:', error)
-        })
-    })
-  }
-}
+// Service worker functionality has been removed as it's not being used
 
 /**
  * Request notification permission

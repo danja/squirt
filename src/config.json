@@ -6,7 +6,8 @@
         "credentials": {
             "user": "admin",
             "password": "admin123"
-        }
+        },
+        "enabled": false
     },
     {
         "name": "local update",
@@ -15,6 +16,19 @@
         "credentials": {
             "user": "admin",
             "password": "admin123"
-        }
+        },
+        "enabled": false
+    },
+    {
+        "name": "DBpedia",
+        "type": "query",
+        "url": "https://dbpedia.org/sparql",
+        "enabled": true
+    },
+    {
+        "name": "Wikidata",
+        "type": "query",
+        "url": "https://query.wikidata.org/sparql",
+        "enabled": true
     }
 ]

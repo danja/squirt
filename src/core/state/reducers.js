@@ -94,8 +94,28 @@ export function uiReducer(state = {
     }
 }
 
-export const rootReducer = combineReducers({
-    endpoints: endpointsReducer,
-    posts: postsReducer,
-    ui: uiReducer
-})
+// Define initial state for each reducer
+const initialState = {
+    endpoints: [],
+    posts: [],
+    ui: {
+        currentView: 'post-view',
+        previousView: null,
+        theme: 'light',
+        notifications: []
+    }
+}
+
+export const rootReducer = (state = initialState, action) => {
+    // Handle initialization action
+    if (action.type === '@@INIT') {
+        return initialState
+    }
+
+    // Pass the correct slice of state to each reducer
+    return {
+        endpoints: endpointsReducer(state.endpoints, action),
+        posts: postsReducer(state.posts, action),
+        ui: uiReducer(state.ui, action)
+    }
+}

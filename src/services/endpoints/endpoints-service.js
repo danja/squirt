@@ -186,7 +186,8 @@ export class EndpointsService {
             label: endpoint.name || endpoint.label || 'Unnamed Endpoint',
             type: endpoint.type || 'query',
             credentials: endpoint.credentials,
-            status: 'unknown'
+            status: 'unknown',
+            enabled: endpoint.enabled !== false // Default to true if not specified
           }))
         }
       }
@@ -537,13 +538,86 @@ export class EndpointsService {
   }
 
   /**
-   * Get active endpoint of specified type
+   * Get endpoints
+   * @param {string} type - Optional endpoint type filter
+   * @returns {Array} Filtered endpoints
+   */
+  getEndpoints(type) {
+    const state = store.getState()
+    let endpoints = getEndpoints(state)
+    
+    // Filter out disabled endpoints
+    endpoints = endpoints.filter(e => e.enabled !== false)
+    
+    if (!type) {
+      return [...endpoints]
+    }
+    
+    return endpoints.filter(e => e.type === type)
+  }
+
+  /**
+   * Get the active endpoint
    * @param {string} type - Endpoint type (query/update)
    * @returns {Object} Active endpoint or undefined
    */
   getActiveEndpoint(type) {
-    const endpoints = getEndpoints(store.getState())
-    return endpoints.find(e => e.type === type && e.status === 'active')
+    const state = store.getState()
+    const endpoints = getEndpoints(state)
+    
+    // Filter by type if specified and enabled status
+    const filteredEndpoints = (type 
+      ? endpoints.filter(e => e.type === type && e.enabled !== false)
+      : endpoints.filter(e => e.enabled !== false))
+    
+    if (filteredEndpoints.length === 0) {
+      console.warn(`No enabled endpoints found${type ? ' of type ' + type : ''}`)
+      return undefined
+    }
+    
+    // Try to get last used endpoint if it's enabled
+    const lastUsedId = this.storageService.getItem(this.LAST_USED_KEY)
+    if (lastUsedId) {
+      const lastUsed = filteredEndpoints.find(e => 
+        (e.id === lastUsedId || e.url === lastUsedId) && e.enabled !== false
+      )
+      if (lastUsed) {
+        return lastUsed
+      }
+    }
+    
+    // Otherwise return the first enabled endpoint of the specified type
+    return filteredEndpoints[0]
+  }
+
+  /**
+   * Check if an endpoint is available
+   * @param {string} url - Endpoint URL
+   * @returns {boolean} True if available and enabled
+   */
+  isEndpointAvailable(url) {
+    const state = store.getState()
+    const endpoints = getEndpoints(state)
+    const endpoint = endpoints.find(e => e.url === url)
+    
+    return endpoint && endpoint.status === 'active' && endpoint.enabled !== false
+  }
+
+  /**
+   * Get endpoint by URL
+   * @param {string} url - Endpoint URL
+   * @param {boolean} includeDisabled - Whether to include disabled endpoints
+   * @returns {Object|undefined} Endpoint or undefined
+   */
+  getEndpointByUrl(url, includeDisabled = false) {
+    const state = store.getState()
+    const endpoints = getEndpoints(state)
+    const endpoint = endpoints.find(e => e.url === url)
+    
+    if (!endpoint) return undefined
+    if (!includeDisabled && endpoint.enabled === false) return undefined
+    
+    return endpoint
   }
 }
 

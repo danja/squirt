@@ -72,7 +72,6 @@ export default {
         new CopyPlugin({
             patterns: [
                 { from: 'src/manifest.json', to: 'manifest.json' },
-                { from: 'service-worker.js', to: 'service-worker.js' },
                 { from: 'src/media/icon-192x192.png', to: 'icons/icon-192x192.png' },
                 { from: 'src/media/icon-256x256.png', to: 'icons/icon-256x256.png' },
                 { from: 'src/media/icon-background-512x512.png', to: 'icons/icon-background-512x512.png' },
@@ -83,9 +82,8 @@ export default {
     resolve: {
         extensions: ['.js', '.json'],
         alias: {
-            // Add alias for direct imports
-            '@triply/yasgui$': path.resolve(__dirname, 'node_modules/@triply/yasgui/build/yasgui.min.js'),
-            '@': path.resolve(__dirname, 'src')  // Add shortcut for imports
+            // Add shortcut for imports
+            '@': path.resolve(__dirname, 'src')
         }
     },
     devServer: {
