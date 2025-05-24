@@ -14,14 +14,17 @@ let isNotificationVisible = false
 export function initNotifications() {
   console.log('Initializing notifications system')
 
-  if (!notificationsContainer) {
-    notificationsContainer = document.querySelector('.notifications-container')
+  // Ensure the notification container exists in the DOM
+  notificationsContainer = document.getElementById('notification-container')
 
-    if (!notificationsContainer) {
-      notificationsContainer = document.createElement('div')
-      notificationsContainer.className = 'notifications-container'
-      document.body.appendChild(notificationsContainer)
-    }
+  if (!notificationsContainer) {
+    notificationsContainer = document.createElement('div')
+    notificationsContainer.id = 'notification-container'
+    notificationsContainer.className = 'notifications-container'
+    document.body.appendChild(notificationsContainer)
+    console.log('Created notification container')
+  } else {
+    console.log('Using existing notification container')
   }
 
   // Subscribe to state changes to render notifications
@@ -207,12 +210,11 @@ function createNotificationElement(notification) {
   }
 
   // Append the notification to the container
-  const container = document.getElementById('notification-container')
-  if (!container) {
-    console.error('Notification container not found in the DOM.')
+  if (!notificationsContainer) {
+    console.error('Notification container not initialized')
     return element
   }
-  container.appendChild(element)
+  notificationsContainer.appendChild(element)
 
   return element
 }
