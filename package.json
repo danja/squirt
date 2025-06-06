@@ -17,6 +17,7 @@
     "@rdfjs/data-model": "^2.0.1",
     "@rdfjs/namespace": "^2.0.0",
     "@rdfjs/parser-n3": "^2.0.1",
+    "atuin": "^0.1.0",
     "codemirror": "^5.65.12",
     "cors": "^2.8.5",
     "evb": "^0.6.0",
