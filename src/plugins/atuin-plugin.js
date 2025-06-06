@@ -1,22 +1,30 @@
-// AtuinPlugin for Squirt - integrates Atuin RDF editor with Turtle and SPARQL views
+// AtuinPlugin for Squirt - Uses actual atuin v0.1.1 components
 import { PluginBase } from '../core/plugin-base.js'
 import { eventBus, EVENTS } from 'evb'
 import { store } from '../core/state/index.js'
 import { getEndpoints } from '../core/state/selectors.js'
 import { querySparql } from '../services/sparql/sparql.js'
 
-// Import Atuin modules - only import working components
-// Note: Avoiding RDFUtils and StreamUtils due to missing dependencies in atuin package
+// Import atuin components and services using specific export paths
+import { TurtleEditor } from 'atuin/core/TurtleEditor'
+import { SPARQLEditor } from 'atuin/core/SPARQLEditor'
+import { GraphVisualizer } from 'atuin/core/GraphVisualizer'
 import { LoggerService } from 'atuin/services'
-import { GraphVisualizerTab } from './GraphVisualizerTab.js'
+import { SettingsManager, SplitPaneManager } from 'atuin/ui'
 
-// Note: CSS files not available in atuin package, using local styles
+// Import CSS from atuin dist using correct export paths
+import 'atuin/css/main'
+import 'atuin/css/editor'
+import 'atuin/css/graph'
 
 // Default configuration
 const DEFAULT_OPTIONS = {
-  defaultView: 'turtle', // 'turtle' or 'sparql'
-  logLevel: 'info',
-  endpointType: 'query' // Type of endpoint to use for queries
+  defaultView: 'turtle', // 'turtle', 'sparql', or 'graph'
+  endpointType: 'query', // Type of endpoint to use for queries
+  enableSplitPane: true, // Enable split pane layout
+  enableSettings: true, // Enable settings panel
+  enableFileHandling: true, // Enable file save/load
+  logLevel: 'info' // Logger level
 }
 
 // Sample Turtle content for initial editor loading
@@ -61,698 +69,108 @@ ex:jane a ex:Person ;
   ex:knows ex:john .
 `
 
+// Sample SPARQL query
+const sampleSparql = `PREFIX ex: <http://example.org/>
+SELECT ?person ?name ?age WHERE {
+  ?person a ex:Person ;
+          ex:name ?name ;
+          ex:age ?age .
+  FILTER(?age > 25)
+}
+ORDER BY ?name
+`
+
 export class AtuinPlugin extends PluginBase {
   constructor(id = 'atuin-plugin', options = {}) {
     super(id, { ...DEFAULT_OPTIONS, ...options });
-    this.editor = null;
-    this.sparqlEditor = null;
-    this.sparqlService = null;
+    
+    // Atuin components
     this.logger = null;
+    this.turtleEditor = null;
+    this.sparqlEditor = null;
+    this.graphVisualizer = null;
+    this.sparqlService = null;
+    this.settingsManager = null;
+    this.splitPaneManager = null;
+    
+    // UI state
     this.currentView = this.options.defaultView;
     this._eventHandlers = [];
-    this.graphTab = null;
-    this._graphInitialized = false;
     this._unsubscribe = null;
-    this.isMounted = false;
-    this.container = null;
+    this._isComponentsInitialized = false;
   }
 
   async initialize() {
-    // Create a safe logger that won't throw if logger is not available
-    const log = (level, ...args) => {
-      try {
-        if (this.logger && typeof this.logger[level] === 'function') {
-          this.logger[level](...args);
-        } else {
-          const logFn = level === 'warn' || level === 'error' ? console[level] || console.error : console.log;
-          logFn(`[AtuinPlugin]`, ...args);
-        }
-      } catch (logError) {
-        console.error('Error in Atuin plugin logger:', logError);
-      }
-    };
+    if (this.isInitialized) {
+      console.warn('Atuin plugin already initialized');
+      return;
+    }
 
     try {
-      if (this.isInitialized) {
-        log('warn', 'Atuin plugin already initialized');
-        return;
-      }
+      console.log('Initializing Atuin plugin with v0.1.1...');
 
-      log('info', 'Initializing Atuin plugin...');
+      // Initialize professional logger first
+      await this._initializeLogger();
 
-      // Initialize logger if not already done
-      if (!this.logger) {
-        try {
-          // Check if LoggerService is available
-          if (typeof LoggerService === 'function') {
-            this.logger = new LoggerService({ level: this.options.logLevel });
-            log('debug', 'Logger initialized');
-          } else {
-            // Fallback to console if LoggerService is not available
-            this.logger = {
-              debug: (...args) => console.debug('[AtuinPlugin]', ...args),
-              info: (...args) => console.info('[AtuinPlugin]', ...args),
-              warn: (...args) => console.warn('[AtuinPlugin]', ...args),
-              error: (...args) => console.error('[AtuinPlugin]', ...args)
-            };
-            log('debug', 'Using console fallback logger');
-          }
-        } catch (loggerError) {
-          console.error('Failed to initialize logger:', loggerError);
-          // Fallback to console
-          this.logger = {
-            debug: (...args) => console.debug('[AtuinPlugin]', ...args),
-            info: (...args) => console.info('[AtuinPlugin]', ...args),
-            warn: (...args) => console.warn('[AtuinPlugin]', ...args),
-            error: (...args) => console.error('[AtuinPlugin]', ...args)
-          };
-        }
-      }
+      // Subscribe to store changes for endpoint updates
+      this._unsubscribe = store.subscribe(this._handleStoreUpdate.bind(this));
 
       // Initial endpoints update
-      try {
-        this._updateEndpoints();
-        log('debug', 'Initial endpoints updated');
-      } catch (endpointError) {
-        log('error', 'Failed to update endpoints:', endpointError);
-        // Continue initialization even if endpoints fail
-      }
-
-      // Subscribe to store changes
-      try {
-        this._unsubscribe = store.subscribe(this._handleStoreUpdate.bind(this));
-        log('debug', 'Subscribed to store updates');
-      } catch (subscribeError) {
-        log('error', 'Failed to subscribe to store:', subscribeError);
-        // Continue initialization even if subscription fails
-      }
+      this._updateEndpoints();
 
       await super.initialize();
-      log('info', 'Atuin plugin initialized successfully');
+      this.logger.info('Atuin plugin v0.1.1 initialized successfully');
     } catch (error) {
-      log('error', 'Error initializing Atuin plugin:', error);
+      console.error('Error initializing Atuin plugin:', error);
       throw error;
     }
   }
 
-  _updateEndpoints() {
-    // Create a safe logger that won't throw if logger is not available
-    const log = (level, ...args) => {
-      try {
-        if (this.logger && typeof this.logger[level] === 'function') {
-          this.logger[level](...args);
-        } else {
-          const logFn = level === 'warn' ? console.warn :
-            level === 'error' ? console.error :
-              level === 'info' ? console.info : console.log;
-          logFn(`[AtuinPlugin]`, ...args);
-        }
-      } catch (logError) {
-        console.error('Error in Atuin plugin logger:', logError);
-      }
-    };
-
+  async _initializeLogger() {
     try {
-      // Check if store is available
-      if (!store || typeof store.getState !== 'function') {
-        log('warn', 'Store not available for endpoints update');
-        return;
-      }
+      // Suppress ResizeObserver errors (common with graph visualizations)
+      this._suppressResizeObserverErrors();
 
-      // Get current state
-      const state = store.getState();
-      if (!state) {
-        log('warn', 'State not available for endpoints update');
-        return;
-      }
+      // Create logger container for alerts
+      const loggerContainer = document.createElement('div');
+      loggerContainer.id = 'atuin-logger-container';
+      loggerContainer.style.position = 'fixed';
+      loggerContainer.style.top = '20px';
+      loggerContainer.style.right = '20px';
+      loggerContainer.style.zIndex = '10000';
+      document.body.appendChild(loggerContainer);
 
-      // Safely get endpoints
-      const endpoints = Array.isArray(getEndpoints) ? getEndpoints(state) || [] : [];
-      log('debug', 'Available endpoints:', endpoints);
-
-      // Filter for query endpoints that are enabled
-      const queryEndpoints = endpoints.filter(e => {
-        return e &&
-          typeof e === 'object' &&
-          e.type === this.options.endpointType &&
-          e.enabled !== false;
-      });
-
-      log('debug', 'Filtered query endpoints:', queryEndpoints);
-
-      if (queryEndpoints.length === 0) {
-        const message = 'No enabled SPARQL endpoints found. Please configure at least one endpoint in settings.';
-        log('warn', message);
-
-        // Only show notification if we're mounted and eventBus is available
-        if (this.isMounted && eventBus && typeof eventBus.emit === 'function') {
-          try {
-            eventBus.emit(EVENTS.NOTIFICATION, {
-              type: 'warning',
-              message: message,
-              timeout: 5000 // Show for 5 seconds
-            });
-          } catch (emitError) {
-            log('error', 'Failed to emit notification:', emitError);
-          }
-        }
-
-        // Clear any existing SPARQL service
-        this.sparqlService = null;
-        return;
-      }
-
-      // Use the first available endpoint
-      const activeEndpoint = queryEndpoints[0];
-      if (!activeEndpoint || !activeEndpoint.url) {
-        log('error', 'Active endpoint is missing URL:', activeEndpoint);
-        return;
-      }
-
-      log('info', 'Using SPARQL endpoint:', activeEndpoint.url);
-
-      // Initialize SPARQL service with the active endpoint
-      this.sparqlService = {
-        executeQuery: async (query) => {
-          if (!query) {
-            throw new Error('Query cannot be empty');
-          }
-
-          try {
-            log('debug', 'Executing SPARQL query:', query.substring(0, 100) + (query.length > 100 ? '...' : ''));
-            const result = await querySparql(
-              activeEndpoint.url,
-              query,
-              'select',
-              activeEndpoint.credentials
-            );
-            log('debug', 'SPARQL query successful');
-            return result;
-          } catch (error) {
-            log('error', 'SPARQL query failed:', error);
-            throw error;
-          }
-        }
+      this.logger = new LoggerService(loggerContainer);
+      this.logger.setLevel(this.options.logLevel);
+      console.log('Professional LoggerService initialized');
+    } catch (error) {
+      console.warn('Failed to initialize LoggerService, using console fallback:', error);
+      // Fallback to console
+      this.logger = {
+        debug: (...args) => console.debug('[Atuin]', ...args),
+        info: (...args) => console.info('[Atuin]', ...args),
+        warn: (...args) => console.warn('[Atuin]', ...args),
+        error: (...args) => console.error('[Atuin]', ...args),
+        alert: (...args) => console.log('[Atuin Alert]', ...args)
       };
-
-      // Update any existing editors
-      if (this.sparqlEditor && typeof this.sparqlEditor.sparqlService !== 'undefined') {
-        try {
-          this.sparqlEditor.sparqlService = this.sparqlService;
-          log('debug', 'Updated SPARQL service in editor');
-        } catch (editorError) {
-          log('error', 'Failed to update SPARQL service in editor:', editorError);
-        }
-      }
-    } catch (error) {
-      log('error', 'Error in _updateEndpoints:', error);
-
-      // Only show notification if we're mounted and eventBus is available
-      if (this.isMounted && eventBus && typeof eventBus.emit === 'function') {
-        try {
-          eventBus.emit(EVENTS.NOTIFICATION, {
-            type: 'error',
-            message: 'Failed to update SPARQL endpoints',
-            timeout: 5000
-          });
-        } catch (emitError) {
-          console.error('Failed to emit error notification:', emitError);
-        }
-      }
     }
   }
 
-  _handleStoreUpdate() {
-    try {
-      // Only update endpoints if we're mounted and initialized
-      if (this.isMounted && this.isInitialized) {
-        this._updateEndpoints();
+  _suppressResizeObserverErrors() {
+    // Suppress harmless ResizeObserver errors that are common with graph visualizations
+    const originalError = window.onerror;
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (message && typeof message === 'string' && 
+          message.includes('ResizeObserver loop completed with undelivered notifications')) {
+        // Suppress this specific error as it's harmless
+        return true;
       }
-    } catch (error) {
-      console.error('Error in store update handler:', error);
-    }
-  }
-
-  _setupEventListeners() {
-    // Listen for tab changes
-    const switchViewHandler = (view) => {
-      if (view === 'turtle' || view === 'sparql') {
-        this.switchView(view)
+      // Call original error handler for other errors
+      if (originalError) {
+        return originalError(message, source, lineno, colno, error);
       }
-    }
-
-    // Listen for SPARQL query events
-    const queryHandler = (query) => {
-      if (this.sparqlEditor) {
-        this.sparqlEditor.executeQuery(query)
-      }
-    }
-
-    eventBus.on('atuin:switch-view', switchViewHandler)
-    eventBus.on('sparql:query', queryHandler)
-
-    // Store handlers for cleanup
-    this._eventHandlers = [
-      { event: 'atuin:switch-view', handler: switchViewHandler },
-      { event: 'sparql:query', handler: queryHandler }
-    ]
-  }
-
-  _removeEventListeners() {
-    if (this._eventHandlers && Array.isArray(this._eventHandlers)) {
-      this._eventHandlers.forEach(({ event, handler }) => {
-        try {
-          if (eventBus && typeof eventBus.off === 'function' && event && handler) {
-            eventBus.off(event, handler);
-          }
-        } catch (error) {
-          console.error('Error removing event listener:', error);
-        }
-      });
-      this._eventHandlers = [];
-    }
-  }
-
-  _setupEventListeners() {
-    // Listen for tab changes
-    const switchViewHandler = (view) => {
-      if (view === 'turtle' || view === 'sparql' || view === 'graph') {
-        this.switchView(view);
-      }
+      return false;
     };
-
-    // Listen for SPARQL query events
-    const queryHandler = (query) => {
-      if (this.sparqlEditor && typeof this.sparqlEditor.executeQuery === 'function') {
-        this.sparqlEditor.executeQuery(query);
-      }
-    };
-
-    // Set up event listeners
-    if (eventBus) {
-      eventBus.on('atuin:switch-view', switchViewHandler);
-      eventBus.on('sparql:query', queryHandler);
-
-      // Store handlers for cleanup
-      this._eventHandlers = [
-        { event: 'atuin:switch-view', handler: switchViewHandler },
-        { event: 'sparql:query', handler: queryHandler }
-      ];
-    }
-  }
-
-  async switchView(view) {
-    if (view === this.currentView) return;
-
-    // Hide all views
-    const views = ['turtle', 'sparql', 'graph'];
-    views.forEach(v => {
-      let element = document.getElementById(`${v}-editor-container`) ||
-        document.getElementById(`${v}-container`);
-
-      // Create the container if it doesn't exist
-      if (!element && v === 'graph') {
-        element = document.createElement('div');
-        element.id = 'graph-container';
-        element.style.width = '100%';
-        element.style.height = '100%';
-        element.style.display = 'none';
-
-        const mainContainer = this.container.querySelector('.main-content') || this.container;
-        mainContainer.appendChild(element);
-      }
-
-      if (element) {
-        element.style.display = 'none';
-      }
-    });
-
-    // Update current view
-    this.currentView = view;
-
-    // Show selected view
-    let viewElement = document.getElementById(`${view}-editor-container`) ||
-      document.getElementById(`${view}-container`);
-
-    // Create the view element if it doesn't exist
-    if (!viewElement && view === 'graph') {
-      viewElement = document.createElement('div');
-      viewElement.id = 'graph-container';
-      viewElement.style.width = '100%';
-      viewElement.style.height = '100%';
-
-      const mainContainer = this.container.querySelector('.main-content') || this.container;
-      mainContainer.appendChild(viewElement);
-    }
-
-    if (viewElement) {
-      viewElement.style.display = 'block';
-    }
-
-    // Update active tab
-    if (document.querySelectorAll) {
-      document.querySelectorAll('.atuin-tab').forEach(tab => {
-        tab.classList.remove('active');
-        if (tab.textContent.toLowerCase() === view) {
-          tab.classList.add('active');
-        }
-      });
-    }
-
-    // Handle view-specific initialization
-    if (view === 'turtle' && this.editor && typeof this.editor.refresh === 'function') {
-      this.editor.refresh();
-    } else if (view === 'sparql' && this.sparqlEditor && typeof this.sparqlEditor.refresh === 'function') {
-      this.sparqlEditor.refresh();
-    } else if (view === 'graph') {
-      await this._initializeGraphView();
-    }
-  }
-
-  async _initializeGraphView() {
-    try {
-      // Ensure the graph container exists in the DOM
-      let container = document.getElementById('graph-container');
-      if (!container) {
-        // Create the container if it doesn't exist
-        container = document.createElement('div');
-        container.id = 'graph-container';
-        container.style.width = '100%';
-        container.style.height = '100%';
-        container.style.display = 'block';
-
-        // Add the container to the main container
-        const mainContainer = document.getElementById('graph-editor-container') || this.container;
-        mainContainer.appendChild(container);
-      }
-
-      // Initialize graph tab if not already done
-      if (!this.graphTab) {
-        const turtleContent = this.editor ? this.editor.getValue() : '';
-        this.graphTab = new GraphVisualizerTab(container, turtleContent);
-      } else if (this.graphTab && !this.graphTab.initialized) {
-        // Re-initialize if needed
-        await this.graphTab.initialize();
-      }
-
-      // Initialize or update the graph
-      if (this.graphTab && typeof this.graphTab.initialize === 'function') {
-        await this.graphTab.initialize();
-      }
-
-      // If there's a turtle editor, update the graph with its content
-      if (this.editor && this.graphTab && typeof this.graphTab.updateGraph === 'function') {
-        const turtleContent = this.editor.getValue();
-        await this.graphTab.updateGraph(turtleContent);
-      }
-
-      this._graphInitialized = true;
-
-    } catch (error) {
-      console.error('Failed to initialize graph view:', error);
-      const container = document.getElementById('graph-container');
-      if (container) {
-        container.innerHTML = `
-          <div class="error">
-            Failed to load graph visualization: ${error.message}
-          </div>
-        `;
-      }
-    }
-  }
-
-  _createTabbedInterface() {
-    if (!this.container) return;
-
-    // Create tab container
-    const tabContainer = document.createElement('div');
-    tabContainer.className = 'atuin-tabs';
-
-    // Create tabs
-    const tabs = [
-      { id: 'turtle', label: 'Turtle' },
-      { id: 'sparql', label: 'SPARQL' },
-      { id: 'graph', label: 'Graph' }
-    ];
-
-    tabs.forEach(tabInfo => {
-      const tab = document.createElement('button');
-      tab.className = `atuin-tab ${this.currentView === tabInfo.id ? 'active' : ''}`;
-      tab.textContent = tabInfo.label;
-      tab.dataset.view = tabInfo.id;
-      tab.addEventListener('click', () => this.switchView(tabInfo.id));
-      tabContainer.appendChild(tab);
-    });
-
-    // Add tabs to the DOM
-    this.container.insertBefore(tabContainer, this.container.firstChild);
-  }
-
-  async _executeSparql() {
-    if (!this.sparqlEditor || !this.sparqlService) return;
-
-    const query = this.sparqlEditor.getValue();
-    if (!query || !query.trim()) {
-      console.warn('No SPARQL query to execute');
-      return;
-    }
-
-    const resultsContainer = document.getElementById('sparql-results');
-    if (!resultsContainer) {
-      console.error('SPARQL results container not found');
-      return;
-    }
-
-    // Show loading state
-    resultsContainer.innerHTML = '<div class="loading">Executing query...</div>';
-
-    try {
-      // Execute the SPARQL query
-      const result = await this.sparqlService.executeQuery(query);
-
-      // Display results
-      if (result && typeof result === 'object') {
-        // Format and display the results
-        resultsContainer.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
-      } else {
-        resultsContainer.innerHTML = '<div class="success">Query executed successfully. No results to display.</div>';
-      }
-    } catch (error) {
-      console.error('Error executing SPARQL query:', error);
-      resultsContainer.innerHTML = `
-        <div class="error">
-          <strong>Error executing query:</strong><br>
-          ${error.message || 'Unknown error'}
-        </div>
-      `;
-    }
-  }
-
-  _initializeEditors() {
-    if (!this.container) return;
-
-    // Create main content container
-    const content = document.createElement('div');
-    content.className = 'atuin-content';
-    this.container.appendChild(content);
-
-    // Create tabbed interface
-    this._createTabbedInterface();
-
-    // Create editor containers
-    content.innerHTML = `
-      <div id="turtle-editor-container" class="editor-container" ${this.currentView !== 'turtle' ? 'style="display: none;"' : ''}>
-        <textarea id="turtle-editor">${sampleContent}</textarea>
-      </div>
-      <div id="sparql-container" ${this.currentView !== 'sparql' ? 'style="display: none;"' : ''}>
-        <div id="sparql-editor-container" class="editor-container">
-          <textarea id="sparql-editor"></textarea>
-        </div>
-        <div id="sparql-results" class="results-container"></div>
-      </div>
-      <div id="graph-container" ${this.currentView !== 'graph' ? 'style="display: none;"' : ''}>
-      </div>
-    `;
-
-    // Initialize Turtle editor
-    const turtleTextarea = document.getElementById('turtle-editor');
-    if (window.CodeMirror && turtleTextarea) {
-      try {
-        this.editor = window.CodeMirror.fromTextArea(turtleTextarea, {
-          mode: 'text/turtle',
-          lineNumbers: true,
-          lineWrapping: true,
-          theme: 'default',
-          extraKeys: {
-            'Ctrl-Enter': () => this._executeSparql()
-          }
-        });
-
-        // Handle changes to update the graph view
-        this.editor.on('change', () => {
-          if (this.currentView === 'graph' && this.graphTab) {
-            this.graphTab.updateGraph(this.editor.getValue());
-          }
-        });
-
-      } catch (error) {
-        console.error('Failed to initialize Turtle editor:', error);
-        turtleTextarea.outerHTML = '<div class="error">Failed to initialize Turtle editor. Check console for details.</div>';
-      }
-    }
-
-    // Initialize SPARQL editor
-    const sparqlTextarea = document.getElementById('sparql-editor');
-    if (window.CodeMirror && sparqlTextarea) {
-      try {
-        this.sparqlEditor = window.CodeMirror.fromTextArea(sparqlTextarea, {
-          mode: 'application/sparql-query',
-          lineNumbers: true,
-          lineWrapping: true,
-          theme: 'default',
-          extraKeys: {
-            'Ctrl-Enter': () => this._executeSparql()
-          }
-        });
-
-        // Set up SPARQL service if available
-        if (this.sparqlService) {
-          this.sparqlEditor.sparqlService = this.sparqlService;
-        }
-
-      } catch (error) {
-        console.error('Failed to initialize SPARQL editor:', error);
-        sparqlTextarea.outerHTML = '<div class="error">Failed to initialize SPARQL editor. Check console for details.</div>';
-      }
-    }
-  }
-
-  _updateEndpoints() {
-    const log = (level, ...args) => {
-      try {
-        if (this.logger && typeof this.logger[level] === 'function') {
-          this.logger[level](...args);
-        } else {
-          const logFn = level === 'warn' ? console.warn :
-            level === 'error' ? console.error :
-              level === 'info' ? console.info :
-                console.log;
-          logFn(`[AtuinPlugin]`, ...args);
-        }
-      } catch (logError) {
-        console.error('Error in Atuin plugin logger:', logError);
-      }
-    };
-
-    try {
-      // Check if store is available
-      if (!store || typeof store.getState !== 'function') {
-        log('warn', 'Store not available for endpoints update');
-        return;
-      }
-
-      // Get current state
-      const state = store.getState();
-      if (!state) {
-        log('warn', 'State not available for endpoints update');
-        return;
-      }
-
-      // Safely get endpoints
-      const endpoints = Array.isArray(getEndpoints) ? getEndpoints(state) || [] : [];
-      log('debug', 'Available endpoints:', endpoints);
-
-      // Filter for query endpoints that are enabled
-      const queryEndpoints = endpoints.filter(e => {
-        return e &&
-          typeof e === 'object' &&
-          e.type === this.options.endpointType &&
-          e.enabled !== false;
-      });
-
-      log('debug', 'Filtered query endpoints:', queryEndpoints);
-
-      if (queryEndpoints.length === 0) {
-        const message = 'No enabled SPARQL endpoints found. Please configure at least one endpoint in settings.';
-        log('warn', message);
-
-        // Only show notification if we're mounted and eventBus is available
-        if (this.isMounted && eventBus && typeof eventBus.emit === 'function') {
-          try {
-            eventBus.emit(EVENTS.NOTIFICATION, {
-              type: 'warning',
-              message: message,
-              timeout: 5000 // Show for 5 seconds
-            });
-          } catch (emitError) {
-            log('error', 'Failed to emit notification:', emitError);
-          }
-        }
-
-        // Clear any existing SPARQL service
-        this.sparqlService = null;
-        return;
-      }
-
-      // Use the first available endpoint
-      const activeEndpoint = queryEndpoints[0];
-      if (!activeEndpoint || !activeEndpoint.url) {
-        log('error', 'Active endpoint is missing URL:', activeEndpoint);
-        return;
-      }
-
-      log('info', 'Using SPARQL endpoint:', activeEndpoint.url);
-
-      // Initialize SPARQL service with the active endpoint
-      this.sparqlService = {
-        executeQuery: async (query) => {
-          if (!query) {
-            throw new Error('Query cannot be empty');
-          }
-
-          try {
-            log('debug', 'Executing SPARQL query:', query.substring(0, 100) + (query.length > 100 ? '...' : ''));
-            const result = await querySparql(
-              activeEndpoint.url,
-              query,
-              'select',
-              activeEndpoint.credentials
-            );
-            log('debug', 'SPARQL query successful');
-            return result;
-          } catch (error) {
-            log('error', 'SPARQL query failed:', error);
-            throw error;
-          }
-        }
-      };
-
-      // Update any existing editors
-      if (this.sparqlEditor && typeof this.sparqlEditor.sparqlService !== 'undefined') {
-        try {
-          this.sparqlEditor.sparqlService = this.sparqlService;
-          log('debug', 'Updated SPARQL service in editor');
-        } catch (editorError) {
-          log('error', 'Failed to update SPARQL service in editor:', editorError);
-        }
-      }
-
-    } catch (error) {
-      log('error', 'Error in _updateEndpoints:', error);
-
-      // Only show notification if we're mounted and eventBus is available
-      if (this.isMounted && eventBus && typeof eventBus.emit === 'function') {
-        try {
-          eventBus.emit(EVENTS.NOTIFICATION, {
-            type: 'error',
-            message: 'Failed to update SPARQL endpoints',
-            timeout: 5000
-          });
-        } catch (emitError) {
-          console.error('Failed to emit error notification:', emitError);
-        }
-      }
-    }
   }
 
   async mount(container) {
@@ -761,144 +179,1238 @@ export class AtuinPlugin extends PluginBase {
     }
 
     this.container = container;
-    this.isMounted = true;
 
     try {
-      // Set up the UI
-      this._initializeEditors();
+      // Create the DOM structure that matches atuin's expected structure
+      this._createAtuinDOM();
+
+      // Try to initialize atuin components
+      await this._initializeAtuinComponents();
 
       // Set up event listeners
       this._setupEventListeners();
 
-      // Initial endpoints update
-      this._updateEndpoints();
+      // Show the initial view
+      this.switchView(this.currentView);
 
-      // Initialize the current view
-      await this.switchView(this.currentView);
-
-      this.logger?.info('Atuin plugin mounted successfully');
+      console.log('Atuin plugin mounted successfully');
       return true;
     } catch (error) {
-      this.logger?.error('Error mounting Atuin plugin:', error);
-      this.isMounted = false;
+      console.error('Error mounting Atuin plugin:', error);
       throw error;
+    }
+  }
+
+  _createAtuinDOM() {
+    this.container.innerHTML = `
+      <div class="atuin-container">
+        <!-- Header with tabs and controls -->
+        <div class="atuin-header">
+          <div class="tab-container">
+            <div class="tabs">
+              <button id="tab-turtle" class="tab active" data-view="turtle">Turtle Editor</button>
+              <button id="tab-sparql" class="tab" data-view="sparql">SPARQL Query</button>
+              <button id="tab-graph" class="tab" data-view="graph">Graph View</button>
+            </div>
+          </div>
+          ${this.options.enableFileHandling ? `
+          <div class="file-controls">
+            <button id="load-file" class="btn btn-outline">Load File</button>
+            <button id="save-file" class="btn btn-outline">Save File</button>
+            <input type="file" id="file-input" accept=".ttl,.turtle,.n3,.rdf,.sparql" style="display: none;">
+          </div>
+          ` : ''}
+          ${this.options.enableSettings ? `
+          <div class="settings-controls">
+            <button id="toggle-settings" class="btn btn-outline">⚙️ Settings</button>
+          </div>
+          ` : ''}
+        </div>
+
+        <!-- Main content area with split pane layout -->
+        <div class="atuin-main-content">
+          ${this.options.enableSplitPane ? `
+          <div class="split-pane-container">
+            <div class="left-pane">
+              <!-- Editor panels -->
+              <div id="turtle-editor-pane" class="editor-pane">
+                <div id="turtle-editor-container" class="editor-container"></div>
+              </div>
+              <div id="sparql-editor-pane" class="editor-pane" style="display: none;">
+                <div id="sparql-editor-container" class="editor-container"></div>
+                <div class="sparql-controls">
+                  <button id="execute-sparql" class="btn btn-primary">Execute Query</button>
+                  <button id="clear-results" class="btn btn-secondary">Clear Results</button>
+                  <button id="format-sparql" class="btn btn-outline">Format Query</button>
+                </div>
+                <div id="sparql-results" class="results-container">
+                  <div class="no-results">No query executed yet.</div>
+                </div>
+              </div>
+            </div>
+            <div id="split-divider" class="split-divider"></div>
+            <div class="right-pane">
+              <div id="graph-pane" class="graph-pane">
+                <div id="graph-container" class="graph-container"></div>
+                <div class="graph-controls">
+                  <button id="fit-graph" class="btn btn-outline">Fit to View</button>
+                  <button id="reset-graph" class="btn btn-outline">Reset Layout</button>
+                  <label class="control-label">
+                    Node Size: <input type="range" id="node-size-slider" min="10" max="50" value="25">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          ` : `
+          <!-- Non-split layout fallback -->
+          <div class="content-container">
+            <div id="turtle-editor-pane" class="editor-pane">
+              <div id="turtle-editor-container" class="editor-container"></div>
+            </div>
+            <div id="sparql-editor-pane" class="editor-pane" style="display: none;">
+              <div id="sparql-editor-container" class="editor-container"></div>
+              <div class="sparql-controls">
+                <button id="execute-sparql" class="btn btn-primary">Execute Query</button>
+                <button id="clear-results" class="btn btn-secondary">Clear Results</button>
+              </div>
+              <div id="sparql-results" class="results-container">
+                <div class="no-results">No query executed yet.</div>
+              </div>
+            </div>
+            <div id="graph-pane" class="graph-pane" style="display: none;">
+              <div id="graph-container" class="graph-container"></div>
+            </div>
+          </div>
+          `}
+        </div>
+
+        <!-- Settings panel (hidden by default) -->
+        ${this.options.enableSettings ? `
+        <div id="settings-panel" class="settings-panel" style="display: none;">
+          <div class="settings-header">
+            <h3>Atuin Settings</h3>
+            <button id="close-settings" class="btn btn-outline">✕</button>
+          </div>
+          <div id="settings-content" class="settings-content">
+            <!-- Settings will be populated by SettingsManager -->
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Add enhanced styles
+    this._addEnhancedStyles();
+  }
+
+  _addEnhancedStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      .atuin-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      .atuin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e1e5e9;
+        background: #f8f9fa;
+      }
+
+      .tab-container {
+        flex: 1;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 4px;
+      }
+
+      .tab {
+        padding: 8px 16px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.2s ease;
+        font-weight: 500;
+        color: #6c757d;
+        font-size: 14px;
+      }
+
+      .tab:hover {
+        background: #e9ecef;
+        color: #495057;
+      }
+
+      .tab.active {
+        background: #fff;
+        color: #0d6efd;
+        border-bottom: 2px solid #0d6efd;
+        font-weight: 600;
+      }
+
+      .file-controls, .settings-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .atuin-main-content {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .split-pane-container {
+        display: flex;
+        height: 100%;
+      }
+
+      .left-pane {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+      }
+
+      .split-divider {
+        width: 4px;
+        background: #e1e5e9;
+        cursor: col-resize;
+        transition: background-color 0.2s;
+      }
+
+      .split-divider:hover {
+        background: #0d6efd;
+      }
+
+      .right-pane {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+      }
+
+      .editor-pane, .graph-pane {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .editor-container {
+        flex: 1;
+        position: relative;
+      }
+
+      .sparql-controls {
+        padding: 12px;
+        border-top: 1px solid #e1e5e9;
+        background: #f8f9fa;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .graph-controls {
+        padding: 12px;
+        border-top: 1px solid #e1e5e9;
+        background: #f8f9fa;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .control-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #495057;
+      }
+
+      .results-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border-top: 1px solid #e1e5e9;
+        background: #fff;
+      }
+
+      .graph-container {
+        flex: 1;
+        background: #fff;
+      }
+
+      .btn {
+        padding: 6px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .btn-primary {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+      }
+
+      .btn-primary:hover {
+        background: #0b5ed7;
+        border-color: #0a58ca;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+        border-color: #6c757d;
+      }
+
+      .btn-secondary:hover {
+        background: #5c636a;
+        border-color: #565e64;
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: #0d6efd;
+        border-color: #0d6efd;
+      }
+
+      .btn-outline:hover {
+        background: #0d6efd;
+        color: white;
+      }
+
+      .settings-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 350px;
+        height: 100vh;
+        background: #fff;
+        border-left: 1px solid #e1e5e9;
+        z-index: 1000;
+        box-shadow: -2px 0 8px rgba(0,0,0,0.1);
+        overflow-y: auto;
+      }
+
+      .settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #e1e5e9;
+        background: #f8f9fa;
+      }
+
+      .settings-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .settings-content {
+        padding: 16px;
+      }
+
+      .no-results, .loading {
+        padding: 32px 16px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      .error {
+        padding: 12px 16px;
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        margin: 8px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .success {
+        padding: 12px 16px;
+        background: #d1e7dd;
+        color: #0f5132;
+        border: 1px solid #badbcc;
+        margin: 8px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      pre {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        padding: 12px;
+        margin: 8px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        overflow-x: auto;
+      }
+
+      /* CodeMirror integration styles */
+      .editor-container .cm-editor {
+        height: 100%;
+        font-size: 14px;
+      }
+
+      .editor-container .cm-focused {
+        outline: none;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .split-pane-container {
+          flex-direction: column;
+        }
+        
+        .left-pane, .right-pane {
+          min-width: unset;
+          min-height: 300px;
+        }
+        
+        .split-divider {
+          width: 100%;
+          height: 4px;
+          cursor: row-resize;
+        }
+        
+        .settings-panel {
+          width: 100%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  async _initializeAtuinComponents() {
+    try {
+      this.logger.info('Initializing atuin v0.1.1 components...');
+
+      // Initialize professional components
+      await this._initializeTurtleEditor();
+      await this._initializeSparqlEditor(); 
+      await this._initializeGraphVisualizer();
+      await this._initializeSparqlService();
+      
+      // Initialize UI managers
+      if (this.options.enableSplitPane) {
+        await this._initializeSplitPaneManager();
+      }
+      
+      if (this.options.enableSettings) {
+        await this._initializeSettingsManager();
+      }
+
+      // Set up event-driven communication
+      this._setupEventBusIntegration();
+
+      this._isComponentsInitialized = true;
+      this.logger.info('All atuin components initialized successfully');
+      
+    } catch (error) {
+      this.logger.error('Some atuin components failed to initialize:', error);
+      // Continue with fallback components
+    }
+  }
+
+  async _initializeTurtleEditor() {
+    const container = document.getElementById('turtle-editor-container');
+    if (!container) {
+      this.logger.warn('Turtle editor container not found');
+      return;
+    }
+
+    try {
+      this.turtleEditor = new TurtleEditor(container, this.logger);
+      await this.turtleEditor.initialize();
+      
+      // Set initial content
+      this.turtleEditor.setValue(sampleContent);
+      
+      // Set up change handler for real-time graph updates
+      this.turtleEditor.onChange((content) => {
+        if (this.graphVisualizer && typeof this.graphVisualizer.updateGraph === 'function') {
+          this.graphVisualizer.updateGraph(content);
+        }
+        // Emit event for other components
+        eventBus.emit('turtle:content-changed', content);
+      });
+      
+      this.logger.info('Professional TurtleEditor initialized with CodeMirror 6');
+    } catch (error) {
+      this.logger.error('Failed to initialize professional TurtleEditor:', error);
+      // Create fallback simple editor
+      this._createFallbackTurtleEditor(container);
+    }
+  }
+
+  _createFallbackTurtleEditor(container) {
+    container.innerHTML = `<textarea id="turtle-fallback" class="editor-textarea">${sampleContent}</textarea>`;
+    const textarea = container.querySelector('#turtle-fallback');
+    
+    this.turtleEditor = {
+      getValue: () => textarea.value,
+      setValue: (value) => { textarea.value = value; },
+      onChange: (callback) => {
+        textarea.addEventListener('input', () => callback(textarea.value));
+      },
+      refresh: () => {},
+      destroy: () => {}
+    };
+    
+    this.logger.warn('Using fallback textarea editor for Turtle');
+  }
+
+  async _initializeSparqlEditor() {
+    const container = document.getElementById('sparql-editor-container');
+    if (!container) {
+      this.logger.warn('SPARQL editor container not found');
+      return;
+    }
+
+    try {
+      this.sparqlEditor = new SPARQLEditor(container, this.logger);
+      await this.sparqlEditor.initialize();
+      
+      // Set initial content
+      this.sparqlEditor.setValue(sampleSparql);
+      
+      // Set up change handler
+      this.sparqlEditor.onChange((query) => {
+        eventBus.emit('sparql:query-changed', query);
+      });
+      
+      this.logger.info('Professional SPARQLEditor initialized with syntax highlighting');
+    } catch (error) {
+      this.logger.error('Failed to initialize professional SPARQLEditor:', error);
+      // Create fallback simple editor
+      this._createFallbackSparqlEditor(container);
+    }
+  }
+
+  _createFallbackSparqlEditor(container) {
+    container.innerHTML = `<textarea id="sparql-fallback" class="editor-textarea">${sampleSparql}</textarea>`;
+    const textarea = container.querySelector('#sparql-fallback');
+    
+    this.sparqlEditor = {
+      getValue: () => textarea.value,
+      setValue: (value) => { textarea.value = value; },
+      onChange: (callback) => {
+        textarea.addEventListener('input', () => callback(textarea.value));
+      },
+      refresh: () => {},
+      destroy: () => {}
+    };
+    
+    this.logger.warn('Using fallback textarea editor for SPARQL');
+  }
+
+  async _initializeGraphVisualizer() {
+    const container = document.getElementById('graph-container');
+    if (!container) {
+      this.logger.warn('Graph container not found');
+      return;
+    }
+
+    try {
+      this.graphVisualizer = new GraphVisualizer(container, this.logger);
+      await this.graphVisualizer.initialize();
+      
+      // Set up node selection handler for editor highlighting
+      this.graphVisualizer.onNodeSelect((nodeId) => {
+        if (this.turtleEditor && typeof this.turtleEditor.highlightNode === 'function') {
+          this.turtleEditor.highlightNode(nodeId);
+        }
+        eventBus.emit('graph:node-selected', nodeId);
+      });
+      
+      // Set initial graph content
+      this.graphVisualizer.updateGraph(sampleContent);
+      
+      this.logger.info('Professional GraphVisualizer initialized with vis-network');
+    } catch (error) {
+      this.logger.error('Failed to initialize professional GraphVisualizer:', error);
+      // Create fallback message
+      container.innerHTML = `
+        <div class="graph-fallback" style="padding: 40px; text-align: center; color: #6c757d;">
+          <h4>Graph Visualization Unavailable</h4>
+          <p>The professional graph visualizer could not be initialized.</p>
+          <p>RDF content can still be edited in the Turtle and SPARQL tabs.</p>
+        </div>
+      `;
+    }
+  }
+
+  async _initializeSparqlService() {
+    try {
+      // Try to import SparqlService directly from its file
+      const module = await import('atuin/core/TurtleEditor');
+      // For now, just use fallback since the core exports have issues
+      this.logger.info('Using fallback SPARQL service implementation');
+      // Fallback will be created in _updateEndpoints
+    } catch (error) {
+      this.logger.warn('Professional SparqlService not available, using fallback:', error.message);
+      // Fallback will be created in _updateEndpoints
+    }
+  }
+
+  async _initializeSplitPaneManager() {
+    try {
+      const container = document.querySelector('.split-pane-container');
+      const leftPane = document.querySelector('.left-pane');
+      const rightPane = document.querySelector('.right-pane');
+      const divider = document.getElementById('split-divider');
+      
+      if (container && leftPane && rightPane && divider) {
+        this.splitPaneManager = new SplitPaneManager({
+          container,
+          leftPane,
+          rightPane,
+          divider,
+          minLeftWidth: 300,
+          minRightWidth: 300
+        });
+        
+        await this.splitPaneManager.initialize();
+        this.logger.info('SplitPaneManager initialized');
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize SplitPaneManager:', error);
+    }
+  }
+
+  async _initializeSettingsManager() {
+    try {
+      const settingsContent = document.getElementById('settings-content');
+      
+      if (settingsContent) {
+        this.settingsManager = new SettingsManager({
+          container: settingsContent,
+          visualizer: this.graphVisualizer,
+          turtleEditor: this.turtleEditor,
+          sparqlEditor: this.sparqlEditor,
+          logger: this.logger
+        });
+        
+        await this.settingsManager.initialize();
+        this.logger.info('SettingsManager initialized');
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize SettingsManager:', error);
+    }
+  }
+
+  _setupEventBusIntegration() {
+    // Listen for model synchronization events
+    eventBus.on('model:synced', (content) => {
+      if (this.graphVisualizer && typeof this.graphVisualizer.updateGraph === 'function') {
+        this.graphVisualizer.updateGraph(content);
+      }
+    });
+
+    // Listen for editor content changes
+    eventBus.on('turtle:content-changed', (content) => {
+      if (this.currentView === 'graph' && this.graphVisualizer) {
+        this.graphVisualizer.updateGraph(content);
+      }
+    });
+
+    // Listen for graph interactions
+    eventBus.on('graph:node-selected', (nodeId) => {
+      this.logger.debug('Graph node selected:', nodeId);
+    });
+
+    this.logger.debug('Event bus integration established');
+  }
+
+  _setupEventListeners() {
+    // Tab switching
+    const tabs = this.container.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      const handler = () => {
+        const view = tab.dataset.view;
+        this.switchView(view);
+      };
+      tab.addEventListener('click', handler);
+      this._eventHandlers.push({ element: tab, event: 'click', handler });
+    });
+
+    // SPARQL controls
+    const executeBtn = document.getElementById('execute-sparql');
+    if (executeBtn) {
+      const handler = () => this._executeSparql();
+      executeBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: executeBtn, event: 'click', handler });
+    }
+
+    const clearBtn = document.getElementById('clear-results');
+    if (clearBtn) {
+      const handler = () => this._clearResults();
+      clearBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: clearBtn, event: 'click', handler });
+    }
+
+    const formatBtn = document.getElementById('format-sparql');
+    if (formatBtn) {
+      const handler = () => this._formatSparql();
+      formatBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: formatBtn, event: 'click', handler });
+    }
+
+    // Graph controls
+    const fitGraphBtn = document.getElementById('fit-graph');
+    if (fitGraphBtn) {
+      const handler = () => this._fitGraph();
+      fitGraphBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: fitGraphBtn, event: 'click', handler });
+    }
+
+    const resetGraphBtn = document.getElementById('reset-graph');
+    if (resetGraphBtn) {
+      const handler = () => this._resetGraph();
+      resetGraphBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: resetGraphBtn, event: 'click', handler });
+    }
+
+    const nodeSizeSlider = document.getElementById('node-size-slider');
+    if (nodeSizeSlider) {
+      const handler = (e) => this._setNodeSize(e.target.value);
+      nodeSizeSlider.addEventListener('input', handler);
+      this._eventHandlers.push({ element: nodeSizeSlider, event: 'input', handler });
+    }
+
+    // File handling controls
+    if (this.options.enableFileHandling) {
+      const loadBtn = document.getElementById('load-file');
+      const saveBtn = document.getElementById('save-file');
+      const fileInput = document.getElementById('file-input');
+
+      if (loadBtn) {
+        const handler = () => fileInput.click();
+        loadBtn.addEventListener('click', handler);
+        this._eventHandlers.push({ element: loadBtn, event: 'click', handler });
+      }
+
+      if (saveBtn) {
+        const handler = () => this._saveCurrentFile();
+        saveBtn.addEventListener('click', handler);
+        this._eventHandlers.push({ element: saveBtn, event: 'click', handler });
+      }
+
+      if (fileInput) {
+        const handler = (e) => this._loadFile(e);
+        fileInput.addEventListener('change', handler);
+        this._eventHandlers.push({ element: fileInput, event: 'change', handler });
+      }
+    }
+
+    // Settings controls
+    if (this.options.enableSettings) {
+      const toggleSettingsBtn = document.getElementById('toggle-settings');
+      const closeSettingsBtn = document.getElementById('close-settings');
+
+      if (toggleSettingsBtn) {
+        const handler = () => this._toggleSettings();
+        toggleSettingsBtn.addEventListener('click', handler);
+        this._eventHandlers.push({ element: toggleSettingsBtn, event: 'click', handler });
+      }
+
+      if (closeSettingsBtn) {
+        const handler = () => this._closeSettings();
+        closeSettingsBtn.addEventListener('click', handler);
+        this._eventHandlers.push({ element: closeSettingsBtn, event: 'click', handler });
+      }
+    }
+  }
+
+  // New enhanced handler methods for v0.1.1 features
+
+  _formatSparql() {
+    if (this.sparqlEditor && typeof this.sparqlEditor.format === 'function') {
+      this.sparqlEditor.format();
+      this.logger.info('SPARQL query formatted');
+    } else {
+      this.logger.warn('SPARQL formatting not available');
+    }
+  }
+
+  _fitGraph() {
+    if (this.graphVisualizer && typeof this.graphVisualizer.resizeAndFit === 'function') {
+      this.graphVisualizer.resizeAndFit();
+      this.logger.debug('Graph fitted to view');
+    }
+  }
+
+  _resetGraph() {
+    if (this.graphVisualizer && typeof this.graphVisualizer.resetLayout === 'function') {
+      this.graphVisualizer.resetLayout();
+      this.logger.debug('Graph layout reset');
+    }
+  }
+
+  _setNodeSize(size) {
+    if (this.graphVisualizer && typeof this.graphVisualizer.setNodeSize === 'function') {
+      this.graphVisualizer.setNodeSize(parseInt(size));
+      this.logger.debug('Node size set to:', size);
+    }
+  }
+
+  async _loadFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const content = await this._readFileContent(file);
+      const extension = file.name.split('.').pop().toLowerCase();
+      
+      if (['ttl', 'turtle', 'n3', 'rdf'].includes(extension)) {
+        if (this.turtleEditor) {
+          this.turtleEditor.setValue(content);
+          this.switchView('turtle');
+          this.logger.info(`Loaded Turtle file: ${file.name}`);
+        }
+      } else if (extension === 'sparql') {
+        if (this.sparqlEditor) {
+          this.sparqlEditor.setValue(content);
+          this.switchView('sparql');
+          this.logger.info(`Loaded SPARQL file: ${file.name}`);
+        }
+      }
+      
+      // Clear the file input
+      event.target.value = '';
+    } catch (error) {
+      this.logger.error('Failed to load file:', error.message);
+    }
+  }
+
+  _readFileContent(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  }
+
+  _saveCurrentFile() {
+    try {
+      let content = '';
+      let filename = '';
+      
+      if (this.currentView === 'turtle' && this.turtleEditor) {
+        content = this.turtleEditor.getValue();
+        filename = 'turtle-content.ttl';
+      } else if (this.currentView === 'sparql' && this.sparqlEditor) {
+        content = this.sparqlEditor.getValue();
+        filename = 'sparql-query.sparql';
+      } else {
+        this.logger.warn('No content to save in current view');
+        return;
+      }
+
+      this._downloadFile(content, filename);
+      this.logger.info(`Saved ${filename}`);
+    } catch (error) {
+      this.logger.error('Failed to save file:', error.message);
+    }
+  }
+
+  _downloadFile(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  _toggleSettings() {
+    const panel = document.getElementById('settings-panel');
+    if (panel) {
+      const isVisible = panel.style.display !== 'none';
+      panel.style.display = isVisible ? 'none' : 'block';
+      this.logger.debug('Settings panel toggled');
+    }
+  }
+
+  _closeSettings() {
+    const panel = document.getElementById('settings-panel');
+    if (panel) {
+      panel.style.display = 'none';
+      this.logger.debug('Settings panel closed');
+    }
+  }
+
+  switchView(view) {
+    if (view === this.currentView) return;
+
+    // Update tabs
+    const tabs = this.container.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.classList.remove('active');
+      if (tab.dataset.view === view) {
+        tab.classList.add('active');
+      }
+    });
+
+    if (this.options.enableSplitPane) {
+      // In split pane mode, handle left pane switching
+      const leftPanes = ['turtle-editor-pane', 'sparql-editor-pane'];
+      leftPanes.forEach(paneId => {
+        const pane = document.getElementById(paneId);
+        if (pane) {
+          pane.style.display = 'none';
+        }
+      });
+
+      if (view === 'turtle') {
+        const turtlePane = document.getElementById('turtle-editor-pane');
+        if (turtlePane) turtlePane.style.display = 'flex';
+      } else if (view === 'sparql') {
+        const sparqlPane = document.getElementById('sparql-editor-pane');
+        if (sparqlPane) sparqlPane.style.display = 'flex';
+      }
+
+      // Graph pane is always visible in split mode
+      const graphPane = document.getElementById('graph-pane');
+      if (graphPane && view === 'graph') {
+        // In graph-only view, hide left pane
+        const leftPane = document.querySelector('.left-pane');
+        const rightPane = document.querySelector('.right-pane');
+        if (leftPane && rightPane) {
+          leftPane.style.display = view === 'graph' ? 'none' : 'flex';
+          rightPane.style.flex = view === 'graph' ? '1' : '1';
+        }
+      } else if (graphPane) {
+        // Show both panes normally
+        const leftPane = document.querySelector('.left-pane');
+        if (leftPane) leftPane.style.display = 'flex';
+      }
+    } else {
+      // Non-split mode - hide all panes and show selected one
+      const allPanes = ['turtle-editor-pane', 'sparql-editor-pane', 'graph-pane'];
+      allPanes.forEach(paneId => {
+        const pane = document.getElementById(paneId);
+        if (pane) {
+          pane.style.display = 'none';
+        }
+      });
+
+      const targetPaneId = `${view === 'turtle' ? 'turtle-editor' : view === 'sparql' ? 'sparql-editor' : 'graph'}-pane`;
+      const targetPane = document.getElementById(targetPaneId);
+      if (targetPane) {
+        targetPane.style.display = 'flex';
+      }
+    }
+
+    this.currentView = view;
+
+    // Handle view-specific actions with enhanced features
+    if (view === 'turtle' && this.turtleEditor) {
+      setTimeout(() => {
+        if (typeof this.turtleEditor.refresh === 'function') {
+          this.turtleEditor.refresh();
+        }
+        // Focus the editor
+        if (typeof this.turtleEditor.focus === 'function') {
+          this.turtleEditor.focus();
+        }
+      }, 10);
+    } else if (view === 'sparql' && this.sparqlEditor) {
+      setTimeout(() => {
+        if (typeof this.sparqlEditor.refresh === 'function') {
+          this.sparqlEditor.refresh();
+        }
+        if (typeof this.sparqlEditor.focus === 'function') {
+          this.sparqlEditor.focus();
+        }
+      }, 10);
+    } else if (view === 'graph' && this.graphVisualizer) {
+      // Update graph with current turtle content
+      const currentContent = this._getCurrentTurtleContent();
+      if (currentContent && typeof this.graphVisualizer.updateGraph === 'function') {
+        this.graphVisualizer.updateGraph(currentContent);
+      }
+      // Resize and fit graph
+      setTimeout(() => {
+        if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+          this.graphVisualizer.resizeAndFit();
+        }
+      }, 100);
+    }
+
+    // Emit view change event
+    eventBus.emit('atuin:view-changed', view);
+    this.logger.debug(`Switched to ${view} view`);
+  }
+
+  _getCurrentTurtleContent() {
+    if (this.turtleEditor && typeof this.turtleEditor.getValue === 'function') {
+      return this.turtleEditor.getValue();
+    } else {
+      const textareaElement = document.getElementById('input-contents');
+      return textareaElement ? textareaElement.value : '';
+    }
+  }
+
+  async _executeSparql() {
+    // Use professional SparqlService if available, otherwise fallback
+    const service = this.sparqlService || this._getFallbackSparqlService();
+    
+    if (!service) {
+      this._showSparqlResult('error', 'SPARQL service not available. Please configure an endpoint in settings.');
+      return;
+    }
+
+    let query = '';
+    if (this.sparqlEditor && typeof this.sparqlEditor.getValue === 'function') {
+      query = this.sparqlEditor.getValue();
+    }
+
+    query = query.trim();
+    if (!query) {
+      this._showSparqlResult('error', 'Please enter a SPARQL query.');
+      return;
+    }
+
+    this._showSparqlResult('loading', 'Executing query...');
+    this.logger.info('Executing SPARQL query');
+
+    try {
+      const result = await service.executeQuery(query);
+      this._showSparqlResult('success', result);
+      this.logger.info('SPARQL query executed successfully');
+      
+      // Emit event for other components
+      eventBus.emit('sparql:query-executed', { query, result });
+    } catch (error) {
+      this._showSparqlResult('error', `Query execution failed: ${error.message}`);
+      this.logger.error('SPARQL query failed:', error);
+    }
+  }
+
+  _getFallbackSparqlService() {
+    // Return the existing fallback service from _updateEndpoints
+    return this._fallbackSparqlService;
+  }
+
+  _clearResults() {
+    const resultsContainer = document.getElementById('sparql-results');
+    if (resultsContainer) {
+      resultsContainer.innerHTML = '<div class="no-results">Results cleared.</div>';
+    }
+  }
+
+  _showSparqlResult(type, content) {
+    const resultsContainer = document.getElementById('sparql-results');
+    if (!resultsContainer) return;
+
+    if (type === 'loading') {
+      resultsContainer.innerHTML = `<div class="loading">🔄 ${content}</div>`;
+    } else if (type === 'error') {
+      resultsContainer.innerHTML = `<div class="error"><strong>Error:</strong> ${content}</div>`;
+    } else if (type === 'success') {
+      if (typeof content === 'object' && content !== null) {
+        const formatted = JSON.stringify(content, null, 2);
+        resultsContainer.innerHTML = `<div class="success">Query executed successfully!</div><pre>${formatted}</pre>`;
+      } else {
+        resultsContainer.innerHTML = `<div class="success">${content || 'Query executed successfully.'}</div>`;
+      }
+    }
+  }
+
+  _updateEndpoints() {
+    try {
+      if (!store || typeof store.getState !== 'function') {
+        this.logger.warn('Store not available for endpoints update');
+        return;
+      }
+
+      const state = store.getState();
+      if (!state) {
+        this.logger.warn('State not available for endpoints update');
+        return;
+      }
+
+      const endpoints = getEndpoints(state) || [];
+      const queryEndpoints = endpoints.filter(e => 
+        e && e.type === this.options.endpointType && e.enabled !== false
+      );
+
+      if (queryEndpoints.length === 0) {
+        this.logger.warn('No enabled SPARQL endpoints found');
+        // Keep fallback service available
+        this._createFallbackSparqlService();
+        return;
+      }
+
+      const activeEndpoint = queryEndpoints[0];
+      this.logger.info('Using SPARQL endpoint:', activeEndpoint.url);
+
+      // Update professional SparqlService if available
+      if (this.sparqlService && typeof this.sparqlService.setEndpoint === 'function') {
+        this.sparqlService.setEndpoint(activeEndpoint);
+      } else {
+        // Create fallback service
+        this._createFallbackSparqlService(activeEndpoint);
+      }
+    } catch (error) {
+      this.logger.error('Error updating endpoints:', error);
+      this._createFallbackSparqlService();
+    }
+  }
+
+  _createFallbackSparqlService(endpoint = null) {
+    this._fallbackSparqlService = {
+      executeQuery: async (query) => {
+        if (!query) {
+          throw new Error('Query cannot be empty');
+        }
+
+        if (!endpoint) {
+          throw new Error('No SPARQL endpoint configured');
+        }
+
+        try {
+          return await querySparql(
+            endpoint.url,
+            query,
+            'select',
+            endpoint.credentials
+          );
+        } catch (error) {
+          this.logger.error('SPARQL query failed:', error);
+          throw error;
+        }
+      }
+    };
+  }
+
+  _handleStoreUpdate() {
+    try {
+      if (this.isInitialized) {
+        this._updateEndpoints();
+      }
+    } catch (error) {
+      console.error('Error in store update handler:', error);
     }
   }
 
   async unmount() {
     try {
-      // Switch to turtle view before unmounting to ensure proper cleanup
-      if (this.currentView !== 'turtle') {
-        await this.switchView('turtle');
-      }
+      // Clean up event listeners
+      this._eventHandlers.forEach(({ element, event, handler }) => {
+        if (element && handler) {
+          element.removeEventListener(event, handler);
+        }
+      });
+      this._eventHandlers = [];
 
       // Clean up DOM
       if (this.container) {
-        while (this.container.firstChild) {
-          this.container.removeChild(this.container.firstChild);
-        }
+        this.container.innerHTML = '';
       }
 
-      // Clean up event listeners
-      this._removeEventListeners();
-
       // Reset state
-      this.isMounted = false;
       this.container = null;
-
-      this.logger?.info('Atuin plugin unmounted');
+      console.log('Atuin plugin unmounted');
       return true;
     } catch (error) {
-      this.logger?.error('Error unmounting Atuin plugin:', error);
+      console.error('Error unmounting Atuin plugin:', error);
       throw error;
     }
   }
 
   async destroy() {
-    const log = (level, ...args) => {
-      try {
-        if (this.logger && typeof this.logger[level] === 'function') {
-          this.logger[level](...args);
-        } else {
-          const logFn = level === 'warn' ? console.warn :
-            level === 'error' ? console.error :
-              level === 'info' ? console.info :
-                console.log;
-          logFn(`[AtuinPlugin]`, ...args);
-        }
-      } catch (logError) {
-        console.error('Error in Atuin plugin logger:', logError);
-      }
-    };
-
     try {
-      log('info', 'Destroying Atuin plugin...');
+      this.logger.info('Destroying Atuin plugin v0.1.1...');
 
-      // Clean up event listeners and resources
-      this._removeEventListeners();
+      // Clean up event bus listeners
+      eventBus.off('model:synced');
+      eventBus.off('turtle:content-changed');
+      eventBus.off('graph:node-selected');
 
-      // Unsubscribe from store if exists
-      if (this._unsubscribe && typeof this._unsubscribe === 'function') {
-        try {
-          this._unsubscribe();
-        } catch (unsubError) {
-          log('error', 'Error unsubscribing from store:', unsubError);
-        }
+      // Unsubscribe from store
+      if (this._unsubscribe) {
+        this._unsubscribe();
         this._unsubscribe = null;
       }
 
-      // Clean up graph tab
-      if (this.graphTab && typeof this.graphTab.destroy === 'function') {
-        try {
-          this.graphTab.destroy();
-        } catch (graphError) {
-          log('error', 'Error destroying graph tab:', graphError);
-        }
-        this.graphTab = null;
+      // Destroy all atuin v0.1.1 components
+      if (this.settingsManager && typeof this.settingsManager.destroy === 'function') {
+        this.settingsManager.destroy();
+      }
+      
+      if (this.splitPaneManager && typeof this.splitPaneManager.destroy === 'function') {
+        this.splitPaneManager.destroy();
       }
 
-      // Clean up editors
-      if (this.editor && typeof this.editor.destroy === 'function') {
-        try {
-          this.editor.destroy();
-        } catch (editorError) {
-          log('error', 'Error destroying editor:', editorError);
-        }
-        this.editor = null;
+      if (this.turtleEditor && typeof this.turtleEditor.destroy === 'function') {
+        this.turtleEditor.destroy();
       }
-
+      
       if (this.sparqlEditor && typeof this.sparqlEditor.destroy === 'function') {
-        try {
-          this.sparqlEditor.destroy();
-        } catch (sparqlError) {
-          log('error', 'Error destroying SPARQL editor:', sparqlError);
-        }
-        this.sparqlEditor = null;
+        this.sparqlEditor.destroy();
+      }
+      
+      if (this.graphVisualizer && typeof this.graphVisualizer.destroy === 'function') {
+        this.graphVisualizer.destroy();
       }
 
-      // Remove all child elements
-      if (this.container && this.container.firstChild) {
-        try {
-          while (this.container.firstChild) {
-            this.container.removeChild(this.container.firstChild);
-          }
-        } catch (domError) {
-          log('error', 'Error cleaning up DOM elements:', domError);
-        }
+      if (this.sparqlService && typeof this.sparqlService.destroy === 'function') {
+        this.sparqlService.destroy();
       }
 
-      // Call parent destroy if it exists
-      if (super.destroy && typeof super.destroy === 'function') {
-        try {
-          await super.destroy();
-        } catch (parentError) {
-          log('error', 'Error in parent destroy:', parentError);
-        }
+      // Clean up logger container
+      const loggerContainer = document.getElementById('atuin-logger-container');
+      if (loggerContainer) {
+        document.body.removeChild(loggerContainer);
       }
 
-      log('info', 'Atuin plugin destroyed successfully');
+      // Reset all references
+      this.logger = null;
+      this.turtleEditor = null;
+      this.sparqlEditor = null;
+      this.graphVisualizer = null;
+      this.sparqlService = null;
+      this.settingsManager = null;
+      this.splitPaneManager = null;
+      this._fallbackSparqlService = null;
+      this._isComponentsInitialized = false;
+
+      await super.destroy();
+      console.log('Atuin plugin v0.1.1 destroyed successfully');
     } catch (error) {
-      log('error', 'Error during Atuin plugin destruction:', error);
+      console.error('Error destroying Atuin plugin:', error);
       throw error;
     }
   }
