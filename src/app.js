@@ -37,15 +37,44 @@ export const services = {
  */
 function registerEnabledPlugins() {
   if (!pluginConfig.plugins || !Array.isArray(pluginConfig.plugins)) return
+  
   pluginConfig.plugins.forEach(({ id, enabled }) => {
     if (!enabled) return
-    // Find plugin class by id (assume class name is PascalCase, e.g. YasguiPlugin)
+    
+    // Find plugin class by id
     const pluginClass = Object.values(availablePlugins).find(
-      Plugin => Plugin && new Plugin().id === id
+      Plugin => {
+        try {
+          // Create a temporary instance to check the id
+          const tempInstance = new Plugin()
+          return tempInstance.id === id
+        } catch (error) {
+          console.warn(`Error checking plugin ${Plugin.name}:`, error)
+          return false
+        }
+      }
     )
+    
     if (pluginClass) {
-      // Register plugin for a view (use id as viewId for now, or map as needed)
-      pluginManager.register(id, new pluginClass(), {})
+      try {
+        const pluginInstance = new pluginClass()
+        
+        // For plugins that provide main tabs, register them differently
+        const mainTabContributions = pluginInstance.getMainTabContributions()
+        if (mainTabContributions.length > 0) {
+          // Register plugin without a specific view since it contributes to main tabs
+          pluginManager.register(null, pluginInstance, {
+            providesMainTabs: true
+          })
+          console.log(`Registered main tab provider plugin: ${id}`)
+        } else {
+          // Traditional plugin registration for a specific view
+          pluginManager.register(`${id}-view`, pluginInstance, {})
+          console.log(`Registered view plugin: ${id}`)
+        }
+      } catch (error) {
+        console.error(`Failed to register plugin ${id}:`, error)
+      }
     } else {
       console.warn(`Plugin with id '${id}' not found in available plugins.`)
     }
@@ -80,13 +109,15 @@ export async function initializeApp() {
 
     // Initialize UI components
     initNotifications()
-    initRouter()
 
     // Register enabled plugins before initializing
     registerEnabledPlugins()
 
     // Initialize plugins
     await pluginManager.initializeAll()
+
+    // Initialize router AFTER plugins are ready (needed for plugin tab contributions)
+    initRouter()
 
     // Initialize endpoint indicator
     initializeEndpointIndicator()

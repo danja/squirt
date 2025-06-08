@@ -5,39 +5,94 @@ import { store } from '../core/state/index.js'
 import { setCurrentView } from '../core/state/actions.js'
 import { getCurrentView } from '../core/state/selectors.js'
 import { viewPluginMap } from './views/settings-view.js'
+import { pluginManager } from '../core/plugin-manager.js'
 import pluginConfig from '../plugins.config.json' with { type: 'json' }
 
-// View IDs
-const VIEWS = {
+// Core View IDs (excluding plugin-contributed tabs)
+const CORE_VIEWS = {
     POST: 'post-view',
     WIKI: 'wiki-view',
     CHAT: 'chat-view',
-    DEVELOPER: 'developer-view',
     PROFILE: 'profile-view',
-    SETTINGS: 'settings-view',
-    ATUIN: 'atuin-view'
+    SETTINGS: 'settings-view'
 }
 
-// Map routes to view IDs
-const ROUTE_MAP = {
-    'post': VIEWS.POST,
-    'wiki': VIEWS.WIKI,
-    'chat': VIEWS.CHAT,
-    'dev': VIEWS.DEVELOPER,
-    'profile': VIEWS.PROFILE,
-    'settings': VIEWS.SETTINGS,
-    'atuin': VIEWS.ATUIN
+// Core routes map (will be extended with plugin contributions)
+const CORE_ROUTE_MAP = {
+    'post': CORE_VIEWS.POST,
+    'wiki': CORE_VIEWS.WIKI,
+    'chat': CORE_VIEWS.CHAT,
+    'profile': CORE_VIEWS.PROFILE,
+    'settings': CORE_VIEWS.SETTINGS
 }
 
-// Map views to module loaders
-const VIEW_MODULES = {
-    [VIEWS.POST]: () => import('./views/post-view.js'),
-    [VIEWS.WIKI]: () => import('./views/wiki-view.js'),
-    [VIEWS.CHAT]: () => import('./views/chat-view.js'),
-    [VIEWS.DEVELOPER]: () => import('./views/developer-view.js'),
-    [VIEWS.PROFILE]: () => import('./views/profile-view.js'),
-    [VIEWS.SETTINGS]: () => import('./views/settings-view.js'),
-    [VIEWS.ATUIN]: () => import('./views/atuin-view.js')
+// Tab order configuration - this defines the order of tabs in navigation
+const TAB_ORDER = [
+    'post',
+    'chat', 
+    'wiki',
+    'turtle',  // Plugin-contributed
+    'sparql',  // Plugin-contributed
+    'graph',   // Plugin-contributed (renamed from 'graph' in Atuin to avoid conflicts)
+    'profile',
+    'settings'
+]
+
+// Dynamic VIEWS and ROUTE_MAP - will be populated with plugin contributions
+let VIEWS = { ...CORE_VIEWS }
+let ROUTE_MAP = { ...CORE_ROUTE_MAP }
+
+// Core view module loaders
+const CORE_VIEW_MODULES = {
+    [CORE_VIEWS.POST]: () => import('./views/post-view.js'),
+    [CORE_VIEWS.WIKI]: () => import('./views/wiki-view.js'),
+    [CORE_VIEWS.CHAT]: () => import('./views/chat-view.js'),
+    [CORE_VIEWS.PROFILE]: () => import('./views/profile-view.js'),
+    [CORE_VIEWS.SETTINGS]: () => import('./views/settings-view.js')
+}
+
+// Dynamic VIEW_MODULES - will be populated with core + plugin modules
+let VIEW_MODULES = { ...CORE_VIEW_MODULES }
+
+/**
+ * Initialize plugin contributions to routing system
+ * This should be called after plugins are initialized
+ */
+function initializePluginContributions() {
+    const contributions = pluginManager.getMainTabContributions()
+    
+    contributions.forEach(tab => {
+        // Add to VIEWS
+        VIEWS[tab.id.toUpperCase()] = tab.viewId
+        
+        // Add to ROUTE_MAP  
+        ROUTE_MAP[tab.id] = tab.viewId
+        
+        // Add plugin tab module loader (these don't load traditional view modules)
+        VIEW_MODULES[tab.viewId] = () => createPluginTabModule(tab)
+    })
+    
+    console.log('Plugin contributions initialized:', contributions)
+}
+
+/**
+ * Create a module-like object for plugin tab views
+ * @param {Object} tab - Tab contribution object
+ * @returns {Promise<Object>} Module with initView function
+ */
+async function createPluginTabModule(tab) {
+    return {
+        initView: () => {
+            // For plugin tabs, we don't need to do anything here
+            // The plugin manager handles activation via route changes
+            return {
+                update: () => {
+                    // Plugin tab views are managed by the plugin manager
+                    // This is just a placeholder to satisfy the view system
+                }
+            }
+        }
+    }
 }
 
 // Store active view handlers
@@ -47,6 +102,9 @@ const activeViewHandlers = {}
  * Initialize the router
  */
 export function initRouter() {
+    // Initialize plugin contributions first
+    initializePluginContributions()
+
     // Listen for hash changes
     window.addEventListener('hashchange', handleRouteChange)
 
@@ -55,6 +113,9 @@ export function initRouter() {
 
     // Setup navigation links
     setupNavLinks()
+    
+    // Re-render navigation with plugin contributions
+    renderNavTabs()
 }
 
 /**
@@ -67,8 +128,11 @@ function handleRouteChange() {
 
         const currentView = getCurrentView(store.getState())
 
-        // Skip if view hasn't changed
-        if (currentView === viewId) {
+        // For plugin tabs, we need to always ensure they're mounted even if view hasn't changed
+        const isPluginTab = pluginManager.getPluginTabInfo(viewId)
+        
+        // Skip if view hasn't changed (unless it's a plugin tab)
+        if (currentView === viewId && !isPluginTab) {
             return
         }
 
@@ -95,10 +159,10 @@ function handleRouteChange() {
         // Update state with new view
         store.dispatch(setCurrentView(viewId))
 
-        // Show the selected view
+        // Show the selected view FIRST
         showView(viewId)
 
-        // Initialize the view module
+        // Initialize the view module  
         initializeView(viewId)
 
         // Update active nav link
@@ -127,10 +191,39 @@ function handleRouteChange() {
  * @param {string} viewId - ID of view to show
  */
 function showView(viewId) {
-    Object.values(VIEWS).forEach(id => {
+    console.log(`[Router] showView called for: ${viewId}`)
+    
+    // Hide all core views
+    Object.values(CORE_VIEWS).forEach(id => {
         const view = document.getElementById(id)
         if (view) {
+            const wasHidden = view.classList.contains('hidden')
             view.classList.toggle('hidden', id !== viewId)
+            const isHidden = view.classList.contains('hidden')
+            if (wasHidden !== isHidden) {
+                console.log(`[Router] View ${id}: ${wasHidden ? 'hidden' : 'visible'} -> ${isHidden ? 'hidden' : 'visible'}`)
+            }
+        }
+    })
+    
+    // Hide all plugin-contributed views  
+    const pluginContributions = pluginManager.getMainTabContributions()
+    pluginContributions.forEach(tab => {
+        const view = document.getElementById(tab.viewId)
+        if (view) {
+            const wasHidden = view.classList.contains('hidden')
+            view.classList.toggle('hidden', tab.viewId !== viewId)
+            const isHidden = view.classList.contains('hidden')
+            if (wasHidden !== isHidden) {
+                console.log(`[Router] Plugin view ${tab.viewId}: ${wasHidden ? 'hidden' : 'visible'} -> ${isHidden ? 'hidden' : 'visible'}`)
+            }
+            
+            // Check if this view has plugin containers
+            const containers = view.querySelectorAll('.plugin-tab-container')
+            console.log(`[Router] View ${tab.viewId} has ${containers.length} plugin containers`)
+            containers.forEach((container, index) => {
+                console.log(`[Router] Container ${index} content length: ${container.innerHTML.length}`)
+            })
         }
     })
 }
@@ -141,6 +234,13 @@ function showView(viewId) {
  */
 async function initializeView(viewId) {
     try {
+        // For plugin tabs, skip view initialization as plugin manager handles it
+        const isPluginTab = pluginManager.getPluginTabInfo(viewId)
+        if (isPluginTab) {
+            console.log(`[Router] Skipping view initialization for plugin tab: ${viewId}`)
+            return
+        }
+
         // If view is already initialized, just update it
         if (activeViewHandlers[viewId]) {
             if (typeof activeViewHandlers[viewId].update === 'function') {
@@ -225,31 +325,71 @@ function getEnabledPlugins() {
 }
 
 function renderNavTabs() {
-    console.log('viewPluginMap:', viewPluginMap)
     const nav = document.querySelector('nav')
     if (!nav) return
+    
     nav.innerHTML = ''
-    // Core views (always shown)
-    const coreTabs = [
-        { viewId: 'post-view', label: 'Post' },
-        { viewId: 'chat-view', label: 'Chat' },
-        { viewId: 'developer-view', label: 'Developer' },
-        { viewId: 'profile-view', label: 'Profile' },
-        { viewId: 'settings-view', label: 'Settings' }
-    ]
-    // Plugin views (show all available, not just enabled)
-    const pluginTabs = viewPluginMap
-        .map(({ viewId, label }) => ({ viewId, label }))
-        .filter(tab => !coreTabs.some(core => core.viewId === tab.viewId)) // avoid duplicates
-    // Combine and render
-    const allTabs = [...coreTabs, ...pluginTabs]
-    allTabs.forEach(({ viewId, label }) => {
+    
+    // Build navigation tabs in the specified order
+    const allTabs = []
+    
+    TAB_ORDER.forEach(routeKey => {
+        // Check if it's a core tab
+        if (CORE_ROUTE_MAP[routeKey]) {
+            const viewId = CORE_ROUTE_MAP[routeKey]
+            const label = getTabLabel(routeKey)
+            allTabs.push({ routeKey, viewId, label, isPlugin: false })
+        } else {
+            // Check if it's a plugin-contributed tab
+            const pluginContributions = pluginManager.getMainTabContributions()
+            const pluginTab = pluginContributions.find(tab => tab.id === routeKey)
+            if (pluginTab) {
+                allTabs.push({ 
+                    routeKey: routeKey, 
+                    viewId: pluginTab.viewId, 
+                    label: pluginTab.label,
+                    isPlugin: true,
+                    pluginId: pluginTab.pluginId
+                })
+            }
+        }
+    })
+    
+    // Render all tabs
+    allTabs.forEach(({ routeKey, viewId, label, isPlugin }) => {
         const a = document.createElement('a')
-        a.href = '#'
+        a.href = `#${routeKey}`
         a.setAttribute('data-view', viewId)
         a.textContent = label
+        
+        if (isPlugin) {
+            a.classList.add('plugin-tab')
+        }
+        
         nav.appendChild(a)
     })
+    
+    console.log('Navigation tabs rendered:', allTabs)
+}
+
+/**
+ * Get display label for a route key
+ * @param {string} routeKey - Route key like 'post', 'turtle', etc.
+ * @returns {string} Display label
+ */
+function getTabLabel(routeKey) {
+    const labels = {
+        'post': 'Post',
+        'chat': 'Chat', 
+        'wiki': 'Wiki',
+        'turtle': 'Turtle',
+        'sparql': 'SPARQL',
+        'graph': 'Graph',
+        'profile': 'Profile',
+        'settings': 'Settings'
+    }
+    
+    return labels[routeKey] || routeKey.charAt(0).toUpperCase() + routeKey.slice(1)
 }
 
 // Call renderNavTabs after DOMContentLoaded
@@ -257,4 +397,4 @@ if (typeof window !== 'undefined' && window.document) {
     document.addEventListener('DOMContentLoaded', renderNavTabs)
 }
 
-export { VIEWS, ROUTE_MAP, renderNavTabs }
+export { VIEWS, CORE_VIEWS, ROUTE_MAP, renderNavTabs, initializePluginContributions }

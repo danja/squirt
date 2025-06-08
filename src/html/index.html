@@ -131,12 +131,7 @@
             <div id="yasgui-container" class="yasgui-container"></div>
         </div>
 
-        <!-- Atuin View -->
-        <div id="atuin-view" class="view hidden">
-            <h2>Atuin RDF Editor</h2>
-            <div class="plugins-section"></div>
-        </div>
-
+        <!-- Chat View -->
         <div id="chat-view" class="view hidden">
             <h2>Chat</h2>
             <div class="chat-container">
@@ -148,17 +143,23 @@
             </div>
         </div>
 
-        <!-- Developer View -->
-        <div id="developer-view" class="view hidden">
-            <h2>Developer Tools</h2>
-            <div class="developer-section">
-                <h3>SPARQL Query</h3>
-                <div class="form-field">
-                    <textarea id="sparql-query" rows="10" placeholder="Enter SPARQL query..."></textarea>
-                </div>
-                <button type="button" id="run-query" class="button-primary">Run Query</button>
-                <div id="query-results" class="results-container"></div>
-            </div>
+        <!-- Plugin-contributed views -->
+        <!-- Turtle Editor View -->
+        <div id="turtle-view" class="view hidden">
+            <h2>Turtle Editor</h2>
+            <!-- Plugin content will be injected here -->
+        </div>
+
+        <!-- SPARQL Query View -->
+        <div id="sparql-view" class="view hidden">
+            <h2>SPARQL Query</h2>
+            <!-- Plugin content will be injected here -->
+        </div>
+
+        <!-- Graph Visualization View -->
+        <div id="graph-view" class="view hidden">
+            <h2>Graph Visualization</h2>
+            <!-- Plugin content will be injected here -->
         </div>
 
         <!-- Profile View -->

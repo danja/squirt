@@ -82,7 +82,16 @@ ORDER BY ?name
 
 export class AtuinPlugin extends PluginBase {
   constructor(id = 'atuin-plugin', options = {}) {
-    super(id, { ...DEFAULT_OPTIONS, ...options });
+    super(id, { 
+      ...DEFAULT_OPTIONS, 
+      ...options,
+      // Define main tab contributions
+      providesMainTabs: [
+        { id: 'turtle', label: 'Turtle', component: 'TurtleEditor' },
+        { id: 'sparql', label: 'SPARQL', component: 'SPARQLEditor' },
+        { id: 'graph', label: 'Graph', component: 'GraphVisualizer' }
+      ]
+    });
     
     // Atuin components
     this.logger = null;
@@ -93,11 +102,12 @@ export class AtuinPlugin extends PluginBase {
     this.settingsManager = null;
     this.splitPaneManager = null;
     
-    // UI state
-    this.currentView = this.options.defaultView;
+    // UI state - now tracks which tab component is active
     this._eventHandlers = [];
     this._unsubscribe = null;
     this._isComponentsInitialized = false;
+    this._activeTabComponent = null;
+    this._activeTabId = null;
   }
 
   async initialize() {
@@ -117,6 +127,9 @@ export class AtuinPlugin extends PluginBase {
 
       // Initial endpoints update
       this._updateEndpoints();
+
+      // Set up mutation observer to detect container clearing
+      this._setupContainerObserver();
 
       await super.initialize();
       this.logger.info('Atuin plugin v0.1.1 initialized successfully');
@@ -173,6 +186,43 @@ export class AtuinPlugin extends PluginBase {
     };
   }
 
+  _setupContainerObserver() {
+    // Create a mutation observer to detect when plugin containers are being cleared
+    this._observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
+          // Check if this was a plugin container
+          const target = mutation.target;
+          if (target && target.classList && target.classList.contains('plugin-tab-container')) {
+            console.log(`[AtuinPlugin] MUTATION OBSERVER: Plugin container content was removed from:`, target);
+            console.log(`[AtuinPlugin] Removed nodes:`, Array.from(mutation.removedNodes).map(n => n.tagName || n.nodeType));
+            console.log(`[AtuinPlugin] Stack trace:`, new Error().stack);
+          }
+        }
+      });
+    });
+
+    // Start observing plugin containers when they're created
+    this._observeContainers();
+  }
+
+  _observeContainers() {
+    // Look for existing plugin containers and observe them
+    const containers = document.querySelectorAll('.plugin-tab-container');
+    containers.forEach(container => {
+      this._observer.observe(container, {
+        childList: true,
+        subtree: true
+      });
+    });
+
+    // Also observe the document for new plugin containers
+    this._observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
   async mount(container) {
     if (!container) {
       throw new Error('Container element is required');
@@ -181,22 +231,59 @@ export class AtuinPlugin extends PluginBase {
     this.container = container;
 
     try {
-      // Create the DOM structure that matches atuin's expected structure
-      this._createAtuinDOM();
-
-      // Try to initialize atuin components
-      await this._initializeAtuinComponents();
-
-      // Set up event listeners
-      this._setupEventListeners();
-
-      // Show the initial view
-      this.switchView(this.currentView);
-
-      console.log('Atuin plugin mounted successfully');
+      // For backwards compatibility - mount with default tab
+      await this.mountTabComponent('turtle', container);
+      console.log('Atuin plugin mounted successfully (legacy mode)');
       return true;
     } catch (error) {
       console.error('Error mounting Atuin plugin:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Mount a specific tab component
+   * @param {string} tabId - The tab ID ('turtle', 'sparql', 'graph')
+   * @param {HTMLElement} container - Container to mount to
+   */
+  async mountTabComponent(tabId, container) {
+    console.log(`[AtuinPlugin] mountTabComponent called: ${tabId}`, container);
+    
+    if (!container) {
+      throw new Error('Container element is required');
+    }
+
+    // If we're already showing this tab, just refresh it
+    if (this._activeTabId === tabId && this.container === container) {
+      console.log(`[AtuinPlugin] Tab ${tabId} already mounted, refreshing...`);
+      return true;
+    }
+
+    // Clear the previous container content but don't fully unmount components
+    if (this._activeTabComponent && this._activeTabId !== tabId) {
+      console.log(`[AtuinPlugin] Switching from ${this._activeTabId} to ${tabId}`);
+      // Just clear event handlers, but keep components alive
+      this._cleanupEventHandlers();
+    }
+
+    this.container = container;
+    this._activeTabId = tabId;
+
+    try {
+      // Initialize components if not already done
+      if (!this._isComponentsInitialized) {
+        console.log(`[AtuinPlugin] Initializing Atuin components...`);
+        await this._initializeAtuinComponents();
+      }
+
+      // Mount the specific component
+      console.log(`[AtuinPlugin] Mounting specific component: ${tabId}`);
+      await this._mountSpecificComponent(tabId, container);
+      
+      console.log(`[AtuinPlugin] Tab ${tabId} mounted successfully`);
+      return true;
+    } catch (error) {
+      console.error(`[AtuinPlugin] Error mounting tab ${tabId}:`, error);
       throw error;
     }
   }
@@ -1325,21 +1412,520 @@ export class AtuinPlugin extends PluginBase {
     }
   }
 
+  /**
+   * Mount a specific component based on tab ID
+   * @param {string} tabId - The tab ID to mount
+   * @param {HTMLElement} container - Container to mount to
+   */
+  async _mountSpecificComponent(tabId, container) {
+    console.log(`[AtuinPlugin] _mountSpecificComponent: ${tabId}, activeComponent: ${this._activeTabComponent}, container content length: ${container.innerHTML.length}`);
+    
+    // Check if this container already has content for this tab type
+    const hasTabContent = this._hasContentForTab(tabId, container);
+    console.log(`[AtuinPlugin] Container has content for ${tabId}: ${hasTabContent}`);
+    
+    // Only clear container if switching to a different component AND container is empty or wrong content
+    if (this._activeTabComponent !== tabId && !hasTabContent) {
+      console.log(`[AtuinPlugin] Switching from ${this._activeTabComponent} to ${tabId}, clearing container`);
+      console.log(`[AtuinPlugin] CLEARING CONTAINER - Stack trace:`, new Error().stack);
+      container.innerHTML = '';
+    } else if (hasTabContent) {
+      console.log(`[AtuinPlugin] Container already has ${tabId} content, preserving it`);
+      this._activeTabComponent = tabId;
+      
+      // For graph components, we need to defer refresh until after the view is visible
+      if (tabId === 'graph') {
+        console.log(`[AtuinPlugin] Deferring graph refresh until view is visible`);
+        // Use a longer timeout to ensure the router has finished showing the view
+        setTimeout(async () => {
+          console.log(`[AtuinPlugin] Executing deferred graph refresh`);
+          await this._refreshExistingComponent(tabId, container);
+        }, 200);
+      } else {
+        // For other components, refresh immediately
+        await this._refreshExistingComponent(tabId, container);
+      }
+      return; // Don't remount if content already exists
+    } else {
+      console.log(`[AtuinPlugin] Same component ${tabId}, keeping existing content`);
+    }
+    
+    switch (tabId) {
+      case 'turtle':
+        await this._mountTurtleEditor(container);
+        break;
+      case 'sparql':
+        await this._mountSparqlEditor(container);
+        break;
+      case 'graph':
+        await this._mountGraphVisualizer(container);
+        break;
+      default:
+        throw new Error(`Unknown tab ID: ${tabId}`);
+    }
+    
+    this._activeTabComponent = tabId;
+    console.log(`[AtuinPlugin] _mountSpecificComponent complete: ${tabId}, container content length now: ${container.innerHTML.length}`);
+  }
+
+  /**
+   * Check if container already has content for the specified tab type
+   * @param {string} tabId - The tab ID to check
+   * @param {HTMLElement} container - Container to check
+   * @returns {boolean} True if container has appropriate content
+   */
+  _hasContentForTab(tabId, container) {
+    if (!container || container.innerHTML.length === 0) {
+      return false;
+    }
+    
+    // Check for specific component containers
+    switch (tabId) {
+      case 'turtle':
+        return container.querySelector('.turtle-editor-container') !== null;
+      case 'sparql':
+        return container.querySelector('.sparql-editor-container') !== null;
+      case 'graph':
+        return container.querySelector('.graph-visualizer-container') !== null;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Refresh an existing component when switching back to it
+   * @param {string} tabId - The tab ID to refresh
+   * @param {HTMLElement} container - Container with existing content
+   */
+  async _refreshExistingComponent(tabId, container) {
+    console.log(`[AtuinPlugin] Refreshing existing ${tabId} component`);
+    
+    try {
+      switch (tabId) {
+        case 'turtle':
+          if (this.turtleEditor && typeof this.turtleEditor.refresh === 'function') {
+            this.turtleEditor.refresh();
+          }
+          setTimeout(() => {
+            if (typeof this.turtleEditor.focus === 'function') {
+              this.turtleEditor.focus();
+            }
+          }, 100);
+          break;
+          
+        case 'sparql':
+          if (this.sparqlEditor && typeof this.sparqlEditor.refresh === 'function') {
+            this.sparqlEditor.refresh();
+          }
+          setTimeout(() => {
+            if (typeof this.sparqlEditor.focus === 'function') {
+              this.sparqlEditor.focus();
+            }
+          }, 100);
+          break;
+          
+        case 'graph':
+          console.log(`[AtuinPlugin] Graph visualizer instance exists:`, !!this.graphVisualizer);
+          const graphContainer = container.querySelector('.graph-container');
+          console.log(`[AtuinPlugin] Graph container found:`, !!graphContainer);
+          
+          if (this.graphVisualizer && graphContainer) {
+            // Graph visualizers often get corrupted when hidden/shown
+            // Let's destroy and recreate the visualization
+            console.log(`[AtuinPlugin] Destroying existing graph visualizer to recreate`);
+            
+            try {
+              if (typeof this.graphVisualizer.destroy === 'function') {
+                this.graphVisualizer.destroy();
+              }
+            } catch (error) {
+              console.log(`[AtuinPlugin] Error destroying graph visualizer:`, error);
+            }
+            
+            // Clear the graph container content
+            graphContainer.innerHTML = '';
+            
+            // Recreate the graph visualizer
+            console.log(`[AtuinPlugin] Recreating graph visualizer`);
+            try {
+              const { GraphVisualizer } = await import('atuin/core/GraphVisualizer');
+              this.graphVisualizer = new GraphVisualizer(graphContainer, this.logger);
+              await this.graphVisualizer.initialize();
+              
+              this.graphVisualizer.onNodeSelect((nodeId) => {
+                eventBus.emit('graph:node-selected', nodeId);
+              });
+              
+              // Update with current turtle content
+              console.log(`[AtuinPlugin] Checking turtle editor for content:`, !!this.turtleEditor);
+              if (this.turtleEditor && typeof this.graphVisualizer.updateGraph === 'function') {
+                const currentContent = this.turtleEditor.getValue();
+                console.log(`[AtuinPlugin] Current turtle content length:`, currentContent ? currentContent.length : 0);
+                if (currentContent) {
+                  console.log(`[AtuinPlugin] Updating recreated graph with current turtle content`);
+                  this.graphVisualizer.updateGraph(currentContent);
+                } else {
+                  console.log(`[AtuinPlugin] No turtle content to update graph with`);
+                }
+              } else {
+                console.log(`[AtuinPlugin] Cannot update graph - turtle editor missing or updateGraph unavailable`);
+                console.log(`[AtuinPlugin] turtleEditor exists:`, !!this.turtleEditor);
+                console.log(`[AtuinPlugin] updateGraph function:`, typeof this.graphVisualizer.updateGraph);
+              }
+              
+              console.log(`[AtuinPlugin] Graph visualizer recreated successfully`);
+            } catch (error) {
+              console.error(`[AtuinPlugin] Failed to recreate graph visualizer:`, error);
+              // Fallback error display
+              graphContainer.innerHTML = `
+                <div class="graph-fallback" style="padding: 40px; text-align: center; color: #6c757d;">
+                  <h4>Graph Visualization Error</h4>
+                  <p>Failed to recreate the graph visualizer.</p>
+                  <p>${error.message}</p>
+                </div>
+              `;
+            }
+          } else {
+            console.log(`[AtuinPlugin] ERROR: Graph visualizer instance or container missing!`);
+          }
+          break;
+      }
+      console.log(`[AtuinPlugin] _refreshExistingComponent completed for ${tabId}`);
+    } catch (error) {
+      console.error(`[AtuinPlugin] Error in _refreshExistingComponent for ${tabId}:`, error);
+    }
+  }
+
+  /**
+   * Mount just the Turtle Editor component
+   */
+  async _mountTurtleEditor(container) {
+    console.log(`[AtuinPlugin] _mountTurtleEditor called, container content length: ${container.innerHTML.length}`);
+    // Check if already mounted in this container
+    let editorContainer = container.querySelector('.turtle-editor-container');
+    
+    if (!editorContainer) {
+      editorContainer = document.createElement('div');
+      editorContainer.className = 'turtle-editor-container';
+      editorContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+      `;
+      container.appendChild(editorContainer);
+    }
+    
+    try {
+      if (!this.turtleEditor) {
+        this.turtleEditor = new TurtleEditor(editorContainer, this.logger);
+        await this.turtleEditor.initialize();
+        this.turtleEditor.setValue(sampleContent);
+        
+        // Set up change handler for real-time updates
+        this.turtleEditor.onChange((content) => {
+          eventBus.emit('turtle:content-changed', content);
+        });
+      } else {
+        // Re-mount existing editor or refresh
+        if (typeof this.turtleEditor.mount === 'function') {
+          await this.turtleEditor.mount(editorContainer);
+        } else if (typeof this.turtleEditor.refresh === 'function') {
+          this.turtleEditor.refresh();
+        }
+      }
+      
+      // Focus the editor
+      setTimeout(() => {
+        if (typeof this.turtleEditor.focus === 'function') {
+          this.turtleEditor.focus();
+        }
+      }, 100);
+      
+    } catch (error) {
+      this.logger.error('Failed to mount Turtle editor:', error);
+      this._createFallbackTurtleEditor(editorContainer);
+    }
+  }
+
+  /**
+   * Mount just the SPARQL Editor component
+   */
+  async _mountSparqlEditor(container) {
+    console.log(`[AtuinPlugin] _mountSparqlEditor called, container content length: ${container.innerHTML.length}`);
+    // Check if already mounted in this container
+    let sparqlContainer = container.querySelector('.sparql-editor-container');
+    
+    if (!sparqlContainer) {
+      sparqlContainer = document.createElement('div');
+      sparqlContainer.className = 'sparql-editor-container';
+      sparqlContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+      `;
+      
+      // Add editor container
+      const editorDiv = document.createElement('div');
+      editorDiv.className = 'editor-container';
+      editorDiv.style.flex = '1';
+      sparqlContainer.appendChild(editorDiv);
+      
+      // Add controls
+      const controlsDiv = document.createElement('div');
+      controlsDiv.className = 'sparql-controls';
+      controlsDiv.style.padding = '12px';
+      controlsDiv.style.borderTop = '1px solid #e1e5e9';
+      controlsDiv.style.background = '#f8f9fa';
+      controlsDiv.style.display = 'flex';
+      controlsDiv.style.gap = '8px';
+      controlsDiv.innerHTML = `
+        <button id="execute-sparql" class="btn btn-primary">Execute Query</button>
+        <button id="clear-results" class="btn btn-secondary">Clear Results</button>
+        <button id="format-sparql" class="btn btn-outline">Format Query</button>
+      `;
+      sparqlContainer.appendChild(controlsDiv);
+      
+      // Add results container
+      const resultsDiv = document.createElement('div');
+      resultsDiv.id = 'sparql-results';
+      resultsDiv.className = 'results-container';
+      resultsDiv.style.maxHeight = '300px';
+      resultsDiv.style.overflowY = 'auto';
+      resultsDiv.style.borderTop = '1px solid #e1e5e9';
+      resultsDiv.style.background = '#fff';
+      resultsDiv.style.padding = '16px';
+      resultsDiv.innerHTML = '<div class="no-results">No query executed yet.</div>';
+      sparqlContainer.appendChild(resultsDiv);
+      
+      container.appendChild(sparqlContainer);
+    }
+    
+    const editorDiv = sparqlContainer.querySelector('.editor-container');
+    const controlsDiv = sparqlContainer.querySelector('.sparql-controls');
+    
+    try {
+      if (!this.sparqlEditor) {
+        this.sparqlEditor = new SPARQLEditor(editorDiv, this.logger);
+        await this.sparqlEditor.initialize();
+        this.sparqlEditor.setValue(sampleSparql);
+        
+        this.sparqlEditor.onChange((query) => {
+          eventBus.emit('sparql:query-changed', query);
+        });
+      } else {
+        // Re-mount existing editor or refresh
+        if (typeof this.sparqlEditor.mount === 'function') {
+          await this.sparqlEditor.mount(editorDiv);
+        } else if (typeof this.sparqlEditor.refresh === 'function') {
+          this.sparqlEditor.refresh();
+        }
+      }
+      
+      // Set up event handlers for controls (only if not already set up)
+      if (!controlsDiv.hasAttribute('data-handlers-setup')) {
+        this._setupSparqlControls(controlsDiv);
+        controlsDiv.setAttribute('data-handlers-setup', 'true');
+      }
+      
+    } catch (error) {
+      this.logger.error('Failed to mount SPARQL editor:', error);
+      this._createFallbackSparqlEditor(editorDiv);
+    }
+  }
+
+  /**
+   * Mount just the Graph Visualizer component  
+   */
+  async _mountGraphVisualizer(container) {
+    console.log(`[AtuinPlugin] _mountGraphVisualizer called, container content length: ${container.innerHTML.length}`);
+    // Check if already mounted in this container
+    let graphContainer = container.querySelector('.graph-visualizer-container');
+    
+    if (!graphContainer) {
+      graphContainer = document.createElement('div');
+      graphContainer.className = 'graph-visualizer-container';
+      graphContainer.style.cssText = `
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+      `;
+      
+      // Add graph container
+      const vizDiv = document.createElement('div');
+      vizDiv.className = 'graph-container';
+      vizDiv.style.flex = '1';
+      vizDiv.style.background = '#fff';
+      graphContainer.appendChild(vizDiv);
+      
+      // Add controls
+      const controlsDiv = document.createElement('div');
+      controlsDiv.className = 'graph-controls';
+      controlsDiv.style.padding = '12px';
+      controlsDiv.style.borderTop = '1px solid #e1e5e9';
+      controlsDiv.style.background = '#f8f9fa';
+      controlsDiv.style.display = 'flex';
+      controlsDiv.style.gap = '12px';
+      controlsDiv.style.alignItems = 'center';
+      controlsDiv.innerHTML = `
+        <button id="fit-graph" class="btn btn-outline">Fit to View</button>
+        <button id="reset-graph" class="btn btn-outline">Reset Layout</button>
+        <label class="control-label">
+          Node Size: <input type="range" id="node-size-slider" min="10" max="50" value="25">
+        </label>
+      `;
+      graphContainer.appendChild(controlsDiv);
+      
+      container.appendChild(graphContainer);
+    }
+    
+    const vizDiv = graphContainer.querySelector('.graph-container');
+    const controlsDiv = graphContainer.querySelector('.graph-controls');
+    
+    try {
+      if (!this.graphVisualizer) {
+        this.graphVisualizer = new GraphVisualizer(vizDiv, this.logger);
+        await this.graphVisualizer.initialize();
+        
+        this.graphVisualizer.onNodeSelect((nodeId) => {
+          eventBus.emit('graph:node-selected', nodeId);
+        });
+        
+        // Set initial graph content
+        this.graphVisualizer.updateGraph(sampleContent);
+      } else {
+        // Re-mount existing visualizer or refresh
+        if (typeof this.graphVisualizer.mount === 'function') {
+          await this.graphVisualizer.mount(vizDiv);
+        } else if (typeof this.graphVisualizer.refresh === 'function') {
+          this.graphVisualizer.refresh();
+        }
+        
+        // Update with current content
+        if (this.turtleEditor) {
+          this.graphVisualizer.updateGraph(this.turtleEditor.getValue());
+        }
+      }
+      
+      // Set up graph controls (only if not already set up)
+      if (!controlsDiv.hasAttribute('data-handlers-setup')) {
+        this._setupGraphControls(controlsDiv);
+        controlsDiv.setAttribute('data-handlers-setup', 'true');
+      }
+      
+      // Resize and fit
+      setTimeout(() => {
+        if (typeof this.graphVisualizer.resizeAndFit === 'function') {
+          this.graphVisualizer.resizeAndFit();
+        }
+      }, 100);
+      
+    } catch (error) {
+      this.logger.error('Failed to mount Graph visualizer:', error);
+      vizDiv.innerHTML = `
+        <div class="graph-fallback" style="padding: 40px; text-align: center; color: #6c757d;">
+          <h4>Graph Visualization Unavailable</h4>
+          <p>The professional graph visualizer could not be initialized.</p>
+          <p>RDF content can still be edited in the Turtle and SPARQL tabs.</p>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Unmount the currently active component
+   */
+  async _unmountActiveComponent() {
+    if (this._activeTabComponent && this.container) {
+      // Clean up component-specific event handlers
+      this._cleanupEventHandlers();
+      
+      // Clear container
+      this.container.innerHTML = '';
+      
+      this._activeTabComponent = null;
+      this._activeTabId = null;
+    }
+  }
+
+  /**
+   * Set up event handlers for SPARQL controls
+   */
+  _setupSparqlControls(controlsDiv) {
+    const executeBtn = controlsDiv.querySelector('#execute-sparql');
+    const clearBtn = controlsDiv.querySelector('#clear-results');
+    const formatBtn = controlsDiv.querySelector('#format-sparql');
+    
+    if (executeBtn) {
+      const handler = () => this._executeSparql();
+      executeBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: executeBtn, event: 'click', handler });
+    }
+    
+    if (clearBtn) {
+      const handler = () => this._clearResults();
+      clearBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: clearBtn, event: 'click', handler });
+    }
+    
+    if (formatBtn) {
+      const handler = () => this._formatSparql();
+      formatBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: formatBtn, event: 'click', handler });
+    }
+  }
+
+  /**
+   * Set up event handlers for graph controls
+   */
+  _setupGraphControls(controlsDiv) {
+    const fitBtn = controlsDiv.querySelector('#fit-graph');
+    const resetBtn = controlsDiv.querySelector('#reset-graph');
+    const sizeSlider = controlsDiv.querySelector('#node-size-slider');
+    
+    if (fitBtn) {
+      const handler = () => this._fitGraph();
+      fitBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: fitBtn, event: 'click', handler });
+    }
+    
+    if (resetBtn) {
+      const handler = () => this._resetGraph();
+      resetBtn.addEventListener('click', handler);
+      this._eventHandlers.push({ element: resetBtn, event: 'click', handler });
+    }
+    
+    if (sizeSlider) {
+      const handler = (e) => this._setNodeSize(e.target.value);
+      sizeSlider.addEventListener('input', handler);
+      this._eventHandlers.push({ element: sizeSlider, event: 'input', handler });
+    }
+  }
+
+  /**
+   * Clean up event handlers
+   */
+  _cleanupEventHandlers() {
+    this._eventHandlers.forEach(({ element, event, handler }) => {
+      if (element && handler) {
+        element.removeEventListener(event, handler);
+      }
+    });
+    this._eventHandlers = [];
+  }
+
   async unmount() {
     try {
-      // Clean up event listeners
-      this._eventHandlers.forEach(({ element, event, handler }) => {
-        if (element && handler) {
-          element.removeEventListener(event, handler);
-        }
-      });
-      this._eventHandlers = [];
-
-      // Clean up DOM
-      if (this.container) {
-        this.container.innerHTML = '';
-      }
-
+      await this._unmountActiveComponent();
+      
       // Reset state
       this.container = null;
       console.log('Atuin plugin unmounted');

@@ -5,3 +5,5 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danja/squirt)
 
 UI client
+
+ lsof -ti:9002 | xargs kill -9

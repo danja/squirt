@@ -18,8 +18,8 @@ export class PluginManager {
   }
 
   /**
-   * Register a plugin for a specific view
-   * @param {string} viewId - ID of the view
+   * Register a plugin for a specific view or as a main tab provider
+   * @param {string|null} viewId - ID of the view (null for main tab providers)
    * @param {Object} pluginInstance - Plugin instance
    * @param {Object} options - Plugin options
    */
@@ -34,12 +34,16 @@ export class PluginManager {
       instance: pluginInstance,
       viewId,
       options: {
-        autoActivate: true,
+        autoActivate: !options.providesMainTabs, // Don't auto-activate main tab providers
         ...options
       }
     })
 
-    console.log(`Plugin "${pluginId}" registered for view "${viewId}"`)
+    if (viewId) {
+      console.log(`Plugin "${pluginId}" registered for view "${viewId}"`)
+    } else {
+      console.log(`Plugin "${pluginId}" registered as main tab provider`)
+    }
   }
 
   /**
@@ -241,14 +245,221 @@ export class PluginManager {
    * @param {Event} event - Route change event
    */
   async handleRouteChange(event) {
-    const { to } = event.detail
+    const { to, from } = event.detail
     if (!to) return
 
-    // Deactivate plugins not in this view
-    await this.deactivatePluginsNotInView(to)
+    console.log(`[PluginManager] Route change: ${from} -> ${to}`)
 
-    // Activate plugins for this view
-    await this.activatePluginsForView(to)
+    // Check if this is a plugin-contributed tab
+    const pluginTabInfo = this.getPluginTabInfo(to)
+    const fromPluginTabInfo = from ? this.getPluginTabInfo(from) : null
+    
+    if (pluginTabInfo) {
+      console.log(`[PluginManager] Plugin tab detected: ${pluginTabInfo.id}`)
+      
+      // Check if we're switching between tabs of the same plugin
+      const samePlugin = fromPluginTabInfo && fromPluginTabInfo.pluginId === pluginTabInfo.pluginId
+      console.log(`[PluginManager] Same plugin: ${samePlugin}`)
+      
+      if (!samePlugin) {
+        // Different plugin or coming from non-plugin view - deactivate others
+        console.log(`[PluginManager] Deactivating other plugins`)
+        await this.deactivateAllPlugins()
+      }
+      
+      // Find the container for this view
+      const viewElement = document.getElementById(to)
+      if (viewElement) {
+        console.log(`[PluginManager] View element found: ${to}`)
+        
+        // Force view to be visible
+        viewElement.classList.remove('hidden')
+        
+        // Find or create plugin container with full height styling
+        let container = viewElement.querySelector('.plugin-tab-container')
+        if (!container) {
+          console.log(`[PluginManager] Creating new plugin container for ${to}`)
+          container = document.createElement('div')
+          container.className = 'plugin-tab-container'
+          container.style.cssText = `
+            width: 100%;
+            height: calc(100vh - 140px);
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+          `
+          
+          // Only clear non-plugin content, preserve existing plugin containers
+          const existingPluginContainers = viewElement.querySelectorAll('.plugin-tab-container')
+          console.log(`[PluginManager] Found ${existingPluginContainers.length} existing plugin containers`)
+          if (existingPluginContainers.length === 0) {
+            // Clear the view element only if no plugin containers exist
+            const children = Array.from(viewElement.children)
+            console.log(`[PluginManager] Clearing ${children.length} non-plugin children from view`)
+            children.forEach(child => {
+              if (!child.classList.contains('plugin-tab-container')) {
+                console.log(`[PluginManager] Removing child:`, child.className, child.tagName)
+                child.remove()
+              }
+            })
+          }
+          
+          viewElement.appendChild(container)
+          console.log(`[PluginManager] Appended new container to view ${to}`)
+        } else {
+          console.log(`[PluginManager] Reusing existing plugin container for ${to}, content length: ${container.innerHTML.length}`)
+        }
+        
+        try {
+          console.log(`[PluginManager] Activating plugin tab: ${pluginTabInfo.pluginId}/${pluginTabInfo.id}`)
+          await this.activatePluginTab(pluginTabInfo.pluginId, pluginTabInfo.id, container)
+          console.log(`[PluginManager] Plugin tab activated successfully`)
+        } catch (error) {
+          console.error(`Failed to activate plugin tab ${pluginTabInfo.id}:`, error)
+          container.innerHTML = `
+            <div style="padding: 2rem; text-align: center; color: #666;">
+              <h3>Error Loading ${pluginTabInfo.label}</h3>
+              <p>Failed to load the ${pluginTabInfo.label} component.</p>
+              <p>${error.message}</p>
+            </div>
+          `
+        }
+      } else {
+        console.log(`[PluginManager] View element not found: ${to}`)
+      }
+    } else {
+      // Traditional view handling
+      console.log(`[PluginManager] Traditional view: ${to}`)
+      // Deactivate plugins not in this view
+      await this.deactivatePluginsNotInView(to)
+
+      // Activate plugins for this view
+      await this.activatePluginsForView(to)
+    }
+  }
+
+  /**
+   * Deactivate all active plugins
+   */
+  async deactivateAllPlugins() {
+    const pluginsToDeactivate = Array.from(this.activePlugins)
+    
+    for (const pluginId of pluginsToDeactivate) {
+      await this.deactivatePlugin(pluginId)
+    }
+  }
+
+  /**
+   * Get main tab contributions from all enabled plugins
+   * @returns {Array<Object>} Array of tab contribution objects with plugin metadata
+   */
+  getMainTabContributions() {
+    const contributions = []
+
+    for (const [pluginId, pluginData] of this.plugins.entries()) {
+      try {
+        const tabContributions = pluginData.instance.getMainTabContributions()
+        
+        // Add plugin metadata to each contribution
+        tabContributions.forEach(tab => {
+          contributions.push({
+            ...tab,
+            pluginId,
+            viewId: `${tab.id}-view`, // Generate view ID from tab ID
+            label: tab.label || tab.id
+          })
+        })
+      } catch (error) {
+        console.warn(`Failed to get tab contributions from plugin ${pluginId}:`, error)
+      }
+    }
+
+    return contributions
+  }
+
+  /**
+   * Get enabled plugins that provide main tabs
+   * @returns {Array<Object>} Array of plugin data for main tab providers
+   */
+  getMainTabProviders() {
+    const providers = []
+
+    for (const [pluginId, pluginData] of this.plugins.entries()) {
+      try {
+        const contributions = pluginData.instance.getMainTabContributions()
+        if (contributions.length > 0) {
+          providers.push({
+            pluginId,
+            pluginData,
+            contributions
+          })
+        }
+      } catch (error) {
+        console.warn(`Failed to check tab contributions from plugin ${pluginId}:`, error)
+      }
+    }
+
+    return providers
+  }
+
+  /**
+   * Activate a plugin for a specific tab
+   * @param {string} pluginId - ID of the plugin
+   * @param {string} tabId - ID of the tab to activate
+   * @param {HTMLElement} container - Container to mount the tab component to
+   */
+  async activatePluginTab(pluginId, tabId, container) {
+    const pluginData = this.plugins.get(pluginId)
+    if (!pluginData) {
+      throw new Error(`Plugin ${pluginId} is not registered`)
+    }
+
+    const { instance } = pluginData
+
+    try {
+      // Check if plugin supports this tab
+      const contributions = instance.getMainTabContributions()
+      const tabContribution = contributions.find(tab => tab.id === tabId)
+      
+      if (!tabContribution) {
+        throw new Error(`Plugin ${pluginId} does not support tab ${tabId}`)
+      }
+
+      // If plugin is already active, check if it's for a different tab
+      if (this.activePlugins.has(pluginId)) {
+        const currentTabId = instance.getActiveTabId ? instance.getActiveTabId() : null
+        if (currentTabId && currentTabId !== tabId) {
+          console.log(`[PluginManager] Switching plugin ${pluginId} from tab ${currentTabId} to ${tabId}`)
+          // Don't unmount - let mountTabComponent handle the switch
+        } else if (!currentTabId) {
+          console.log(`[PluginManager] Plugin ${pluginId} active but no current tab, unmounting`)
+          await instance.unmount()
+        } else {
+          console.log(`[PluginManager] Plugin ${pluginId} already on tab ${tabId}, refreshing`)
+        }
+      }
+
+      // Mount the specific tab component
+      await instance.mountTabComponent(tabId, container)
+      this.activePlugins.add(pluginId)
+      
+      console.log(`Plugin ${pluginId} tab ${tabId} activated successfully`)
+    } catch (error) {
+      errorHandler.handle(error)
+      console.error(`Failed to activate plugin ${pluginId} tab ${tabId}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Check if a view ID corresponds to a plugin-contributed tab
+   * @param {string} viewId - The view ID to check
+   * @returns {Object|null} Tab contribution info or null if not a plugin tab
+   */
+  getPluginTabInfo(viewId) {
+    const contributions = this.getMainTabContributions()
+    return contributions.find(tab => tab.viewId === viewId) || null
   }
 
   /**

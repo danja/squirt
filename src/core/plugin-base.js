@@ -134,4 +134,43 @@ export class PluginBase {
     this.options = { ...this.options, ...newOptions };
     // Plugins should override this method to apply changes based on new options
   }
+
+  /**
+   * Get main tab contributions from this plugin
+   * Plugins that want to contribute main-level navigation tabs should override this
+   * @returns {Array<Object>} Array of tab contribution objects
+   */
+  getMainTabContributions() {
+    return this.options.providesMainTabs || [];
+  }
+
+  /**
+   * Mount a specific tab component to a container
+   * Called when a plugin-contributed main tab is activated
+   * @param {string} tabId - The ID of the tab to mount
+   * @param {HTMLElement} container - The container to mount to
+   * @returns {Promise<void>}
+   */
+  async mountTabComponent(tabId, container) {
+    // Default implementation - plugins should override this
+    // to handle mounting specific tab components
+    if (this.isMounted) {
+      console.warn(`Plugin ${this.id} is already mounted, unmounting first`);
+      await this.unmount();
+    }
+    
+    // Store the active tab ID for this mount
+    this._activeTabId = tabId;
+    
+    // Call the standard mount method
+    await this.mount(container);
+  }
+
+  /**
+   * Get the currently active tab ID for this plugin
+   * @returns {string|null} The active tab ID or null if not mounted via tab
+   */
+  getActiveTabId() {
+    return this._activeTabId || null;
+  }
 }
