@@ -1,0 +1,1 @@
+ lsof -ti:9002 | xargs kill -9

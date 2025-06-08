@@ -191,11 +191,16 @@ export class AtuinPlugin extends PluginBase {
     this._observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'childList' && mutation.removedNodes.length > 0) {
-          // Check if this was a plugin container
+          // Check if this was a plugin container or graph-specific content
           const target = mutation.target;
-          if (target && target.classList && target.classList.contains('plugin-tab-container')) {
-            console.log(`[AtuinPlugin] MUTATION OBSERVER: Plugin container content was removed from:`, target);
+          const isPluginContainer = target && target.classList && target.classList.contains('plugin-tab-container');
+          const isGraphContainer = target && target.classList && target.classList.contains('graph-container');
+          const isGraphVisualizer = target && target.classList && target.classList.contains('graph-visualizer-container');
+          
+          if (isPluginContainer || isGraphContainer || isGraphVisualizer) {
+            console.log(`[AtuinPlugin] MUTATION OBSERVER: Content removed from ${target.className}:`, target);
             console.log(`[AtuinPlugin] Removed nodes:`, Array.from(mutation.removedNodes).map(n => n.tagName || n.nodeType));
+            console.log(`[AtuinPlugin] Current container content length:`, target.innerHTML.length);
             console.log(`[AtuinPlugin] Stack trace:`, new Error().stack);
           }
         }
@@ -1556,22 +1561,71 @@ export class AtuinPlugin extends PluginBase {
                 eventBus.emit('graph:node-selected', nodeId);
               });
               
-              // Update with current turtle content
+              // Update with current turtle content - try multiple sources
               console.log(`[AtuinPlugin] Checking turtle editor for content:`, !!this.turtleEditor);
-              if (this.turtleEditor && typeof this.graphVisualizer.updateGraph === 'function') {
-                const currentContent = this.turtleEditor.getValue();
-                console.log(`[AtuinPlugin] Current turtle content length:`, currentContent ? currentContent.length : 0);
-                if (currentContent) {
-                  console.log(`[AtuinPlugin] Updating recreated graph with current turtle content`);
+              
+              let currentContent = null;
+              
+              // Try to get content from turtle editor first
+              if (this.turtleEditor && typeof this.turtleEditor.getValue === 'function') {
+                try {
+                  currentContent = this.turtleEditor.getValue();
+                  console.log(`[AtuinPlugin] Got content from turtle editor, length:`, currentContent ? currentContent.length : 0);
+                } catch (error) {
+                  console.log(`[AtuinPlugin] Error getting content from turtle editor:`, error);
+                }
+              }
+              
+              // Fallback to sample content if no turtle editor content
+              if (!currentContent || currentContent.length === 0) {
+                console.log(`[AtuinPlugin] Using sample turtle content as fallback`);
+                currentContent = `@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a rdfs:Class ;
+  rdfs:label "Person" .
+
+ex:john a ex:Person ;
+  ex:name "John Doe" ;
+  ex:age "30" ;
+  ex:knows ex:jane .
+
+ex:jane a ex:Person ;
+  ex:name "Jane Smith" ;
+  ex:age "28" ;
+  ex:knows ex:john .`;
+              }
+              
+              // Update graph with content
+              if (currentContent && typeof this.graphVisualizer.updateGraph === 'function') {
+                console.log(`[AtuinPlugin] Updating recreated graph with turtle content, length:`, currentContent.length);
+                try {
                   this.graphVisualizer.updateGraph(currentContent);
-                } else {
-                  console.log(`[AtuinPlugin] No turtle content to update graph with`);
+                  console.log(`[AtuinPlugin] Graph updated successfully`);
+                } catch (error) {
+                  console.error(`[AtuinPlugin] Error updating graph:`, error);
                 }
               } else {
-                console.log(`[AtuinPlugin] Cannot update graph - turtle editor missing or updateGraph unavailable`);
-                console.log(`[AtuinPlugin] turtleEditor exists:`, !!this.turtleEditor);
+                console.log(`[AtuinPlugin] Cannot update graph - no content or updateGraph unavailable`);
+                console.log(`[AtuinPlugin] Content available:`, !!currentContent);
                 console.log(`[AtuinPlugin] updateGraph function:`, typeof this.graphVisualizer.updateGraph);
               }
+              
+              // Single delayed resize after DOM settles
+              setTimeout(() => {
+                console.log(`[AtuinPlugin] Calling resizeAndFit after DOM settlement`);
+                if (this.graphVisualizer && typeof this.graphVisualizer.resizeAndFit === 'function') {
+                  try {
+                    this.graphVisualizer.resizeAndFit();
+                    console.log(`[AtuinPlugin] Graph resized successfully`);
+                  } catch (error) {
+                    console.error(`[AtuinPlugin] Error during resize:`, error);
+                  }
+                } else {
+                  console.error(`[AtuinPlugin] Graph visualizer or resizeAndFit method not available`);
+                }
+              }, 300);
               
               console.log(`[AtuinPlugin] Graph visualizer recreated successfully`);
             } catch (error) {

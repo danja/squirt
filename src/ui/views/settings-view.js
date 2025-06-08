@@ -7,6 +7,7 @@ import { showNotification } from '../notifications/notifications.js'
 import { RDFModel } from '../../domain/rdf/model.js'
 import pluginConfig from '../../plugins.config.json' with { type: 'json' }
 import { renderNavTabs } from '../router.js'
+import { pluginManager } from '../../core/plugin-manager.js'
 
 /**
  * Initialize the Settings view
@@ -21,7 +22,7 @@ export function initView() {
             throw new Error('Settings view element not found')
         }
 
-        // Setup endpoints list
+        // Setup endpoints list with defaults
         setupEndpointsList()
 
         // Setup plugins list
@@ -65,6 +66,9 @@ function setupEndpointsList() {
         return
     }
 
+    // Add default endpoints if none exist
+    addDefaultEndpoints()
+    
     // Initial render
     renderEndpointsList()
 
@@ -260,13 +264,40 @@ function saveEndpointChanges(item) {
     showNotification('Endpoint updated successfully', 'success')
 }
 
-// Map views to plugins
-const viewPluginMap = [
-    { viewId: 'wiki-view', label: 'Wiki', pluginId: 'wiki-plugin' },
-    { viewId: 'yasgui-view', label: 'SPARQL', pluginId: 'yasgui-plugin' },
-    { viewId: 'atuin-view', label: 'Atuin', pluginId: 'atuin-plugin' }
-    // Add more mappings as you add plugins/views
-]
+/**
+ * Add default endpoints if none exist
+ */
+function addDefaultEndpoints() {
+    const currentEndpoints = getEndpoints(store.getState()) || []
+    
+    if (currentEndpoints.length === 0) {
+        console.log('Adding default SPARQL endpoints')
+        
+        const defaultEndpoints = [
+            {
+                url: 'https://fuseki.hyperdata.it/squirt/query',
+                label: 'Hyperdata Query Endpoint',
+                type: 'query',
+                status: 'unknown',
+                lastChecked: null
+            },
+            {
+                url: 'https://fuseki.hyperdata.it/squirt/update',
+                label: 'Hyperdata Update Endpoint', 
+                type: 'update',
+                status: 'unknown',
+                lastChecked: null
+            }
+        ]
+        
+        // Add each default endpoint
+        defaultEndpoints.forEach(endpoint => {
+            store.dispatch(addEndpoint(endpoint))
+        })
+        
+        showNotification('Default SPARQL endpoints added', 'info')
+    }
+}
 
 /**
  * Set up the plugins list
@@ -288,12 +319,53 @@ function setupPluginsList() {
         plugins = pluginConfig.plugins || []
     }
 
-    // Render plugin checkboxes per view/tab
-    container.innerHTML = viewPluginMap.map(({ viewId, label, pluginId }) => {
-        const plugin = plugins.find(p => p.id === pluginId)
-        const checked = plugin && plugin.enabled ? 'checked' : ''
-        return `<label><input type="checkbox" class="plugin-toggle" data-plugin-id="${pluginId}" ${checked}> ${label} (${pluginId})</label><br>`
-    }).join('')
+    // Get currently loaded plugins and their main tab contributions
+    const loadedPlugins = Array.from(pluginManager.plugins.keys())
+    const tabContributions = pluginManager.getMainTabContributions()
+    
+    // Build plugin info with current state
+    const pluginInfo = plugins.map(plugin => {
+        const isLoaded = loadedPlugins.includes(plugin.id)
+        const contributions = tabContributions.filter(tab => tab.pluginId === plugin.id)
+        
+        return {
+            ...plugin,
+            isLoaded,
+            contributions: contributions.map(tab => tab.label).join(', ') || 'None'
+        }
+    })
+
+    // Render plugin information and controls
+    container.innerHTML = `
+        <div class="plugins-grid">
+            ${pluginInfo.map(plugin => `
+                <div class="plugin-card ${plugin.enabled ? 'enabled' : 'disabled'}">
+                    <div class="plugin-header">
+                        <h4>${plugin.name || plugin.id}</h4>
+                        <div class="plugin-status">
+                            <span class="status-badge ${plugin.isLoaded ? 'loaded' : 'not-loaded'}">
+                                ${plugin.isLoaded ? 'Loaded' : 'Not Loaded'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="plugin-details">
+                        <p><strong>ID:</strong> ${plugin.id}</p>
+                        <p><strong>Version:</strong> ${plugin.version || 'Unknown'}</p>
+                        <p><strong>Main Tabs:</strong> ${plugin.contributions}</p>
+                        <p><strong>Description:</strong> ${plugin.description || 'No description available'}</p>
+                    </div>
+                    <div class="plugin-controls">
+                        <label class="plugin-toggle-label">
+                            <input type="checkbox" class="plugin-toggle" data-plugin-id="${plugin.id}" ${plugin.enabled ? 'checked' : ''}>
+                            <span class="toggle-switch"></span>
+                            Enable Plugin
+                        </label>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        ${pluginInfo.length === 0 ? '<p class="no-plugins">No plugins configured.</p>' : ''}
+    `
 
     // Handle form submit
     const form = document.getElementById('plugins-form')
@@ -310,6 +382,16 @@ function setupPluginsList() {
             localStorage.setItem('squirt.plugins', JSON.stringify(updated))
             renderNavTabs() // Update navigation tabs
             showNotification('Plugin settings saved. Please reload the app to apply changes.', 'success')
+        })
+    }
+    
+    // Handle reload page button
+    const reloadBtn = document.getElementById('reload-page')
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', () => {
+            if (confirm('Reload the page to apply plugin changes?')) {
+                window.location.reload()
+            }
         })
     }
 }
@@ -560,5 +642,3 @@ function updateStorageUsage() {
     // Update the display
     usageElement.textContent = `Storage used: ${size}`
 }
-
-export { viewPluginMap }

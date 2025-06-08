@@ -146,19 +146,16 @@
         <!-- Plugin-contributed views -->
         <!-- Turtle Editor View -->
         <div id="turtle-view" class="view hidden">
-            <h2>Turtle Editor</h2>
             <!-- Plugin content will be injected here -->
         </div>
 
         <!-- SPARQL Query View -->
         <div id="sparql-view" class="view hidden">
-            <h2>SPARQL Query</h2>
             <!-- Plugin content will be injected here -->
         </div>
 
         <!-- Graph Visualization View -->
         <div id="graph-view" class="view hidden">
-            <h2>Graph Visualization</h2>
             <!-- Plugin content will be injected here -->
         </div>
 
@@ -225,9 +222,13 @@
                 <!-- Plugins Section -->
                 <div class="settings-section">
                     <h3>Plugins</h3>
+                    <p class="section-description">Manage plugin components that extend Squirt's functionality. Changes require a page reload to take effect.</p>
                     <form id="plugins-form">
                         <div id="plugins-list"></div>
-                        <button type="submit" class="button-primary">Save Plugins</button>
+                        <div class="plugins-form-actions">
+                            <button type="submit" class="button-primary">Save Plugin Settings</button>
+                            <button type="button" id="reload-page" class="button-secondary">Reload Page</button>
+                        </div>
                     </form>
                 </div>
             </div>
