@@ -31,6 +31,7 @@ const TAB_ORDER = [
     'post',
     'chat', 
     'wiki',
+    'draw',    // Plugin-contributed
     'turtle',  // Plugin-contributed
     'sparql',  // Plugin-contributed
     'graph',   // Plugin-contributed (renamed from 'graph' in Atuin to avoid conflicts)

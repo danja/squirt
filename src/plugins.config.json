@@ -9,6 +9,10 @@
       "enabled": false
     },
     {
+      "id": "draw-plugin",
+      "enabled": true
+    },
+    {
       "id": "atuin-plugin",
       "enabled": true
     }
