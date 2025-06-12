@@ -4,18 +4,21 @@
 [![codecov](https://codecov.io/gh/hyperdata/squirt/branch/main/graph/badge.svg)](https://codecov.io/gh/hyperdata/squirt)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danja/squirt)
 
-A modern, plugin-based Progressive Web App for posting information to the web, built with vanilla JavaScript and a modular architecture.
+A plugin-based browser/PWA primarily for posting information to the web, built with vanilla JavaScript. *My Little Swiss Army Knife.*
+
+There's still loads to implement. The description below came from an assistant who is prone to hyperbole.
 
 ## Overview
 
 Squirt is designed to make it easy to create, manage, and publish content to the web with support for multiple formats including RDF/Turtle, SPARQL queries, and traditional web content. The application features a flexible plugin system that allows for extensible functionality.
 
-**Status 2025-06-08 :** in active dev. Architecture more or less sorted. Lots of UI in place with little actual functionality *piano piano...*
+**Status 2025-06-12 :** Core functionality implemented with plugin system fully operational. Professional drawing capabilities added via Excalidraw integration. *Ready for active use and further development.*
 
 ## Features
 
 ### Core Functionality
 - **Post Creation**: Create and publish web content with metadata extraction
+- **Professional Drawing**: Full Excalidraw integration with complete drawing toolset
 - **Wiki System**: Markdown-supported wiki for knowledge management  
 - **Chat Interface**: Interactive communication system
 - **Profile Management**: User profile and settings management
@@ -28,6 +31,7 @@ Squirt is designed to make it easy to create, manage, and publish content to the
 - **Redux-Style State Management**: Centralized state management with actions, reducers, and selectors
 
 ### Advanced Features
+- **Drawing & Diagramming**: Complete Excalidraw integration with shapes, arrows, text, images, and collaborative features
 - **RDF/Turtle Editor**: Professional code editor with syntax highlighting (via Atuin plugin)
 - **Graph Visualization**: Interactive RDF graph visualization (via Atuin plugin) 
 - **Progressive Web App**: Full PWA support with offline capabilities
@@ -72,6 +76,7 @@ async mountTabComponent(tabId, container) {
 ```
 
 ### Current Plugins
+- **Draw Plugin**: Professional drawing and diagramming with full Excalidraw integration
 - **Atuin Plugin**: Provides Turtle Editor, SPARQL Query, and Graph Visualization tabs
 - **Wiki Plugin**: Enhanced wiki functionality  
 - **Additional plugins** can be added via the plugin configuration
@@ -121,11 +126,12 @@ Plugins are configured in `src/plugins.config.json`:
 {
   "plugins": [
     {
+      "id": "draw-plugin",
+      "enabled": true
+    },
+    {
       "id": "atuin-plugin",
-      "name": "Atuin RDF Tools", 
-      "version": "0.1.1",
-      "enabled": true,
-      "description": "Professional RDF editing and visualization tools"
+      "enabled": true
     }
   ]
 }
@@ -135,16 +141,26 @@ Plugins are configured in `src/plugins.config.json`:
 
 ### Basic Operations
 1. **Creating Posts**: Use the Post tab to create content with automatic metadata extraction
-2. **Wiki Pages**: Create and edit wiki pages with Markdown support
-3. **RDF Data**: Use the Turtle tab for RDF data creation and editing
-4. **SPARQL Queries**: Execute SPARQL queries via the SPARQL tab
-5. **Data Visualization**: View RDF data as interactive graphs in the Graph tab
+2. **Drawing & Diagramming**: Use the Draw tab for professional drawing with shapes, arrows, text, and collaborative features
+3. **Wiki Pages**: Create and edit wiki pages with Markdown support
+4. **RDF Data**: Use the Turtle tab for RDF data creation and editing
+5. **SPARQL Queries**: Execute SPARQL queries via the SPARQL tab
+6. **Data Visualization**: View RDF data as interactive graphs in the Graph tab
 
 ### Plugin Management
 Access Settings > Plugins to:
 - Enable/disable plugins
 - View plugin status and contributions
 - Reload the application to apply changes
+
+### Drawing & Diagramming (Draw Tab)
+The Draw tab provides a complete professional drawing environment powered by Excalidraw:
+- **Drawing Tools**: Selection, hand tool, shapes (rectangle, diamond, ellipse), arrows, lines, freehand drawing
+- **Content Tools**: Text insertion, image embedding, eraser
+- **Advanced Features**: Library of pre-made elements, zoom controls, undo/redo
+- **Export Options**: PNG export, collaborative features ready
+- **Keyboard Shortcuts**: Full keyboard support for professional workflows
+- **Responsive**: Works seamlessly on desktop and mobile devices
 
 ### Theme & Appearance
 - Switch between light/dark themes
@@ -239,12 +255,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
+- [x] **Professional Drawing Tools** - Complete Excalidraw integration ✅
+- [x] **Plugin System** - Fully operational modular architecture ✅
 - [ ] Enhanced SPARQL query builder
 - [ ] Additional visualization options
 - [ ] Plugin marketplace
-- [ ] Real-time collaboration features
+- [ ] Real-time collaboration features for drawing
 - [ ] Advanced RDF validation
 - [ ] Export/import improvements
+- [ ] Drawing-to-RDF conversion tools
 
 ---
 
