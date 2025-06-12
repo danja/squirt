@@ -83,7 +83,11 @@ export default {
         extensions: ['.js', '.json'],
         alias: {
             // Add shortcut for imports
-            '@': path.resolve(__dirname, 'src')
+            '@': path.resolve(__dirname, 'src'),
+            // Fix Excalidraw roughjs dependencies
+            'roughjs/bin/rough': path.resolve(__dirname, 'node_modules/roughjs/bin/rough.js'),
+            'roughjs/bin/generator': path.resolve(__dirname, 'node_modules/roughjs/bin/generator.js'),
+            'roughjs/bin/math': path.resolve(__dirname, 'node_modules/roughjs/bin/math.js')
         }
     },
     devServer: {

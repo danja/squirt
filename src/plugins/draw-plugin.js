@@ -15,11 +15,8 @@ export class DrawPlugin extends PluginBase {
     })
 
     this.excalidrawAPI = null
-    this.drawContainer = null
-    this.fallbackCanvas = null
-    this.fallbackContext = null
+    this.excalidrawData = null
     this.reactRoot = null
-    this._eventHandlers = []
   }
 
   /**
@@ -83,253 +80,113 @@ export class DrawPlugin extends PluginBase {
       drawContainer.className = 'draw-container'
       drawContainer.style.cssText = `
         width: 100%;
-        height: 100%;
+        height: calc(100vh - 60px);
         display: flex;
         flex-direction: column;
-        flex: 1;
         overflow: hidden;
         position: relative;
       `
       container.appendChild(drawContainer)
     }
 
-    // Create header with title and controls
-    const header = document.createElement('div')
-    header.className = 'draw-header'
-    header.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      border-bottom: 1px solid #e1e5e9;
-      background: #f8f9fa;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    `
-    header.innerHTML = `
-      <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #495057;">Drawing Canvas</h3>
-      <div class="draw-controls" style="display: flex; gap: 8px; align-items: center;">
-        <button id="clear-canvas" class="btn btn-outline" style="padding: 6px 12px; border: 1px solid #6c757d; border-radius: 4px; cursor: pointer; font-size: 13px; background: transparent; color: #6c757d;">Clear Canvas</button>
-        <button id="export-png" class="btn btn-outline" style="padding: 6px 12px; border: 1px solid #0d6efd; border-radius: 4px; cursor: pointer; font-size: 13px; background: transparent; color: #0d6efd;">Export PNG</button>
-      </div>
-    `
-    
-    // Create Excalidraw container
+    // Create Excalidraw container (full height for Excalidraw's built-in UI)
     const excalidrawContainer = document.createElement('div')
     excalidrawContainer.className = 'excalidraw-container'
     excalidrawContainer.style.cssText = `
-      flex: 1;
       width: 100%;
-      height: calc(100% - 50px);
+      height: 100%;
       position: relative;
+      display: flex;
+      flex-direction: column;
     `
 
     // Clear and setup container
     drawContainer.innerHTML = ''
-    drawContainer.appendChild(header)
     drawContainer.appendChild(excalidrawContainer)
 
-    try {
-      console.log(`[DrawPlugin] Creating drawing canvas`)
-      
-      // Use fallback canvas for now due to Excalidraw build issues
-      console.log(`[DrawPlugin] Using fallback canvas (Excalidraw temporarily disabled due to build issues)`)
-      this._createFallbackCanvas(excalidrawContainer)
-
-      // Set up event handlers for controls
-      this._setupDrawControls(header)
-      
-    } catch (error) {
-      console.error(`[DrawPlugin] Failed to mount drawing component:`, error)
-      excalidrawContainer.innerHTML = `
-        <div class="draw-fallback" style="padding: 40px; text-align: center; color: #6c757d;">
-          <h4>Drawing Canvas Unavailable</h4>
-          <p>The drawing component could not be initialized.</p>
-          <p>Error: ${error.message}</p>
-        </div>
-      `
-    }
+    // Load full Excalidraw component
+    console.log(`[DrawPlugin] Creating Excalidraw drawing canvas`)
+    await this._createExcalidrawComponent(excalidrawContainer)
   }
 
   /**
-   * Create a fallback canvas when Excalidraw is not available
+   * Create the full Excalidraw component using React
    */
-  _createFallbackCanvas(container) {
-    console.log(`[DrawPlugin] Creating fallback canvas`)
+  async _createExcalidrawComponent(container) {
+    console.log(`[DrawPlugin] Creating full Excalidraw component`)
     
-    const canvas = document.createElement('canvas')
-    canvas.width = 800
-    canvas.height = 600
-    canvas.style.cssText = `
-      width: 100%;
-      height: 100%;
-      border: 1px solid #e1e5e9;
-      background: white;
-      cursor: crosshair;
-    `
+    // Dynamic import of React and Excalidraw with CSS
+    const React = await import('react')
+    const ReactDOM = await import('react-dom/client')
+    const { Excalidraw } = await import('@excalidraw/excalidraw')
     
-    const ctx = canvas.getContext('2d')
-    let isDrawing = false
-    let lastX = 0
-    let lastY = 0
+    // Import Excalidraw CSS
+    await import('@excalidraw/excalidraw/index.css')
     
-    // Set up drawing context
-    ctx.strokeStyle = '#000000'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-    
-    // Handle mouse events
-    canvas.addEventListener('mousedown', (e) => {
-      isDrawing = true
-      const rect = canvas.getBoundingClientRect()
-      lastX = (e.clientX - rect.left) * (canvas.width / rect.width)
-      lastY = (e.clientY - rect.top) * (canvas.height / rect.height)
-    })
-    
-    canvas.addEventListener('mousemove', (e) => {
-      if (!isDrawing) return
-      
-      const rect = canvas.getBoundingClientRect()
-      const currentX = (e.clientX - rect.left) * (canvas.width / rect.width)
-      const currentY = (e.clientY - rect.top) * (canvas.height / rect.height)
-      
-      ctx.beginPath()
-      ctx.moveTo(lastX, lastY)
-      ctx.lineTo(currentX, currentY)
-      ctx.stroke()
-      
-      lastX = currentX
-      lastY = currentY
-    })
-    
-    canvas.addEventListener('mouseup', () => isDrawing = false)
-    canvas.addEventListener('mouseout', () => isDrawing = false)
-    
-    // Handle touch events for mobile
-    canvas.addEventListener('touchstart', (e) => {
-      e.preventDefault()
-      const touch = e.touches[0]
-      const rect = canvas.getBoundingClientRect()
-      isDrawing = true
-      lastX = (touch.clientX - rect.left) * (canvas.width / rect.width)
-      lastY = (touch.clientY - rect.top) * (canvas.height / rect.height)
-    })
-    
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault()
-      if (!isDrawing) return
-      
-      const touch = e.touches[0]
-      const rect = canvas.getBoundingClientRect()
-      const currentX = (touch.clientX - rect.left) * (canvas.width / rect.width)
-      const currentY = (touch.clientY - rect.top) * (canvas.height / rect.height)
-      
-      ctx.beginPath()
-      ctx.moveTo(lastX, lastY)
-      ctx.lineTo(currentX, currentY)
-      ctx.stroke()
-      
-      lastX = currentX
-      lastY = currentY
-    })
-    
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault()
-      isDrawing = false
-    })
-    
-    container.appendChild(canvas)
-    this.fallbackCanvas = canvas
-    this.fallbackContext = ctx
-    
-    console.log(`[DrawPlugin] Fallback canvas created successfully`)
-  }
-
-  /**
-   * Set up event handlers for drawing controls
-   */
-  _setupDrawControls(header) {
-    const clearBtn = header.querySelector('#clear-canvas')
-    const exportBtn = header.querySelector('#export-png')
-
-    if (clearBtn) {
-      const handler = () => this._clearCanvas()
-      clearBtn.addEventListener('click', handler)
-      this._eventHandlers.push({ element: clearBtn, event: 'click', handler })
-    }
-
-    if (exportBtn) {
-      const handler = () => this._exportPNG()
-      exportBtn.addEventListener('click', handler)
-      this._eventHandlers.push({ element: exportBtn, event: 'click', handler })
-    }
-
-    // Add hover effects
-    const buttons = header.querySelectorAll('.btn')
-    buttons.forEach(btn => {
-      btn.addEventListener('mouseenter', () => {
-        if (btn.id === 'export-png') {
-          btn.style.background = '#0d6efd'
-          btn.style.color = 'white'
-        } else {
-          btn.style.background = '#6c757d'
-          btn.style.color = 'white'
+    // Create React component
+    const ExcalidrawApp = React.createElement(Excalidraw, {
+      initialData: {
+        elements: [],
+        appState: {
+          viewBackgroundColor: "#ffffff",
+          currentItemStrokeColor: "#000000",
+          currentItemBackgroundColor: "transparent",
+          currentItemFillStyle: "hachure",
+          currentItemStrokeWidth: 1,
+          currentItemStrokeStyle: "solid",
+          currentItemRoughness: 1,
+          currentItemOpacity: 100,
+          currentItemFontSize: 20,
+          currentItemFontFamily: 1,
+          currentItemTextAlign: "left",
+          currentItemStartArrowhead: null,
+          currentItemEndArrowhead: "arrow",
+          scrollX: 0,
+          scrollY: 0,
+          zoom: {
+            value: 1
+          },
+          gridSize: null,
+          theme: "light"
         }
-      })
-      
-      btn.addEventListener('mouseleave', () => {
-        btn.style.background = 'transparent'
-        if (btn.id === 'export-png') {
-          btn.style.color = '#0d6efd'
-        } else {
-          btn.style.color = '#6c757d'
+      },
+      onChange: (elements, appState, files) => {
+        console.log(`[DrawPlugin] Excalidraw content changed: ${elements.length} elements`)
+        // Store the current state for potential export/save functionality
+        this.excalidrawData = { elements, appState, files }
+      },
+      onPointerUpdate: (payload) => {
+        // Optional: Handle pointer updates for collaborative features
+      },
+      UIOptions: {
+        canvasActions: {
+          changeViewBackgroundColor: true,
+          clearCanvas: true,
+          export: {
+            saveFileToDisk: true
+          },
+          loadScene: true,
+          saveAsImage: true,
+          theme: true,
+          saveToActiveFile: false
+        },
+        tools: {
+          image: true
         }
-      })
+      }
     })
+    
+    // Create React root and render
+    if (this.reactRoot) {
+      this.reactRoot.unmount()
+    }
+    
+    this.reactRoot = ReactDOM.createRoot(container)
+    this.reactRoot.render(ExcalidrawApp)
+    
+    console.log(`[DrawPlugin] Excalidraw component mounted successfully`)
   }
 
-  /**
-   * Clear the drawing canvas
-   */
-  _clearCanvas() {
-    if (this.fallbackCanvas && this.fallbackContext) {
-      try {
-        this.fallbackContext.clearRect(0, 0, this.fallbackCanvas.width, this.fallbackCanvas.height)
-        console.log(`[DrawPlugin] Canvas cleared`)
-      } catch (error) {
-        console.error(`[DrawPlugin] Error clearing canvas:`, error)
-      }
-    } else {
-      console.warn(`[DrawPlugin] Cannot clear canvas - no drawing canvas available`)
-    }
-  }
-
-  /**
-   * Export drawing as PNG
-   */
-  async _exportPNG() {
-    if (this.fallbackCanvas) {
-      try {
-        // Convert canvas to blob and download
-        this.fallbackCanvas.toBlob((blob) => {
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `drawing-${new Date().toISOString().slice(0, 10)}.png`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        }, 'image/png')
-        
-        console.log(`[DrawPlugin] Canvas drawing exported as PNG`)
-      } catch (error) {
-        console.error(`[DrawPlugin] Error exporting canvas PNG:`, error)
-      }
-    } else {
-      console.warn(`[DrawPlugin] Cannot export - no drawing canvas available`)
-    }
-  }
 
   /**
    * Legacy mount method for backwards compatibility
@@ -365,21 +222,7 @@ export class DrawPlugin extends PluginBase {
 
       // Clean up API references
       this.excalidrawAPI = null
-      this.fallbackCanvas = null
-      this.fallbackContext = null
-
-      // Clean up event handlers
-      if (this._eventHandlers) {
-        this._eventHandlers.forEach(({ element, event, handler }) => {
-          if (element && handler) {
-            element.removeEventListener(event, handler)
-          }
-        })
-        this._eventHandlers = []
-      }
-
-      // Reset container
-      this.container = null
+      this.excalidrawData = null
       
       console.log('Draw plugin unmounted')
       return true
