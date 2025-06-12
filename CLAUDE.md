@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` - Start development server with webpack dev server on port 9002
 - `npm run build` - Production build using webpack (cleans dist first)
 - `npm test` - Run tests with vitest
-- `npm run test:ui` - Run tests with vitest UI
+- `npm run test:ui` - Run tests with interactive vitest UI
 - `npm run coverage` - Run tests with coverage report
+- Tests are located in `src/**/*.{test,spec}.js` files and run with vitest + jsdom for DOM testing
 
 ## Architecture Overview
 
