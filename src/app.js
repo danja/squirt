@@ -193,19 +193,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const sharedText = params.get('text')
 
     if (sharedUrl || sharedTitle || sharedText) {
-      // Emit an event with the shared data
-      eventBus.emit(EVENTS.SHARE_RECEIVED, {
+      console.log('Share target received:', { url: sharedUrl, title: sharedTitle, text: sharedText })
+      
+      // Store shared data for later use
+      sessionStorage.setItem('sharedData', JSON.stringify({
         url: sharedUrl,
         title: sharedTitle,
         text: sharedText
-      })
+      }))
 
-      // Redirect to the main app view (hash router will take over)
-      window.location.replace('/')
+      // Redirect to the main app post view
+      window.location.replace('/#post')
       return // Don't initialize the app on the share-target page itself
     }
   }
 
   // Initialize the app normally
-  initializeApp()
+  initializeApp().then(() => {
+    // Check for stored shared data after app initialization
+    const sharedData = sessionStorage.getItem('sharedData')
+    if (sharedData) {
+      try {
+        const data = JSON.parse(sharedData)
+        sessionStorage.removeItem('sharedData') // Clean up
+        
+        // Emit the share event after a short delay to ensure views are ready
+        setTimeout(() => {
+          console.log('Emitting stored share data:', data)
+          eventBus.emit(EVENTS.SHARE_RECEIVED, data)
+        }, 100)
+      } catch (error) {
+        console.error('Error parsing shared data:', error)
+      }
+    }
+  })
 })
