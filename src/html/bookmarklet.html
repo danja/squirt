@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squirt Bookmarklet</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f9f9f9;
+            color: #2c3e50;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .bookmarklet {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            display: inline-block;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: background 0.2s;
+        }
+        .bookmarklet:hover {
+            background: #2980b9;
+            color: white;
+        }
+        .instructions {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 8px 0;
+        }
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .note strong {
+            color: #856404;
+        }
+        .demo {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .feature-list {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-list h3 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        .feature-list ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .feature-list li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📌 Squirt Bookmarklet</h1>
+        
+        <p>Save the current webpage to your Squirt posts with one click! This bookmarklet captures the page URL and title, then opens Squirt with the data pre-filled.</p>
+
+        <div class="demo">
+            <h3>👆 Drag this button to your bookmarks bar:</h3>
+            <a href="javascript:(function(){var url=encodeURIComponent(window.location.href);var title=encodeURIComponent(document.title||'');var squirtUrl='https://tensegrity.it/squirt/share-target.html?url='+url+'&title='+title;window.open(squirtUrl,'_blank');})();" class="bookmarklet">
+                📝 Save to Squirt
+            </a>
+        </div>
+
+        <div class="feature-list">
+            <h3>✨ What it does:</h3>
+            <ul>
+                <li><strong>Captures current page URL</strong> - The webpage you're viewing</li>
+                <li><strong>Extracts page title</strong> - Automatically fills the title field</li>
+                <li><strong>Opens Squirt</strong> - Opens in a new tab with data pre-filled</li>
+                <li><strong>Ready to post</strong> - Just add content and hit "Post"</li>
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 How to install:</h3>
+            <ol>
+                <li><strong>Show your bookmarks bar</strong> (Ctrl+Shift+B in Chrome/Firefox)</li>
+                <li><strong>Drag the blue "Save to Squirt" button</strong> above to your bookmarks bar</li>
+                <li><strong>That's it!</strong> The bookmarklet is now installed</li>
+            </ol>
+        </div>
+
+        <div class="instructions">
+            <h3>🚀 How to use:</h3>
+            <ol>
+                <li><strong>Visit any webpage</strong> you want to save to Squirt</li>
+                <li><strong>Click the "Save to Squirt" bookmark</strong> in your bookmarks bar</li>
+                <li><strong>Squirt opens</strong> with the URL and title pre-filled</li>
+                <li><strong>Add your content</strong> and click "Post" to save</li>
+            </ol>
+        </div>
+
+        <div class="note">
+            <strong>💡 Tip:</strong> You can also right-click the bookmarklet button above and select "Bookmark this link" if drag-and-drop doesn't work in your browser.
+        </div>
+
+        <div class="note">
+            <strong>🔒 Privacy:</strong> This bookmarklet only sends the current page URL and title to Squirt. No other data is collected or transmitted.
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <p><a href="https://tensegrity.it/squirt" style="color: #3498db; text-decoration: none;">← Back to Squirt</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactivity to show the bookmarklet code
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookmarklet = document.querySelector('.bookmarklet');
+            
+            // Show a tooltip with the JavaScript code when hovering
+            bookmarklet.addEventListener('mouseenter', function() {
+                bookmarklet.title = 'Bookmarklet JavaScript code:\n' + decodeURIComponent(bookmarklet.href.replace('javascript:', ''));
+            });
+
+            // Add click handler for mobile devices where drag-and-drop doesn't work
+            bookmarklet.addEventListener('click', function(e) {
+                if ('ontouchstart' in window) {
+                    e.preventDefault();
+                    alert('On mobile devices, copy this link and create a bookmark manually:\n\n' + bookmarklet.href);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
