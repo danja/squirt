@@ -46,16 +46,22 @@
         const sharedTitle = params.get('title');
         const sharedText = params.get('text');
 
+        console.log('Share target received data:', { url: sharedUrl, title: sharedTitle, text: sharedText });
+
         // Store shared data for the main app to pick up
         if (sharedUrl || sharedTitle || sharedText) {
-            sessionStorage.setItem('sharedData', JSON.stringify({
+            const sharedData = {
                 url: sharedUrl,
                 title: sharedTitle,
-                text: sharedText
-            }));
+                text: sharedText,
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem('sharedData', JSON.stringify(sharedData));
+            console.log('Stored shared data:', sharedData);
         }
 
         // Redirect to main app post view
+        console.log('Redirecting to main app...');
         window.location.replace('./index.html#post');
     </script>
 </body>

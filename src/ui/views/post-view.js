@@ -24,9 +24,25 @@ export function initView() {
         // Load existing posts if needed
         loadPosts()
 
-        // Listen for shared content
-        unsubscribeShareReceived = eventBus.on(EVENTS.SHARE_RECEIVED, (data) => {
-            console.log('Share received in Post View:', data)
+        // Check for shared data immediately when post view loads
+        const checkForSharedData = () => {
+            const sharedData = sessionStorage.getItem('sharedData')
+            if (sharedData) {
+                try {
+                    const data = JSON.parse(sharedData)
+                    console.log('Post view found stored shared data:', data)
+                    sessionStorage.removeItem('sharedData')
+                    // Process shared data directly
+                    processSharedData(data)
+                } catch (error) {
+                    console.error('Error parsing shared data in post view:', error)
+                }
+            }
+        }
+
+        // Function to process shared data and populate form
+        const processSharedData = (data) => {
+            console.log('Processing shared data in Post View:', data)
             const urlInput = document.getElementById('url')
             const titleInput = document.getElementById('title')
             const contentInput = document.getElementById('content')
@@ -34,25 +50,30 @@ export function initView() {
 
             if (data.url && urlInput) {
                 urlInput.value = data.url
-                // Switch to link type if not already selected
                 if (postTypeSelect && postTypeSelect.value !== 'link') {
                     postTypeSelect.value = 'link'
-                    // Manually trigger change event if needed for other logic
                     postTypeSelect.dispatchEvent(new Event('change'))
                 }
             }
             if (data.title && titleInput) {
                 titleInput.value = data.title
             }
-            // Use text as content if available and no URL was provided
             if (data.text && contentInput && !data.url) {
                 contentInput.value = data.text
-                // Switch to entry type if a URL wasn't the primary share item
                 if (postTypeSelect && postTypeSelect.value !== 'entry') {
                     postTypeSelect.value = 'entry'
                     postTypeSelect.dispatchEvent(new Event('change'))
                 }
             }
+        }
+
+        // Check immediately
+        setTimeout(checkForSharedData, 100)
+
+        // Listen for shared content
+        console.log('Post view: Setting up share event listener')
+        unsubscribeShareReceived = eventBus.on(EVENTS.SHARE_RECEIVED, (data) => {
+            processSharedData(data)
         })
 
         return {

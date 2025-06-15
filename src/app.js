@@ -228,21 +228,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize the app normally
   initializeApp().then(() => {
-    // Check for stored shared data after app initialization
-    const sharedData = sessionStorage.getItem('sharedData')
-    if (sharedData) {
-      try {
-        const data = JSON.parse(sharedData)
-        sessionStorage.removeItem('sharedData') // Clean up
-        
-        // Emit the share event after a short delay to ensure views are ready
-        setTimeout(() => {
-          console.log('Emitting stored share data:', data)
-          eventBus.emit(EVENTS.SHARE_RECEIVED, data)
-        }, 100)
-      } catch (error) {
-        console.error('Error parsing shared data:', error)
+    // Function to check and emit shared data
+    const checkAndEmitSharedData = () => {
+      const sharedData = sessionStorage.getItem('sharedData')
+      if (sharedData) {
+        try {
+          const data = JSON.parse(sharedData)
+          console.log('Found stored shared data:', data)
+          sessionStorage.removeItem('sharedData') // Clean up
+          
+          // Emit the share event with increased delay to ensure views are ready
+          setTimeout(() => {
+            console.log('Emitting stored share data:', data)
+            eventBus.emit(EVENTS.SHARE_RECEIVED, data)
+          }, 500)
+        } catch (error) {
+          console.error('Error parsing shared data:', error)
+        }
       }
     }
+
+    // Check immediately after app init
+    checkAndEmitSharedData()
+    
+    // Also listen for hash changes to handle cases where the post view loads after the check
+    window.addEventListener('hashchange', () => {
+      if (window.location.hash === '#post') {
+        setTimeout(checkAndEmitSharedData, 200)
+      }
+    })
   })
 })
