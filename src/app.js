@@ -153,7 +153,22 @@ function setupHamburgerMenu() {
   }
 }
 
-// Service worker functionality has been removed as it's not being used
+/**
+ * Register service worker for PWA functionality
+ */
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('SW registered: ', registration)
+        })
+        .catch((registrationError) => {
+          console.log('SW registration failed: ', registrationError)
+        })
+    })
+  }
+}
 
 /**
  * Request notification permission
@@ -207,6 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return // Don't initialize the app on the share-target page itself
     }
   }
+
+  // Register service worker for PWA
+  registerServiceWorker()
 
   // Initialize the app normally
   initializeApp().then(() => {
