@@ -154,6 +154,41 @@ function setupHamburgerMenu() {
 }
 
 /**
+ * Directly populate post form fields with shared data
+ */
+function populatePostForm(data) {
+  console.log('Directly populating post form with:', data)
+  
+  const urlInput = document.getElementById('url')
+  const titleInput = document.getElementById('title')
+  const contentInput = document.getElementById('content')
+  const postTypeSelect = document.getElementById('post-type')
+
+  if (data.url && urlInput) {
+    urlInput.value = data.url
+    console.log('Set URL field to:', data.url)
+    if (postTypeSelect && postTypeSelect.value !== 'link') {
+      postTypeSelect.value = 'link'
+      postTypeSelect.dispatchEvent(new Event('change'))
+      console.log('Switched to link post type')
+    }
+  }
+  if (data.title && titleInput) {
+    titleInput.value = data.title
+    console.log('Set title field to:', data.title)
+  }
+  if (data.text && contentInput && !data.url) {
+    contentInput.value = data.text
+    console.log('Set content field to:', data.text)
+    if (postTypeSelect && postTypeSelect.value !== 'entry') {
+      postTypeSelect.value = 'entry'
+      postTypeSelect.dispatchEvent(new Event('change'))
+      console.log('Switched to entry post type')
+    }
+  }
+}
+
+/**
  * Register service worker for PWA functionality
  */
 function registerServiceWorker() {
@@ -241,6 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => {
             console.log('Emitting stored share data:', data)
             eventBus.emit(EVENTS.SHARE_RECEIVED, data)
+            
+            // Also directly populate form fields as fallback
+            populatePostForm(data)
           }, 500)
         } catch (error) {
           console.error('Error parsing shared data:', error)
@@ -254,7 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Also listen for hash changes to handle cases where the post view loads after the check
     window.addEventListener('hashchange', () => {
       if (window.location.hash === '#post') {
-        setTimeout(checkAndEmitSharedData, 200)
+        setTimeout(() => {
+          checkAndEmitSharedData()
+          // Also try direct form population as backup
+          const sharedData = sessionStorage.getItem('sharedData')
+          if (sharedData) {
+            try {
+              const data = JSON.parse(sharedData)
+              sessionStorage.removeItem('sharedData')
+              setTimeout(() => populatePostForm(data), 200)
+            } catch (error) {
+              console.error('Error in hash change handler:', error)
+            }
+          }
+        }, 200)
       }
     })
   })
