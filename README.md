@@ -14,16 +14,11 @@ Squirt is designed to make it easy to create, manage, and publish content to the
 
 **Status 2025-06-12 :** Core functionality implemented with plugin system fully operational. Professional drawing capabilities added via Excalidraw integration. *Ready for active use and further development.*
 
-### Serving as PWA
+## [Demo](https://tensegrity.it/squirt)
 
-*If you want to play with my other bits and pieces as well, best create a dir `hyperdata` and `cd` into it before installing.*
+It is installable on mobile devices as a PWA, and you can **Share to** it.
 
-```sh
-# Install
-git clone https://github.com/danja/squirt.git
-cd squirt
-npm install
-
+There is also a demo [bookmarklet](https://tensegrity.it/squirt/bookmarklet.html).
 
 ## Features
 
