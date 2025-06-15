@@ -14,6 +14,17 @@ Squirt is designed to make it easy to create, manage, and publish content to the
 
 **Status 2025-06-12 :** Core functionality implemented with plugin system fully operational. Professional drawing capabilities added via Excalidraw integration. *Ready for active use and further development.*
 
+### Serving as PWA
+
+*If you want to play with my other bits and pieces as well, best create a dir `hyperdata` and `cd` into it before installing.*
+
+```sh
+# Install
+git clone https://github.com/danja/squirt.git
+cd squirt
+npm install
+
+
 ## Features
 
 ### Core Functionality

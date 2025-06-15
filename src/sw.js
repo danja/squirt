@@ -1,9 +1,9 @@
 // Minimal service worker for PWA installation
 const CACHE_NAME = 'squirt-v1'
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ]
 
 // Install event
