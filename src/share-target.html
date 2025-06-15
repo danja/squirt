@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squirt - Processing Share...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f9f9f9;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="spinner"></div>
+        <div class="message">Processing shared content...</div>
+    </div>
+    
+    <script>
+        // Get shared data from URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const sharedUrl = params.get('url');
+        const sharedTitle = params.get('title');
+        const sharedText = params.get('text');
+
+        // Store shared data for the main app to pick up
+        if (sharedUrl || sharedTitle || sharedText) {
+            sessionStorage.setItem('sharedData', JSON.stringify({
+                url: sharedUrl,
+                title: sharedTitle,
+                text: sharedText
+            }));
+        }
+
+        // Redirect to main app post view
+        window.location.replace('./index.html#post');
+    </script>
+</body>
+</html>

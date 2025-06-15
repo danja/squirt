@@ -73,6 +73,7 @@ export default {
             patterns: [
                 { from: 'src/manifest.json', to: 'manifest.json' },
                 { from: 'src/sw.js', to: 'sw.js' },
+                { from: 'src/share-target.html', to: 'share-target.html' },
                 { from: 'src/media/icon-192x192.png', to: 'icons/icon-192x192.png' },
                 { from: 'src/media/icon-256x256.png', to: 'icons/icon-256x256.png' },
                 { from: 'src/media/icon-background-512x512.png', to: 'icons/icon-background-512x512.png' },

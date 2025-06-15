@@ -201,7 +201,7 @@ function askNotificationPermission() {
 // Initialize the application when the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   // Check for share target request before initializing the app
-  if (window.location.pathname === '/share-target') {
+  if (window.location.pathname.endsWith('/share-target')) {
     const params = new URLSearchParams(window.location.search)
     const sharedUrl = params.get('url')
     const sharedTitle = params.get('title')
