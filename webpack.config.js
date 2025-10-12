@@ -1,6 +1,7 @@
 // webpack.config.js (ESM)
 import path from 'path'
 import { fileURLToPath } from 'url'
+import webpack from 'webpack'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
@@ -9,7 +10,8 @@ import CopyPlugin from 'copy-webpack-plugin'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export default {
+export default (env, argv) => {
+const config = {
     entry: {
         main: './src/app.js'  // Updated path to new entry point
     },
@@ -61,6 +63,9 @@ export default {
         ]
     },
     plugins: [
+        new webpack.ProvidePlugin({
+            process: 'process/browser'
+        }),
         new HtmlWebpackPlugin({
             template: './src/html/index.html',
             favicon: './src/media/favicon.ico',
@@ -104,4 +109,7 @@ export default {
     optimization: {
         minimize: false // Disable minimization for development
     }
+}
+
+return config
 }

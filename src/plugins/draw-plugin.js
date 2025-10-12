@@ -114,14 +114,11 @@ export class DrawPlugin extends PluginBase {
    */
   async _createExcalidrawComponent(container) {
     console.log(`[DrawPlugin] Creating full Excalidraw component`)
-    
-    // Dynamic import of React and Excalidraw with CSS
+
+    // Dynamic import of React and Excalidraw
     const React = await import('react')
     const ReactDOM = await import('react-dom/client')
     const { Excalidraw } = await import('@excalidraw/excalidraw')
-    
-    // Import Excalidraw CSS
-    await import('@excalidraw/excalidraw/index.css')
     
     // Create React component
     const ExcalidrawApp = React.createElement(Excalidraw, {

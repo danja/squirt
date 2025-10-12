@@ -1,0 +1,1 @@
+* move from webpack to vite for packaging
